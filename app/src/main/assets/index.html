@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2f2118" />
+  <title>Moras Wood - Quotations & Estimations</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/mwi-logo.png" />
+  <link rel="stylesheet" href="/styles.css?v=10" />
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="container brand-row">
+      <img src="/mwi-logo.png" alt="Moras Wood Industries" class="brand-logo" />
+      <div>
+        <h1>MORAS WOOD INDUSTRIES</h1>
+        <p>Quotations & Estimations</p>
+      </div>
+      <button id="goHome" class="secondary home-button hidden" type="button">Home</button>
+    </div>
+  </header>
+
+  <main id="homeView" class="container home-view">
+    <div class="page-heading">
+      <h2>Welcome to Moras Wood Q&amp;E</h2>
+      <p>Start a new job, open a saved project, or manage your reusable notes.</p>
+    </div>
+    <div class="home-actions">
+      <button id="newProjectHome" class="home-action primary" type="button"><strong>New Project</strong><span>Start a calculator, estimate and quotation.</span></button>
+      <button id="savedProjectsHome" class="home-action secondary" type="button"><strong>Saved Projects</strong><span>Open or remove a project saved on this device.</span></button>
+      <button id="notesHome" class="home-action secondary" type="button"><strong>Notes</strong><span>Manage notes to reuse in quotations.</span></button>
+      <button id="continueProjectHome" class="home-action secondary hidden" type="button"><strong>Continue Current Project</strong><span>Resume your latest automatically saved work.</span></button>
+    </div>
+    <div id="savedProjectsPanel" class="saved-panel hidden"></div>
+  </main>
+
+  <main id="notesView" class="container notes-view hidden">
+    <div class="page-heading">
+      <h2>Saved Notes</h2>
+      <p>Create and manage notes to reuse on quotations.</p>
+    </div>
+    <div class="card notes-manager">
+      <label class="field">New note<textarea id="newSavedNote" class="input" rows="3" placeholder="Enter a note to reuse on quotations"></textarea></label>
+      <button id="createSavedNote" class="primary" type="button">Save note</button>
+      <span id="notesManagerStatus" class="status" role="status" aria-live="polite"></span>
+      <div id="savedNotesList" class="saved-notes-list"></div>
+    </div>
+  </main>
+
+  <div id="workspaceView" class="workspace-view hidden">
+  <nav class="tabs no-print" aria-label="Main navigation">
+    <div class="container tab-row">
+      <button class="tab active" data-tab="calculator">Calculator</button>
+      <button class="tab" data-tab="estimation">Estimation</button>
+      <button class="tab" data-tab="quotation">Quotation</button>
+      <button class="tab" data-tab="review">Job Review</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+  </nav>
+
+  <section class="project-toolbar no-print">
+    <div class="container project-row">
+      <input id="projectName" class="input project-name" placeholder="Project / job name" />
+      <button id="saveProject" class="primary">Save Project</button>
+      <button id="showProjects" class="secondary">Saved Projects</button>
+      <span id="projectStatus" class="status"></span>
+    </div>
+  </section>
+
+  <main class="container main-content">
+    <section id="calculator" class="panel active-panel">
+      <div class="page-heading">
+        <h2>Timber Calculator</h2>
+        <p>Choose a unit for each measurement. The app converts Length to feet and Width/Thickness to inches automatically for CFT/KOL. Press Enter to move L → W → T → Pieces → next row.</p>
+      </div>
+      <div id="calculatorItems"></div>
+      <button id="newCalcItem" class="secondary">+ New Item</button>
+      <div class="grand-bar">
+        <span>Grand Total</span>
+        <strong id="calcGrand">0.000 CFT | 0.000 KOL</strong>
+        <button id="sendToEstimation" class="primary">Send to Estimation →</button>
+      </div>
+    </section>
+
+    <section id="estimation" class="panel">
+      <div class="page-heading">
+        <h2>Estimation & Rate Builder</h2>
+        <p>Price every item separately. CFT/KOL rates, labour, polish and selling price can all differ item by item.</p>
+      </div>
+      <div id="estimationItems"></div>
+      <button id="newEstimateItem" class="secondary">+ New Estimation Item</button>
+      <div class="grand-bar">
+        <span>Estimated Selling Price</span>
+        <strong id="estimateGrand">₹0</strong>
+        <button id="sendToQuotation" class="primary">Send to Quotation →</button>
+      </div>
+    </section>
+
+    <section id="quotation" class="panel">
+      <div class="quote-actions no-print">
+        <button id="printQuotation" class="primary">Print quotation</button>
+      </div>
+      <div class="quotation-editor paper screen-quotation">
+        <div class="quote-editor-head">
+          <img src="/mwi-logo.png" alt="MWI" />
+          <div><h2>MORAS WOOD INDUSTRIES</h2><p>Moorukaveri, Kinnigoli, Mangaluru - 574150</p><p>+91 63616 95416 | info@moraswood.com | GSTIN: 29AFPPM1242L1Z1</p></div>
+        </div>
+        <div class="quote-title-line"><h2>QUOTATION</h2><span id="quoteDateScreen"></span></div>
+        <div class="customer-grid">
+          <input id="customerName" class="input" placeholder="Customer name" />
+          <input id="customerLocation" class="input" placeholder="Customer location" />
+        </div>
+        <div id="quotationItems" class="quote-items"></div>
+        <button id="addQuoteItem" class="secondary no-print">+ Add quotation item</button>
+
+        <div class="quote-controls no-print">
+          <label>Discount type<select id="discountType" class="input"><option value="amount">₹ Amount</option><option value="percent">Percent %</option></select></label>
+          <label>Discount<input id="discountValue" type="number" min="0" step="any" class="input" /></label>
+          <label>GST %<input id="gstPercent" type="number" min="0" step="any" class="input" /></label>
+        </div>
+        <div id="quoteTotalsScreen" class="totals-box"></div>
+
+        <section class="notes-editor">
+          <h3>Notes</h3>
+          <div class="saved-notes-tools no-print">
+            <select id="savedNoteSelect" class="input"><option value="">Select saved note</option></select>
+            <button id="addSavedNote" class="secondary">Add saved note</button>
+            <button id="deleteSavedNote" class="secondary">Delete saved</button>
+          </div>
+          <div id="notesList"></div>
+          <div class="note-footer-actions no-print"><button id="addNote" class="secondary">+ Add note</button><span id="noteStatus" class="status"></span></div>
+        </section>
+      </div>
+
+      <section id="printSheet" class="print-sheet" aria-label="Printable quotation"></section>
+    </section>
+
+    <section id="review" class="panel">
+      <div class="page-heading"><h2>Actual Cost / Job Review</h2><p>Compare what you estimated with what actually happened.</p></div>
+      <div class="card">
+        <div class="review-grid">
+          <div class="metric"><span>Estimated Cost</span><strong id="reviewEstimated">₹0</strong></div>
+          <label>Actual material + consumables<input id="actualMaterials" type="number" min="0" step="any" class="input" /></label>
+          <label>Actual labour hours<input id="actualLabourHours" type="number" min="0" step="any" class="input" /></label>
+        </div>
+        <p class="muted">Use this after job completion to compare estimated costs against actual material and labour usage.</p>
+      </div>
+    </section>
+
+    <section id="settings" class="panel">
+      <div class="page-heading">
+        <h2>Settings</h2>
+        <p>Configure an AI-compatible API and convert length measurements.</p>
+      </div>
+      <section class="card settings-card">
+        <h3>AI API</h3>
+        <p class="muted">Paste a key and the app will recognize common provider key formats and suggest an endpoint and model. Keys that cannot be identified still work with a compatible API when you enter its endpoint and model. Model access depends on your provider account. Requests go directly to the configured provider; Android encrypts the key on this device.</p>
+        <label class="field">API base URL or chat-completions URL<input id="aiEndpoint" class="input" type="url" inputmode="url" placeholder="https://api.openai.com/v1" autocomplete="url"></label>
+        <label class="field">Model<input id="aiModel" class="input" placeholder="gpt-4o-mini"></label>
+        <label class="field">API key<input id="aiApiKey" class="input" type="password" autocomplete="off" placeholder="Paste your API key"></label>
+        <p id="aiDetectionStatus" class="muted" aria-live="polite">Provider detection starts when you paste an API key.</p>
+        <div class="settings-actions">
+          <button id="saveAiSettings" class="primary" type="button">Save AI settings</button>
+          <button id="removeAiKey" class="secondary" type="button">Remove API key</button>
+          <span id="aiSettingsStatus" class="status" role="status" aria-live="polite"></span>
+        </div>
+      </section>
+      <section class="card settings-card">
+        <h3>Length converter</h3>
+        <p class="muted">Convert freely between millimetres, centimetres, metres, inches, feet, yards and miles.</p>
+        <div class="converter-grid">
+          <label class="field">Value<input id="lengthValue" class="input" type="number" step="any" inputmode="decimal" placeholder="Enter a length"></label>
+          <label class="field">From<select id="lengthFrom" class="input"></select></label>
+          <button id="swapLengthUnits" class="secondary swap-units" type="button" aria-label="Swap units">⇄</button>
+          <label class="field">To<select id="lengthTo" class="input"></select></label>
+        </div>
+        <p id="lengthResult" class="length-result" aria-live="polite">Enter a value to convert.</p>
+      </section>
+    </section>
+  </main>
+  </div>
+
+  <datalist id="unitOptions">
+    <option value="Set"></option><option value="Piece"></option><option value="Nos"></option><option value="Lumpsum"></option><option value="Sq.ft"></option><option value="Rft"></option><option value="Job"></option>
+  </datalist>
+
+  <script src="/app.js?v=10" defer></script>
+</body>
+</html>
