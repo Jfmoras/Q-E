@@ -155,13 +155,11 @@
       </div>
       <section class="card settings-card">
         <h3>AI API</h3>
-        <p class="muted">Paste a key and the app will recognize common provider key formats and suggest an endpoint and model. Keys that cannot be identified still work with a compatible API when you enter its endpoint and model. Model access depends on your provider account. Requests go directly to the configured provider; Android encrypts the key on this device.</p>
-        <label class="field">API base URL or chat-completions URL<input id="aiEndpoint" class="input" type="url" inputmode="url" placeholder="https://api.openai.com/v1" autocomplete="url"></label>
-        <label class="field">Model<input id="aiModel" class="input" placeholder="gpt-4o-mini"></label>
+        <p class="muted">Enter your API key. The app will automatically identify supported providers and choose the connection settings. An internet connection and an API key with model access are required.</p>
         <label class="field">API key<input id="aiApiKey" class="input" type="password" autocomplete="off" placeholder="Paste your API key"></label>
         <p id="aiDetectionStatus" class="muted" aria-live="polite">Provider detection starts when you paste an API key.</p>
         <div class="settings-actions">
-          <button id="saveAiSettings" class="primary" type="button">Save AI settings</button>
+          <button id="saveAiSettings" class="primary" type="button">Connect AI</button>
           <button id="removeAiKey" class="secondary" type="button">Remove API key</button>
           <span id="aiSettingsStatus" class="status" role="status" aria-live="polite"></span>
         </div>
