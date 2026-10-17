@@ -98,3 +98,15 @@ input,textarea,select,[contenteditable="true"]{scroll-margin-top:85px;scroll-mar
 /* Notes editor should scroll itself with the cursor and remain above the keyboard. */
 .note-text,.saved-note-edit,.q-desc{min-height:120px;overflow-y:auto;overscroll-behavior:contain}
 .note-row{scroll-margin-top:90px;scroll-margin-bottom:180px}
+
+@media print{
+.print-table.without-references th:nth-child(1){width:14mm}
+.print-table.without-references th:nth-child(3){width:21mm}
+.print-table.without-references th:nth-child(4){width:31mm}
+.print-table.without-references th:nth-child(5){width:34mm}
+.print-table.with-references th:nth-child(1){width:12mm}
+.print-table.with-references th:nth-child(3){width:46mm}
+.print-table.with-references th:nth-child(4){width:19mm}
+.print-table.with-references th:nth-child(5){width:27mm}
+.print-table.with-references th:nth-child(6){width:30mm}
+}
