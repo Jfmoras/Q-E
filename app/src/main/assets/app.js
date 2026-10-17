@@ -249,14 +249,18 @@
   let logRows;
   try { const stored=JSON.parse(localStorage.getItem(logStore)||'null');logRows=Array.isArray(stored)&&stored.length?stored:[{length:'',girth:''}]; }
   catch { logRows=[{length:'',girth:''}]; }
+  // Use quarter-girth volume, then round HALF UP to 0.01 CFT.
+  // The printed book has a few differing entries; never substitute an unverified
+  // intermediate rounding rule for the actual Hoppus calculation.
   const logCft=(length,girth)=>Number(length)*Number(girth)*Number(girth)/2304;
+  const logCftRounded=(length,girth)=>Math.round((logCft(length,girth)+Number.EPSILON)*100)/100;
   function renderLogVolume(){
     const target=$('#logVolumeRows');
     target.innerHTML=logRows.map((r,i)=>`<div class="log-row" data-index="${i}">
       <span class="log-number">Log ${i+1}</span>
       <label class="field">Length (ft)<input class="input log-input" data-key="length" enterkeyhint="next" type="number" inputmode="decimal" min="0" step="any" placeholder="Feet" value="${attr(r.length)}"></label>
       <label class="field">Girth (in)<input class="input log-input" data-key="girth" enterkeyhint="next" type="number" inputmode="decimal" min="0" step="any" placeholder="Inches" value="${attr(r.girth)}"></label>
-      <strong class="log-result">${validLog(r)?logCft(r.length,r.girth).toFixed(2)+' CFT':'—'}</strong>
+      <strong class="log-result">${validLog(r)?logCftRounded(r.length,r.girth).toFixed(2)+' CFT':'—'}</strong>
       <button type="button" class="secondary remove-log" data-index="${i}" aria-label="Remove log ${i+1}">×</button>
     </div>`).join('');
     updateLogTotal();
@@ -434,7 +438,7 @@
 
   document.addEventListener('input',e=>{
     const t=e.target;
-    if(t.classList.contains('log-input')){const i=+t.closest('.log-row').dataset.index;logRows[i][t.dataset.key]=t.value;const r=logRows[i];t.closest('.log-row').querySelector('.log-result').textContent=validLog(r)?logCft(r.length,r.girth).toFixed(2)+' CFT':'—';updateLogTotal();return}
+    if(t.classList.contains('log-input')){const i=+t.closest('.log-row').dataset.index;logRows[i][t.dataset.key]=t.value;const r=logRows[i];t.closest('.log-row').querySelector('.log-result').textContent=validLog(r)?logCftRounded(r.length,r.girth).toFixed(2)+' CFT':'—';updateLogTotal();return}
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
