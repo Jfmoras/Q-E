@@ -60,3 +60,14 @@
 .estimate-measure-table td small{display:block}
 .estimate-measure{grid-template-columns:minmax(0,1fr) 76px}
 @media(max-width:640px){.measure-entry{grid-template-columns:minmax(90px,1fr) 68px}.unit-calc-table{min-width:860px}}
+
+/* Always-available floating length converter */
+.floating-converter-button{position:fixed;right:max(17px,env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));z-index:1100;width:58px;height:58px;border-radius:50%;background:#613a27;color:white;border:0;box-shadow:0 5px 20px #0004;font-size:26px;display:grid;place-items:center}
+.floating-converter-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.floating-converter-overlay.hidden{display:none}
+.floating-converter-dialog{width:min(620px,100%);max-height:85dvh;overflow-y:auto;background:#fff;border-radius:18px;padding:18px;box-shadow:0 15px 45px #0003}
+.floating-converter-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.floating-converter-title h2{margin:0;font-size:23px}
+.floating-converter-title button{font-size:24px;line-height:1}
+.floating-converter-card{max-width:none;padding:4px;margin:0;border:0;box-shadow:none;background:transparent}
+@media(min-width:700px){.floating-converter-overlay{align-items:center}}
