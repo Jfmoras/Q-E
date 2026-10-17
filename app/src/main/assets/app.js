@@ -427,7 +427,25 @@
     if(ec&&t.classList.contains('labour-mode')){state.costings[+ec.dataset.i].labourMode=t.value;renderEstimation();saveAutosave()}
     if(ec&&t.classList.contains('polish-mode')){state.costings[+ec.dataset.i].polishMode=t.value;renderEstimation();saveAutosave()}
     if(t.id==='discountType'){state.quote.discountType=t.value;renderQuoteTotals();renderPrintSheet();saveAutosave()}
-    if(t.classList.contains('q-images')){const i=+t.closest('.quote-item').dataset.i,files=[...t.files].slice(0,6);for(const f of files){if(state.quoteItems[i].images.length>=6)break;state.quoteItems[i].images.push(await resizeImage(f))}renderQuotation();saveAutosave()}
+    if(t.classList.contains('q-images')){
+      const i=+t.closest('.quote-item').dataset.i;
+      const files=Array.from(t.files||[]).slice(0,6);
+      let added=0;
+      for(const file of files){
+        if(state.quoteItems[i].images.length>=6)break;
+        try{
+          if(!file.type.startsWith('image/'))throw new Error('Selected file is not an image.');
+          const converted=await resizeImage(file);
+          if(!converted || !converted.startsWith('data:image/'))throw new Error('Image could not be read.');
+          state.quoteItems[i].images.push(converted);
+          added++;
+        }catch(error){alert('Could not add image: '+(error.message||'Unknown error'))}
+      }
+      t.value='';
+      if(added){saveAutosave();renderQuotation();}
+      else if(files.length===0){/* User cancelled the picker. */}
+      else alert('No image was added. Try selecting a JPG or PNG file.');
+    }
   });
 
   // The on-screen keyboard can cover fields inside an Android WebView.
