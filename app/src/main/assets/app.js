@@ -95,71 +95,57 @@
     if(key.startsWith('xai-'))return 'xai';
     if(key.startsWith('pplx-'))return 'perplexity';
     if(key.startsWith('sk-proj-')||key.startsWith('sk-svcacct-'))return 'openai';
-    if(key.startsWith('sk-'))return 'openai';
+    if(key.startsWith('sk-'))return 'generic';
     return key?'generic':'';
   }
-  function updateDetectedProvider(apiKey,force=false){
+  function updateDetectedProvider(apiKey){
     const providerId=detectAiProvider(apiKey);
     const detection=$('#aiDetectionStatus');
-    if(!providerId){if(detection)detection.textContent='Provider detection starts when you paste an API key.';return}
-    const untouched=!$('#aiEndpoint').dataset.userEdited&&!$('#aiModel').dataset.userEdited;
-    if(force||providerId!==detectedAiProvider){
-      const provider=aiProviders[providerId];
-      aiSettings.provider=providerId;
-      detectedAiProvider=providerId;
-      if(providerId!=='generic'&&untouched){
-        $('#aiEndpoint').value=provider.endpoint;
-        $('#aiModel').value=provider.model;
-        $('#aiEndpoint').dataset.userEdited='';
-        $('#aiModel').dataset.userEdited='';
-      }
-    }
-    if(detection)detection.textContent=providerId==='generic'
-      ?'Key format not recognized. You can still use it with a compatible provider; enter its endpoint and model below.'
-      :providerId==='openai'&&apiKey.startsWith('sk-')&&!apiKey.startsWith('sk-proj-')&&!apiKey.startsWith('sk-svcacct-')
-        ?'This sk- prefix is shared by multiple providers. Using OpenAI-compatible defaults; verify the endpoint and model for your key.'
-        :`Detected ${aiProviders[providerId].label}. Suggested model: ${aiProviders[providerId].model}. Check your provider account’s model access.`;
-    $('#aiApiKey').dataset.detectedProvider=providerId;
+    if(!detection)return;
+    if(!providerId){detection.textContent='Paste a key to detect the provider.';return}
+    detection.textContent=providerId==='generic'
+      ?'This key format cannot be reliably identified. Use a recognizable provider key; no API requests will be sent to an unknown service.'
+      :`Detected ${aiProviders[providerId].label}. The app will select its connection settings automatically.`;
   }
   function loadAiSettingsFields(){
     let nativeSettings=null;
     if(window.QENative?.getAiSettings){
       try{nativeSettings=JSON.parse(window.QENative.getAiSettings())}catch{}
     }else{
-      try{const saved=JSON.parse(localStorage.getItem(aiSettingsStorage)||'{}');aiSettings.endpoint=saved.endpoint||aiDefaults.endpoint;aiSettings.model=saved.model||aiDefaults.model;if(!saved.apiKey){const legacy=localStorage.getItem('mwi-openai-api-key-v1');if(legacy)aiSettings.apiKey=legacy}}catch{}
+      try{Object.assign(aiSettings,JSON.parse(localStorage.getItem(aiSettingsStorage)||'{}'))}catch{}
     }
-    if(nativeSettings){aiSettings.endpoint=nativeSettings.endpoint||aiDefaults.endpoint;aiSettings.model=nativeSettings.model||aiDefaults.model;aiSettings.provider=nativeSettings.provider||'openai'}
-    $('#aiEndpoint').value=aiSettings.endpoint;
-    $('#aiModel').value=aiSettings.model;
+    if(nativeSettings)Object.assign(aiSettings,nativeSettings);
     $('#aiApiKey').value='';
-    const detection=$('#aiDetectionStatus');
-    if(detection)detection.textContent=aiProviders[aiSettings.provider]?.label
-      ?`Saved key is configured for ${aiProviders[aiSettings.provider].label}.`
-      :'Saved key provider is not recognized; configure its endpoint and model.';
-    $('#aiEndpoint').dataset.userEdited='';
-    $('#aiModel').dataset.userEdited='';
-    detectedAiProvider=aiSettings.provider||'';
+    $('#aiDetectionStatus').textContent=hasAiKey()
+      ?`Saved API key: ${aiProviders[aiSettings.provider]?.label||'provider unknown'}. Paste a new key to replace it.`
+      :'Paste a key to detect the provider.';
     updateAiSettingsStatus();
   }
-  function saveAiSettings(){
-    const endpoint=$('#aiEndpoint').value.trim(),model=$('#aiModel').value.trim(),apiKey=$('#aiApiKey').value.trim();
-    let parsed;
-    try{parsed=new URL(endpoint)}catch{throw new Error('Enter a valid API endpoint URL.')}
-    if(parsed.protocol!=='https:')throw new Error('The API endpoint must use HTTPS so your key is not sent insecurely.');
-    if(!model)throw new Error('Enter a model name for your AI provider.');
-    const provider=apiKey?detectAiProvider(apiKey):(aiSettings.provider||'generic');
-    const settings={endpoint,model,apiKey,provider};
-    if(window.QENative?.saveAiSettings){
-      const error=window.QENative.saveAiSettings(JSON.stringify(settings));
-      if(error)throw new Error(error);
-    }else{
-      if(!apiKey){try{settings.apiKey=JSON.parse(localStorage.getItem(aiSettingsStorage)||'{}').apiKey||localStorage.getItem('mwi-openai-api-key-v1')||''}catch{}}
-      localStorage.setItem(aiSettingsStorage,JSON.stringify(settings));
-    }
-    aiSettings.endpoint=endpoint;aiSettings.model=model;aiSettings.provider=provider;aiSettings.apiKey=apiKey||aiSettings.apiKey||'';
-    if(apiKey)$('#aiApiKey').dataset.detectedProvider=provider;
-    $('#aiApiKey').value='';
-    updateAiSettingsStatus('AI settings saved on this device.');
+  async function saveAiSettings(){
+    const apiKey=$('#aiApiKey').value.trim();
+    if(!apiKey)throw new Error('Paste an API key first.');
+    const provider=detectAiProvider(apiKey);
+    if(!provider||provider==='generic')throw new Error('Provider cannot be determined safely from this key. Use an identifiable OpenAI, Gemini, Anthropic, Groq, OpenRouter, xAI or Perplexity key.');
+    const preset=aiProviders[provider];
+    const settings={apiKey,provider,endpoint:preset.endpoint,model:preset.model};
+    const button=$('#saveAiSettings');
+    button.disabled=true;
+    try{
+      if(window.QENative?.saveAiSettings){
+        const error=window.QENative.saveAiSettings(JSON.stringify(settings));
+        if(error)throw new Error(error);
+      }else{
+        localStorage.setItem(aiSettingsStorage,JSON.stringify(settings));
+      }
+      Object.assign(aiSettings,settings);
+      updateAiSettingsStatus('Checking connection…');
+      await improveDescription('Wooden table', 'concise');
+      $('#aiApiKey').value='';
+      $('#aiDetectionStatus').textContent=`Connected to ${preset.label} (${preset.model}).`;
+      updateAiSettingsStatus('AI connection tested successfully and saved.');
+    }catch(error){
+      updateAiSettingsStatus(`Connection not verified: ${error?.message||error}. Check the key and model access.`);
+    }finally{button.disabled=false}
   }
   function removeAiKey(){
     if(window.QENative?.clearApiKey){
@@ -378,7 +364,7 @@
       input?.classList.remove('input-error');const q={description:it.name,unit:'',qty:'',unitPrice:String(price),images:[],aiOriginal:''};const onlyBlank=state.quoteItems.length===1&&!state.quoteItems[0].description&&!state.quoteItems[0].unit&&!state.quoteItems[0].qty&&!state.quoteItems[0].unitPrice&&!state.quoteItems[0].images.length;if(onlyBlank)state.quoteItems=[q];else state.quoteItems.push(q);renderQuotation();showTab('quotation');saveAutosave()
     }
     if(b.id==='saveAiSettings'){
-      try{saveAiSettings()}
+      try{await saveAiSettings()}
       catch(error){updateAiSettingsStatus(error?.message||'Could not save AI settings.')}
     }
     if(b.id==='removeAiKey'){
@@ -428,8 +414,8 @@
   document.addEventListener('input',e=>{
     const t=e.target;
     if(t.id==='aiApiKey'){updateDetectedProvider(t.value);return}
-    if(t.id==='aiEndpoint')t.dataset.userEdited='true';
-    if(t.id==='aiModel')t.dataset.userEdited='true';
+    
+    
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
