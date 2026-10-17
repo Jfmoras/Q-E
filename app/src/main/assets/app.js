@@ -254,8 +254,8 @@
     const target=$('#logVolumeRows');
     target.innerHTML=logRows.map((r,i)=>`<div class="log-row" data-index="${i}">
       <span class="log-number">Log ${i+1}</span>
-      <label class="field">Length (ft)<input class="input log-input" data-key="length" type="number" inputmode="decimal" min="0" step="any" placeholder="Feet" value="${attr(r.length)}"></label>
-      <label class="field">Girth (in)<input class="input log-input" data-key="girth" type="number" inputmode="decimal" min="0" step="any" placeholder="Inches" value="${attr(r.girth)}"></label>
+      <label class="field">Length (ft)<input class="input log-input" data-key="length" enterkeyhint="next" type="number" inputmode="decimal" min="0" step="any" placeholder="Feet" value="${attr(r.length)}"></label>
+      <label class="field">Girth (in)<input class="input log-input" data-key="girth" enterkeyhint="next" type="number" inputmode="decimal" min="0" step="any" placeholder="Inches" value="${attr(r.girth)}"></label>
       <strong class="log-result">${validLog(r)?logCft(r.length,r.girth).toFixed(2)+' CFT':'—'}</strong>
       <button type="button" class="secondary remove-log" data-index="${i}" aria-label="Remove log ${i+1}">×</button>
     </div>`).join('');
@@ -525,7 +525,27 @@
 
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#floatingConverterPanel').classList.contains('hidden'))setFloatingConverter(false);
 
-    const t=e.target;if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
+    const t=e.target;
+    if(t instanceof HTMLInputElement && t.classList.contains('log-input') && e.key==='Enter'){
+      e.preventDefault();
+      const row=t.closest('.log-row'),i=Number(row.dataset.index);
+      logRows[i][t.dataset.key]=t.value;
+      if(t.dataset.key==='length'){
+        const next=row.querySelector('.log-input[data-key="girth"]');
+        next?.focus();next?.select();
+      }else if(validLog(logRows[i])){
+        // Keep the completed row and its calculated CFT; open a fresh entry.
+        if(i===logRows.length-1)logRows.push({length:'',girth:''});
+        renderLogVolume();
+        const next=$(`.log-row[data-index="${i+1}"] .log-input[data-key="length"]`);
+        next?.focus();next?.scrollIntoView({block:'nearest'});
+      }else{
+        t.focus();
+      }
+      updateLogTotal();
+      return;
+    }
+    if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
   });
 
   function saveProject(){const name=(state.projectName||state.customer.name||'').trim();const status=$('#projectStatus');if(!name){status.textContent='Enter a project name before saving.';return}state.projectName=name;const list=savedList(),now=new Date().toISOString(),existing=list.findIndex(x=>x.name.toLowerCase()===name.toLowerCase());let snapshot;try{snapshot=JSON.parse(JSON.stringify(state))}catch{status.textContent='Could not prepare project for saving.';return}const rec={id:existing>=0?list[existing].id:uid(),name,updatedAt:now,snapshot};if(existing>=0)list[existing]=rec;else list.unshift(rec);try{writeSaved(list);const check=savedList().find(x=>x.id===rec.id);if(!check||!check.snapshot)throw new Error('Save verification failed');status.textContent='Project saved successfully on this device.';saveAutosave()}catch{status.textContent='Could not save project. Try fewer/lower-resolution images.'}}
