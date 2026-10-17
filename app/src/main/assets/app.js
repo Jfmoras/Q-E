@@ -66,7 +66,7 @@
   const aiProviders={
     openai:{label:'OpenAI',endpoint:'https://api.openai.com/v1',model:'gpt-4o-mini',format:'openai'},
     anthropic:{label:'Anthropic',endpoint:'https://api.anthropic.com/v1/messages',model:'claude-haiku-5-5',format:'anthropic'},
-    google:{label:'Google Gemini',endpoint:'https://generativelanguage.googleapis.com/v1beta',model:'gemini-2.5-flash',format:'google'},
+    google:{label:'Google Gemini',endpoint:'https://generativelanguage.googleapis.com/v1beta',model:'gemini-3.8-flash',format:'google'},
     groq:{label:'Groq',endpoint:'https://api.groq.com/openai/v1',model:'llama-3.3-70b-versatile',format:'openai'},
     openrouter:{label:'OpenRouter',endpoint:'https://openrouter.ai/api/v1',model:'openai/gpt-4o-mini',format:'openai'},
     xai:{label:'xAI',endpoint:'https://api.x.ai/v1',model:'grok-4.7',format:'openai'},
@@ -104,7 +104,7 @@
     if(!detection)return;
     if(!providerId){detection.textContent='Paste a key to detect the provider.';return}
     detection.textContent=providerId==='generic'
-      ?'This key format cannot be reliably identified. Use a recognizable provider key; no API requests will be sent to an unknown service.'
+      ?'Provider not recognized from key. Connect AI will try Google Gemini.'
       :`Detected ${aiProviders[providerId].label}. The app will select its connection settings automatically.`;
   }
   function loadAiSettingsFields(){
@@ -141,9 +141,24 @@
       }
       Object.assign(aiSettings,settings);
       updateAiSettingsStatus('Checking connection with '+preset.label+'…');
-      await improveDescription('Wooden table', 'concise');
+      try {
+        await improveDescription('Wooden table', 'concise');
+      } catch (firstError) {
+        // Only switch models if Google reports the requested model is unavailable.
+        if (selectedProvider !== 'google' || !/404|not found|no longer available|not supported/i.test(String(firstError?.message||firstError))) throw firstError;
+        settings.model='gemini-3.5-flash-lite';
+        if(window.QENative?.saveAiSettings){
+          const error=window.QENative.saveAiSettings(JSON.stringify(settings));
+          if(error)throw new Error(error);
+        }else{
+          localStorage.setItem(aiSettingsStorage,JSON.stringify(settings));
+        }
+        Object.assign(aiSettings,settings);
+        updateAiSettingsStatus('Trying an alternative Gemini model…');
+        await improveDescription('Wooden table', 'concise');
+      }
       $('#aiApiKey').value='';
-      $('#aiDetectionStatus').textContent=`Connected to ${preset.label} (${preset.model}).`;
+      $('#aiDetectionStatus').textContent=`Connected to ${preset.label} (${settings.model}).`;
       updateAiSettingsStatus('AI connection tested successfully and saved.');
     }catch(error){
       updateAiSettingsStatus(`Connection not verified: ${error?.message||error}. Check that this is a Gemini API key and has model access.`);
