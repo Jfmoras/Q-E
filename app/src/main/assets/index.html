@@ -27,12 +27,24 @@
       <p>Start a new job, open a saved project, or manage your reusable notes.</p>
     </div>
     <div class="home-actions">
-      <button id="newProjectHome" class="home-action primary" type="button"><strong>New Project</strong><span>Start a calculator, estimate and quotation.</span></button>
+      <button id="newProjectHome" class="home-action primary" type="button"><strong>Quotation &amp; Estimation</strong><span>New project: timber calculator, costing and quotation.</span></button>
+      <button id="logVolumeHome" class="home-action secondary" type="button"><strong>Log Volume Calculator</strong><span>Enter log length (ft) and girth (in) for quarter-girth CFT.</span></button>
       <button id="savedProjectsHome" class="home-action secondary" type="button"><strong>Saved Projects</strong><span>Open or remove a project saved on this device.</span></button>
       <button id="notesHome" class="home-action secondary" type="button"><strong>Notes</strong><span>Manage notes to reuse in quotations.</span></button>
       <button id="continueProjectHome" class="home-action secondary hidden" type="button"><strong>Continue Current Project</strong><span>Resume your latest automatically saved work.</span></button>
     </div>
     <div id="savedProjectsPanel" class="saved-panel hidden"></div>
+  </main>
+
+  <main id="logVolumeView" class="container log-volume-view hidden">
+    <div class="page-heading"><h2>Log Volume Calculator</h2><p>Quarter-girth / Hoppus method — matches your timber measurement book. Enter length in feet and circumference (girth) in inches.</p></div>
+    <div class="card log-card">
+      <div id="logVolumeRows"></div>
+      <button id="addLogRow" class="secondary" type="button">+ Add another log</button>
+      <div class="log-grand"><span>Total log volume</span><strong id="logVolumeTotal">0.00 CFT</strong></div>
+      <p class="muted log-hint">CFT = (girth in inches ÷ 4)² × length in feet ÷ 144. These are Hoppus CFT, not full cylindrical volume. Individual book values are rounded to 2 decimals.</p>
+      <button id="clearLogRows" class="secondary" type="button">Clear all logs</button>
+    </div>
   </main>
 
   <main id="notesView" class="container notes-view hidden">
@@ -185,5 +197,6 @@
   </datalist>
 
   <script src="/app.js?v=10" defer></script>
+  <script src="/log-volume.js?v=1" defer></script>
 </body>
 </html>
