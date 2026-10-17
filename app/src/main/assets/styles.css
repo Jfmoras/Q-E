@@ -60,3 +60,79 @@
 .estimate-measure-table td small{display:block}
 .estimate-measure{grid-template-columns:minmax(0,1fr) 76px}
 @media(max-width:640px){.measure-entry{grid-template-columns:minmax(90px,1fr) 68px}.unit-calc-table{min-width:860px}}
+
+/* Always-available floating length converter */
+.floating-converter-button{position:fixed;right:max(17px,env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));z-index:1100;width:58px;height:58px;border-radius:50%;background:#613a27;color:white;border:0;box-shadow:0 5px 20px #0004;font-size:26px;display:grid;place-items:center}
+.floating-converter-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.floating-converter-overlay.hidden{display:none}
+.floating-converter-dialog{width:min(620px,100%);max-height:85dvh;overflow-y:auto;background:#fff;border-radius:18px;padding:18px;box-shadow:0 15px 45px #0003}
+.floating-converter-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.floating-converter-title h2{margin:0;font-size:23px}
+.floating-converter-title button{font-size:24px;line-height:1}
+.floating-converter-card{max-width:none;padding:4px;margin:0;border:0;box-shadow:none;background:transparent}
+@media(min-width:700px){.floating-converter-overlay{align-items:center}}
+
+/* Mobile editing: keep focused quotation fields above the keyboard */
+html{scroll-padding-bottom:120px}body{overflow-x:hidden}textarea.input{scroll-margin-bottom:145px;min-height:90px;resize:vertical}.quote-item,.note-row{scroll-margin-bottom:140px}.quote-fields .desc{min-width:0}.note-row{flex-wrap:wrap}.note-row .note-text{flex:1 1 calc(100% - 42px);min-width:0}.note-actions{flex-basis:100%;margin-left:30px}
+/* Do not render the surrounding dark frame in printed quotations */
+@media print{html,body,#workspaceView,#quotation,.main-content,.print-sheet{background:#fff!important;box-shadow:none!important;border:0!important;outline:0!important}.print-sheet{padding:0!important}.paper{border:0!important}}
+
+/* Ensure all editors have scrollable space when the Android keyboard is raised. */
+body{padding-bottom:env(safe-area-inset-bottom)}
+.main-content,.notes-view,.home-view{padding-bottom:max(160px,env(safe-area-inset-bottom))}
+input,textarea,select,[contenteditable="true"]{scroll-margin-top:85px;scroll-margin-bottom:36px}
+
+/* Printed references belong to their quotation line, not a separate image gallery. */
+@media print{
+.print-table th:nth-child(1){width:12mm}
+.print-table th:nth-child(3){width:46mm}
+.print-table th:nth-child(4){width:19mm}
+.print-table th:nth-child(5){width:27mm}
+.print-table th:nth-child(6){width:30mm}
+.print-ref{vertical-align:top;text-align:center}
+.print-item-photos{display:flex;flex-wrap:wrap;gap:1.5mm;align-items:flex-start;justify-content:center}
+.print-item-photos img{max-width:100%;width:auto;max-height:33mm;object-fit:contain;break-inside:avoid}
+.print-item-photos img:nth-child(n+2){max-width:47%}
+.print-desc{overflow-wrap:anywhere}
+}
+/* Notes editor should scroll itself with the cursor and remain above the keyboard. */
+.note-text,.saved-note-edit,.q-desc{min-height:120px;overflow-y:auto;overscroll-behavior:contain}
+.note-row{scroll-margin-top:90px;scroll-margin-bottom:180px}
+
+@media print{
+.print-table.without-references th:nth-child(1){width:14mm}
+.print-table.without-references th:nth-child(3){width:21mm}
+.print-table.without-references th:nth-child(4){width:31mm}
+.print-table.without-references th:nth-child(5){width:34mm}
+.print-table.with-references th:nth-child(1){width:12mm}
+.print-table.with-references th:nth-child(3){width:46mm}
+.print-table.with-references th:nth-child(4){width:19mm}
+.print-table.with-references th:nth-child(5){width:27mm}
+.print-table.with-references th:nth-child(6){width:30mm}
+}
+
+/* Independent quarter-girth log measurement */
+.log-volume-view{min-height:calc(100vh - 80px);padding-top:28px;padding-bottom:150px}
+.log-card{padding:16px;max-width:850px;margin:0 auto}
+.log-entry{display:grid;grid-template-columns:minmax(90px,1fr) minmax(90px,1fr) minmax(65px,.6fr) minmax(105px,1fr) auto;gap:10px;align-items:end;border-bottom:1px solid var(--line);padding:12px 0}
+.log-entry label{font-size:13px;font-weight:650;min-width:0}
+.log-entry .input{margin-top:6px}
+.log-result{background:var(--soft);padding:11px 9px;border-radius:8px;font-weight:800;min-height:42px;font-variant-numeric:tabular-nums}
+.log-remove{margin-bottom:0}
+.log-grand{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 10px;padding:18px;border-radius:12px;background:var(--brown);color:white}
+.log-grand strong{font-size:26px;font-variant-numeric:tabular-nums}
+.log-hint{line-height:1.6;margin:12px 0}
+@media(max-width:640px){.log-entry{grid-template-columns:repeat(2,minmax(0,1fr))}.log-entry .log-result-wrap{grid-column:1}.log-entry .log-remove{justify-self:end}.log-grand strong{font-size:22px}}
+
+/* Dedicated quarter-girth log volume calculator */
+.log-volume-view{padding-top:24px;padding-bottom:140px}
+.log-card{padding:18px;max-width:880px;margin:auto}
+.log-row{display:grid;grid-template-columns:54px minmax(95px,1fr) minmax(95px,1fr) minmax(100px,auto) 42px;gap:10px;align-items:end;border-bottom:1px solid #e7e5e4;padding:10px 0}
+.log-row .field{margin-bottom:0}
+.log-number{font-weight:700;align-self:center}
+.log-result{font-size:16px;white-space:nowrap;align-self:center}
+.log-grand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0;background:#2f2118;color:#fff;border-radius:10px;padding:17px;font-weight:700}
+.log-grand strong{font-size:23px}
+.log-hint{line-height:1.5}
+@media(max-width:580px){.log-row{grid-template-columns:1fr 1fr 42px}.log-number{grid-column:1/-1}.log-row .field{grid-row:2}.log-result{grid-column:1/3}.remove-log{grid-column:3;grid-row:2}}
+@media print{#logVolumeView{display:none!important}}

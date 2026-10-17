@@ -66,7 +66,7 @@
   const aiProviders={
     openai:{label:'OpenAI',endpoint:'https://api.openai.com/v1',model:'gpt-4o-mini',format:'openai'},
     anthropic:{label:'Anthropic',endpoint:'https://api.anthropic.com/v1/messages',model:'claude-haiku-5-5',format:'anthropic'},
-    google:{label:'Google Gemini',endpoint:'https://generativelanguage.googleapis.com/v1beta',model:'gemini-2.5-flash',format:'google'},
+    google:{label:'Google Gemini',endpoint:'https://generativelanguage.googleapis.com/v1beta',model:'gemini-3.8-flash',format:'google'},
     groq:{label:'Groq',endpoint:'https://api.groq.com/openai/v1',model:'llama-3.3-70b-versatile',format:'openai'},
     openrouter:{label:'OpenRouter',endpoint:'https://openrouter.ai/api/v1',model:'openai/gpt-4o-mini',format:'openai'},
     xai:{label:'xAI',endpoint:'https://api.x.ai/v1',model:'grok-4.7',format:'openai'},
@@ -95,71 +95,74 @@
     if(key.startsWith('xai-'))return 'xai';
     if(key.startsWith('pplx-'))return 'perplexity';
     if(key.startsWith('sk-proj-')||key.startsWith('sk-svcacct-'))return 'openai';
-    if(key.startsWith('sk-'))return 'openai';
+    if(key.startsWith('sk-'))return 'generic';
     return key?'generic':'';
   }
-  function updateDetectedProvider(apiKey,force=false){
+  function updateDetectedProvider(apiKey){
     const providerId=detectAiProvider(apiKey);
     const detection=$('#aiDetectionStatus');
-    if(!providerId){if(detection)detection.textContent='Provider detection starts when you paste an API key.';return}
-    const untouched=!$('#aiEndpoint').dataset.userEdited&&!$('#aiModel').dataset.userEdited;
-    if(force||providerId!==detectedAiProvider){
-      const provider=aiProviders[providerId];
-      aiSettings.provider=providerId;
-      detectedAiProvider=providerId;
-      if(providerId!=='generic'&&untouched){
-        $('#aiEndpoint').value=provider.endpoint;
-        $('#aiModel').value=provider.model;
-        $('#aiEndpoint').dataset.userEdited='';
-        $('#aiModel').dataset.userEdited='';
-      }
-    }
-    if(detection)detection.textContent=providerId==='generic'
-      ?'Key format not recognized. You can still use it with a compatible provider; enter its endpoint and model below.'
-      :providerId==='openai'&&apiKey.startsWith('sk-')&&!apiKey.startsWith('sk-proj-')&&!apiKey.startsWith('sk-svcacct-')
-        ?'This sk- prefix is shared by multiple providers. Using OpenAI-compatible defaults; verify the endpoint and model for your key.'
-        :`Detected ${aiProviders[providerId].label}. Suggested model: ${aiProviders[providerId].model}. Check your provider account’s model access.`;
-    $('#aiApiKey').dataset.detectedProvider=providerId;
+    if(!detection)return;
+    if(!providerId){detection.textContent='Paste a key to detect the provider.';return}
+    detection.textContent=providerId==='generic'
+      ?'Provider not recognized from key. Connect AI will try Google Gemini.'
+      :`Detected ${aiProviders[providerId].label}. The app will select its connection settings automatically.`;
   }
   function loadAiSettingsFields(){
     let nativeSettings=null;
     if(window.QENative?.getAiSettings){
       try{nativeSettings=JSON.parse(window.QENative.getAiSettings())}catch{}
     }else{
-      try{const saved=JSON.parse(localStorage.getItem(aiSettingsStorage)||'{}');aiSettings.endpoint=saved.endpoint||aiDefaults.endpoint;aiSettings.model=saved.model||aiDefaults.model;if(!saved.apiKey){const legacy=localStorage.getItem('mwi-openai-api-key-v1');if(legacy)aiSettings.apiKey=legacy}}catch{}
+      try{Object.assign(aiSettings,JSON.parse(localStorage.getItem(aiSettingsStorage)||'{}'))}catch{}
     }
-    if(nativeSettings){aiSettings.endpoint=nativeSettings.endpoint||aiDefaults.endpoint;aiSettings.model=nativeSettings.model||aiDefaults.model;aiSettings.provider=nativeSettings.provider||'openai'}
-    $('#aiEndpoint').value=aiSettings.endpoint;
-    $('#aiModel').value=aiSettings.model;
+    if(nativeSettings)Object.assign(aiSettings,nativeSettings);
     $('#aiApiKey').value='';
-    const detection=$('#aiDetectionStatus');
-    if(detection)detection.textContent=aiProviders[aiSettings.provider]?.label
-      ?`Saved key is configured for ${aiProviders[aiSettings.provider].label}.`
-      :'Saved key provider is not recognized; configure its endpoint and model.';
-    $('#aiEndpoint').dataset.userEdited='';
-    $('#aiModel').dataset.userEdited='';
-    detectedAiProvider=aiSettings.provider||'';
+    $('#aiDetectionStatus').textContent=hasAiKey()
+      ?`Saved API key: ${aiProviders[aiSettings.provider]?.label||'provider unknown'}. Paste a new key to replace it.`
+      :'Paste a key to detect the provider.';
     updateAiSettingsStatus();
   }
-  function saveAiSettings(){
-    const endpoint=$('#aiEndpoint').value.trim(),model=$('#aiModel').value.trim(),apiKey=$('#aiApiKey').value.trim();
-    let parsed;
-    try{parsed=new URL(endpoint)}catch{throw new Error('Enter a valid API endpoint URL.')}
-    if(parsed.protocol!=='https:')throw new Error('The API endpoint must use HTTPS so your key is not sent insecurely.');
-    if(!model)throw new Error('Enter a model name for your AI provider.');
-    const provider=apiKey?detectAiProvider(apiKey):(aiSettings.provider||'generic');
-    const settings={endpoint,model,apiKey,provider};
-    if(window.QENative?.saveAiSettings){
-      const error=window.QENative.saveAiSettings(JSON.stringify(settings));
-      if(error)throw new Error(error);
-    }else{
-      if(!apiKey){try{settings.apiKey=JSON.parse(localStorage.getItem(aiSettingsStorage)||'{}').apiKey||localStorage.getItem('mwi-openai-api-key-v1')||''}catch{}}
-      localStorage.setItem(aiSettingsStorage,JSON.stringify(settings));
-    }
-    aiSettings.endpoint=endpoint;aiSettings.model=model;aiSettings.provider=provider;aiSettings.apiKey=apiKey||aiSettings.apiKey||'';
-    if(apiKey)$('#aiApiKey').dataset.detectedProvider=provider;
-    $('#aiApiKey').value='';
-    updateAiSettingsStatus('AI settings saved on this device.');
+  async function saveAiSettings(){
+    const apiKey=$('#aiApiKey').value.trim();
+    if(!apiKey)throw new Error('Paste an API key first.');
+    const provider=detectAiProvider(apiKey);
+    if(!provider)throw new Error('Paste an API key first.');
+    // Unknown key formats are tested ONLY against Google's Gemini endpoint, never arbitrary hosts.
+    const selectedProvider=provider==='generic'?'google':provider;
+    const preset=aiProviders[selectedProvider];
+    const settings={apiKey,provider:selectedProvider,endpoint:preset.endpoint,model:preset.model};
+    const button=$('#saveAiSettings');
+    button.disabled=true;
+    try{
+      if(window.QENative?.saveAiSettings){
+        const error=window.QENative.saveAiSettings(JSON.stringify(settings));
+        if(error)throw new Error(error);
+      }else{
+        localStorage.setItem(aiSettingsStorage,JSON.stringify(settings));
+      }
+      Object.assign(aiSettings,settings);
+      updateAiSettingsStatus('Checking connection with '+preset.label+'…');
+      try {
+        await improveDescription('Wooden table', 'concise');
+      } catch (firstError) {
+        // Only switch models if Google reports the requested model is unavailable.
+        if (selectedProvider !== 'google' || !/404|not found|no longer available|not supported/i.test(String(firstError?.message||firstError))) throw firstError;
+        settings.model='gemini-3.5-flash-lite';
+        if(window.QENative?.saveAiSettings){
+          const error=window.QENative.saveAiSettings(JSON.stringify(settings));
+          if(error)throw new Error(error);
+        }else{
+          localStorage.setItem(aiSettingsStorage,JSON.stringify(settings));
+        }
+        Object.assign(aiSettings,settings);
+        updateAiSettingsStatus('Trying an alternative Gemini model…');
+        await improveDescription('Wooden table', 'concise');
+      }
+      $('#aiApiKey').value='';
+      $('#aiDetectionStatus').textContent=`Connected to ${preset.label} (${settings.model}).`;
+      updateAiSettingsStatus('AI connection tested successfully and saved.');
+    }catch(error){
+      updateAiSettingsStatus(`Connection not verified: ${error?.message||error}. Check that this is a Gemini API key and has model access.`);
+    }finally{button.disabled=false}
   }
   function removeAiKey(){
     if(window.QENative?.clearApiKey){
@@ -237,10 +240,43 @@
     $('#homeView').classList.toggle('hidden',view!=='home');
     $('#workspaceView').classList.toggle('hidden',view!=='workspace');
     $('#notesView').classList.toggle('hidden',view!=='notes');
+    $('#logVolumeView').classList.toggle('hidden',view!=='log');
     $('#goHome').classList.toggle('hidden',view==='home');
     if(view==='notes')renderNotesManager();
   }
-  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('.panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); if(name==='settings')loadAiSettingsFields(); saveAutosave(); }
+  // Quarter-girth (Hoppus) CFT: length (ft) × girth (in)^2 / 2304.
+  const logStore='mwi-log-volume-v1';
+  let logRows;
+  try { const stored=JSON.parse(localStorage.getItem(logStore)||'null');logRows=Array.isArray(stored)&&stored.length?stored:[{length:'',girth:''}]; }
+  catch { logRows=[{length:'',girth:''}]; }
+  // Use quarter-girth volume, then round HALF UP to 0.01 CFT.
+  // The printed book has a few differing entries; never substitute an unverified
+  // intermediate rounding rule for the actual Hoppus calculation.
+  const logCft=(length,girth)=>Number(length)*Number(girth)*Number(girth)/2304;
+  const logCftRounded=(length,girth)=>Math.round((logCft(length,girth)+Number.EPSILON)*100)/100;
+  function renderLogVolume(){
+    const target=$('#logVolumeRows');
+    target.innerHTML=logRows.map((r,i)=>`<div class="log-row" data-index="${i}">
+      <span class="log-number">Log ${i+1}</span>
+      <label class="field">Length (ft)<input class="input log-input" data-key="length" enterkeyhint="next" type="number" inputmode="decimal" min="0" step="any" placeholder="Feet" value="${attr(r.length)}"></label>
+      <label class="field">Girth (in)<input class="input log-input" data-key="girth" enterkeyhint="next" type="number" inputmode="decimal" min="0" step="any" placeholder="Inches" value="${attr(r.girth)}"></label>
+      <strong class="log-result">${validLog(r)?logCftRounded(r.length,r.girth).toFixed(2)+' CFT':'—'}</strong>
+      <button type="button" class="secondary remove-log" data-index="${i}" aria-label="Remove log ${i+1}">×</button>
+    </div>`).join('');
+    updateLogTotal();
+  }
+  function validLog(r){return r.length!=='' && r.girth!=='' && Number.isFinite(+r.length) && Number.isFinite(+r.girth) && +r.length>0 && +r.girth>0}
+  function updateLogTotal(){
+    const total=logRows.reduce((sum,r)=>sum+(validLog(r)?logCft(r.length,r.girth):0),0);
+    $('#logVolumeTotal').textContent=total.toFixed(2)+' CFT';
+    localStorage.setItem(logStore,JSON.stringify(logRows));
+  }
+  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('.panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); saveAutosave(); }
+  function setFloatingConverter(open){
+    $('#floatingConverterPanel').classList.toggle('hidden',!open);
+    $('#floatingConverterButton').setAttribute('aria-expanded',String(open));
+    if(open)$('#lengthValue').focus();else $('#floatingConverterButton').focus();
+  }
   function renderLengthConverter(){
     const from=$('#lengthFrom'),to=$('#lengthTo');
     const options=Object.entries(converterUnits).map(([unit,data])=>`<option value="${unit}">${data.label}</option>`).join('');
@@ -320,13 +356,13 @@
     $('#customerName').value=state.customer.name; $('#customerLocation').value=state.customer.location; $('#discountType').value=state.quote.discountType; $('#discountValue').value=state.quote.discountValue; $('#gstPercent').value=state.quote.gstPercent;
     const date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); $('#quoteDateScreen').textContent=`Date: ${date}`;
     const host=$('#quotationItems'); host.innerHTML='';
-    state.quoteItems.forEach((it,i)=>{const box=document.createElement('div');box.className='quote-item';box.dataset.i=i;box.innerHTML=`<div class="quote-item-head"><strong>Item ${i+1}</strong><button class="danger remove-quote no-print">Remove</button></div><div class="quote-fields"><label class="field desc">Description<textarea class="input q-desc" rows="4" placeholder="Write the item description in your own words">${esc(it.description)}</textarea><div class="ai-desc-tools no-print"><select class="input ai-style" aria-label="AI description style"><option value="professional">Professional</option><option value="concise">Short & clear</option><option value="detailed">Detailed</option></select><button class="secondary ai-improve" type="button">✨ Improve with AI</button><button class="secondary ai-undo ${it.aiOriginal?'':'hidden'}" type="button">Undo AI</button><span class="ai-status muted" aria-live="polite"></span></div></label><label class="field">Units<input class="input q-unit" list="unitOptions" placeholder="Set / Piece / Lumpsum" value="${attr(it.unit)}"></label><label class="field">Quantity<input class="input q-qty" type="number" min="0" step="any" value="${attr(it.qty)}"></label><label class="field">Unit price<input class="input q-price" type="number" min="0" step="any" value="${attr(it.unitPrice)}"></label><div class="metric q-row-total"><span>Total</span><strong>${money(num(it.qty)*num(it.unitPrice))}</strong></div></div><div class="quote-image-actions no-print"><label class="secondary file-button">+ Add images<input class="q-images" type="file" accept="image/*" multiple></label> <small class="muted">Up to 6 images per item</small></div>${it.images.length?`<div class="image-grid">${it.images.map((src,j)=>`<div class="image-thumb"><img src="${src}" alt="Quotation item ${i+1} image ${j+1}"><button class="remove-image no-print" data-j="${j}">×</button></div>`).join('')}</div>`:''}`; host.appendChild(box)});
+    state.quoteItems.forEach((it,i)=>{const box=document.createElement('div');box.className='quote-item';box.dataset.i=i;box.innerHTML=`<div class="quote-item-head"><strong>Item ${i+1}</strong><button class="danger remove-quote no-print">Remove</button></div><div class="quote-fields"><label class="field desc">Description<textarea class="input q-desc" rows="4" placeholder="Write the item description in your own words">${esc(it.description)}</textarea></label><label class="field">Units<input class="input q-unit" list="unitOptions" placeholder="Set / Piece / Lumpsum" value="${attr(it.unit)}"></label><label class="field">Quantity<input class="input q-qty" type="number" min="0" step="any" value="${attr(it.qty)}"></label><label class="field">Unit price<input class="input q-price" type="number" min="0" step="any" value="${attr(it.unitPrice)}"></label><div class="metric q-row-total"><span>Total</span><strong>${money(num(it.qty)*num(it.unitPrice))}</strong></div></div><div class="quote-image-actions no-print"><label class="secondary file-button">+ Add images<input class="q-images" type="file" accept="image/*" multiple></label> <small class="muted">Up to 6 images per item</small></div>${it.images.length?`<div class="image-grid">${it.images.map((src,j)=>`<div class="image-thumb"><img src="${src}" alt="Quotation item ${i+1} image ${j+1}"><button class="remove-image no-print" data-j="${j}">×</button></div>`).join('')}</div>`:''}`; host.appendChild(box)});
     renderNotes(); renderQuoteTotals(); renderPrintSheet();
   }
-  function renderNotes(){const host=$('#notesList');host.innerHTML='';state.quote.notes.forEach((note,i)=>{const d=document.createElement('div');d.className='note-row';d.dataset.i=i;d.innerHTML=`<span class="note-num">${i+1}.</span><textarea class="input note-text" rows="2" placeholder="Add note">${esc(note)}</textarea><div class="note-actions no-print"><button class="secondary save-note">Save</button><button class="secondary remove-note">Remove</button></div>`;host.appendChild(d)});renderSavedNoteOptions()}
+  function renderNotes(){const host=$('#notesList');host.innerHTML='';state.quote.notes.forEach((note,i)=>{const d=document.createElement('div');d.className='note-row';d.dataset.i=i;d.innerHTML=`<span class="note-num">${i+1}.</span><textarea class="input note-text" rows="2" placeholder="Add note">${esc(note)}</textarea><div class="note-actions no-print"><button class="secondary save-note">Save</button><button class="secondary remove-note">Remove</button></div>`;host.appendChild(d)});renderSavedNoteOptions();host.querySelectorAll('.note-text').forEach(el=>{el.style.height='auto';el.style.height=Math.min(Math.max(el.scrollHeight+6,120),420)+'px'})}
   function renderSavedNoteOptions(){const select=$('#savedNoteSelect');if(!select)return;const notes=savedNotes();select.innerHTML='<option value="">Select saved note</option>'+notes.map((x,i)=>`<option value="${i}">${esc(x)}</option>`).join('')}
   function renderQuoteTotals(){const t=quoteTotals();$('#quoteTotalsScreen').innerHTML=`<div class="total-line"><span>Total Price</span><strong>${money(t.subtotal)}</strong></div><div class="total-line"><span>Discount${state.quote.discountType==='percent'&&num(state.quote.discountValue)?` (${num(state.quote.discountValue)}%)`:''}</span><strong>- ${money(t.discount)}</strong></div><div class="total-line"><span>GST (${num(state.quote.gstPercent)}%)</span><strong>${money(t.gst)}</strong></div><div class="total-line grand"><span>Grand Total</span><strong>${money(t.grand)}</strong></div>`}
-  function renderPrintSheet(){const t=quoteTotals(),date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),imgs=state.quoteItems.flatMap(x=>x.images).slice(0,4),notes=state.quote.notes.filter(x=>x.trim());$('#printSheet').innerHTML=`<div class="print-header"><img class="print-logo" src="/mwi-logo.png" alt="MWI"><div><div class="print-company-name">MORAS WOOD INDUSTRIES</div><div class="print-tagline">SAWMILL | CUSTOM FURNITURE | WOODWORKS</div></div><div class="print-company-details"><div>Moorukaveri, Kinnigoli, Mangaluru - 574150</div><div>+91 63616 95416 &nbsp; | &nbsp; info@moraswood.com</div><div>GSTIN: 29AFPPM1242L1Z1</div></div></div><div class="print-title-row"><div>QUOTATION</div><div class="print-date">Date: ${date}</div></div><div class="print-customer-bar"><div class="print-customer-label">CUSTOMER DETAILS</div><div><strong>${esc(state.customer.name||'-')}</strong><div>${esc(state.customer.location||'-')}</div></div></div>${imgs.length?`<div class="print-images ${imgs.length===1?'single':'multiple'}">${imgs.map((s,i)=>`<img src="${s}" alt="Quotation product ${i+1}">`).join('')}</div>`:''}<table class="print-table"><thead><tr><th>Sl. No.</th><th>Description</th><th>Units</th><th>Unit Price</th><th>Total Price</th></tr></thead><tbody>${state.quoteItems.map((x,i)=>`<tr><td class="print-sl">${i+1}</td><td class="print-desc">${esc(x.description||'-')}</td><td class="print-num">${esc([x.qty,x.unit].filter(Boolean).join(' ')||'-')}</td><td class="print-num">${rs(num(x.unitPrice))}</td><td class="print-num">${rs(num(x.qty)*num(x.unitPrice))}</td></tr>`).join('')}</tbody></table><div class="print-totals"><div><span>Total</span><strong>${rs(t.subtotal)}</strong></div>${t.discount>0?`<div><span>Discount${state.quote.discountType==='percent'&&num(state.quote.discountValue)?` (${num(state.quote.discountValue)}%)`:''}</span><strong>- ${rs(t.discount)}</strong></div>`:''}<div><span>GST (${num(state.quote.gstPercent)}%)</span><strong>${rs(t.gst)}</strong></div><div class="print-grand"><span>GRAND TOTAL</span><strong>${rs(t.grand)}</strong></div></div>${notes.length?`<div class="print-notes"><div class="print-notes-title">NOTES</div>${notes.map((x,i)=>`<div>${i+1}. ${esc(x)}</div>`).join('')}</div>`:''}<div class="print-footer"><strong>MORAS WOOD INDUSTRIES</strong><span>Digital copy - no signature required.</span></div>`}
+  function renderPrintSheet(){const t=quoteTotals(),date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),notes=state.quote.notes.filter(x=>x.trim()),hasReferences=state.quoteItems.some(x=>(x.images||[]).length>0);$('#printSheet').innerHTML=`<div class="print-header"><img class="print-logo" src="/mwi-logo.png" alt="MWI"><div><div class="print-company-name">MORAS WOOD INDUSTRIES</div><div class="print-tagline">SAWMILL | CUSTOM FURNITURE | WOODWORKS</div></div><div class="print-company-details"><div>Moorukaveri, Kinnigoli, Mangaluru - 574150</div><div>+91 63616 95416 &nbsp; | &nbsp; info@moraswood.com</div><div>GSTIN: 29AFPPM1242L1Z1</div></div></div><div class="print-title-row"><div>QUOTATION</div><div class="print-date">Date: ${date}</div></div><div class="print-customer-bar"><div class="print-customer-label">CUSTOMER DETAILS</div><div><strong>${esc(state.customer.name||'-')}</strong><div>${esc(state.customer.location||'-')}</div></div></div><table class="print-table ${hasReferences?'with-references':'without-references'}"><thead><tr><th>Sl. No.</th><th>Description</th>${hasReferences?'<th>Reference</th>':''}<th>Units</th><th>Unit Price</th><th>Total Price</th></tr></thead><tbody>${state.quoteItems.map((x,i)=>`<tr><td class="print-sl">${i+1}</td><td class="print-desc">${esc(x.description||'-')}</td>${hasReferences?`<td class="print-ref">${(x.images||[]).length?'<div class="print-item-photos">'+x.images.map((src,j)=>'<img src="'+src+'" alt="Item '+(i+1)+' reference '+(j+1)+'">').join('')+'</div>':'-'}</td>`:''}<td class="print-num">${esc([x.qty,x.unit].filter(Boolean).join(' ')||'-')}</td><td class="print-num">${rs(num(x.unitPrice))}</td><td class="print-num">${rs(num(x.qty)*num(x.unitPrice))}</td></tr>`).join('')}</tbody></table><div class="print-totals"><div><span>Total</span><strong>${rs(t.subtotal)}</strong></div>${t.discount>0?`<div><span>Discount${state.quote.discountType==='percent'&&num(state.quote.discountValue)?` (${num(state.quote.discountValue)}%)`:''}</span><strong>- ${rs(t.discount)}</strong></div>`:''}<div><span>GST (${num(state.quote.gstPercent)}%)</span><strong>${rs(t.gst)}</strong></div><div class="print-grand"><span>GRAND TOTAL</span><strong>${rs(t.grand)}</strong></div></div>${notes.length?`<div class="print-notes"><div class="print-notes-title">NOTES</div>${notes.map((x,i)=>`<div>${i+1}. ${esc(x)}</div>`).join('')}</div>`:''}<div class="print-footer"><strong>MORAS WOOD INDUSTRIES</strong><span>Digital copy - no signature required.</span></div>`}
 
   function renderReview(){ $('#actualMaterials').value=state.actual.materials; $('#actualLabourHours').value=state.actual.labourHours; $('#reviewEstimated').textContent=money(estimateGrand().cost) }
   function renderAll(){ $('#projectName').value=state.projectName; renderCalc(); renderEstimation(); renderQuotation(); renderReview(); showTab(state.tab||'calculator'); $('#continueProjectHome').classList.toggle('hidden',!hasProjectWork()); }
@@ -334,6 +370,10 @@
   document.addEventListener('click',async e=>{
     const b=e.target.closest('button'); if(!b)return;
     if(b.id==='goHome'){showView('home');return}
+    if(b.id==='logVolumeHome'){renderLogVolume();showView('log');return}
+    if(b.id==='addLogRow'){logRows.push({length:'',girth:''});renderLogVolume();return}
+    if(b.id==='clearLogRows'){logRows=[{length:'',girth:''}];renderLogVolume();return}
+    if(b.classList.contains('remove-log')){logRows.splice(+b.dataset.index,1);if(!logRows.length)logRows=[{length:'',girth:''}];renderLogVolume();return}
     if(b.id==='newProjectHome'){startNewProject();return}
     if(b.id==='continueProjectHome'){showView('workspace');showTab(state.tab||'calculator');return}
     if(b.id==='savedProjectsHome'){renderSavedProjects();$('#savedProjectsPanel').scrollIntoView({behavior:'smooth',block:'start'});return}
@@ -377,40 +417,11 @@
       if(num(price)<=0){const status=$('.send-quote-status',card);if(status)status.textContent='Enter the estimated selling price before sending to Quotation.';input?.classList.add('input-error');input?.focus();return}
       input?.classList.remove('input-error');const q={description:it.name,unit:'',qty:'',unitPrice:String(price),images:[],aiOriginal:''};const onlyBlank=state.quoteItems.length===1&&!state.quoteItems[0].description&&!state.quoteItems[0].unit&&!state.quoteItems[0].qty&&!state.quoteItems[0].unitPrice&&!state.quoteItems[0].images.length;if(onlyBlank)state.quoteItems=[q];else state.quoteItems.push(q);renderQuotation();showTab('quotation');saveAutosave()
     }
-    if(b.id==='saveAiSettings'){
-      try{saveAiSettings()}
-      catch(error){updateAiSettingsStatus(error?.message||'Could not save AI settings.')}
-    }
-    if(b.id==='removeAiKey'){
-      try{removeAiKey();$('#aiApiKey').value=''}
-      catch(error){updateAiSettingsStatus(error?.message||'Could not remove the API key.')}
-    }
+    if(b.id==='floatingConverterButton'){setFloatingConverter(true)}
+    if(b.id==='closeFloatingConverter'){setFloatingConverter(false)}
+    if(b.id==='floatingConverterPanel' && e.target===b){setFloatingConverter(false)}
     if(b.id==='swapLengthUnits'){
       const from=$('#lengthFrom'),to=$('#lengthTo'),unit=from.value;from.value=to.value;to.value=unit;updateLengthConversion();
-    }
-    if(b.classList.contains('ai-improve')){
-      const box=b.closest('.quote-item'),i=+box.dataset.i,textarea=$('.q-desc',box),status=$('.ai-status',box),style=$('.ai-style',box)?.value||'professional';
-      const text=(textarea?.value||'').trim();
-      if(!text){if(status)status.textContent='Write a description first.';textarea?.focus();return}
-      if(!hasAiKey()){if(status)status.textContent='Add an AI API key in Settings to use this feature.';return}
-      state.quoteItems[i].description=textarea.value;
-      const original=textarea.value;
-      b.disabled=true;b.textContent='Improving…';if(status)status.textContent='AI is rewriting the description.';
-      try{
-        const improved=await improveDescription(original,style);
-        state.quoteItems[i].aiOriginal=original;
-        state.quoteItems[i].description=improved;
-        textarea.value=state.quoteItems[i].description;
-        $('.ai-undo',box)?.classList.remove('hidden');
-        if(status)status.textContent='Updated. You can edit it further or undo.';
-        renderPrintSheet();saveAutosave();
-      }catch(err){if(status)status.textContent=err?.message||'Could not improve the description.'}
-      finally{b.disabled=false;b.textContent='✨ Improve with AI'}
-    }
-    if(b.classList.contains('ai-undo')){
-      const box=b.closest('.quote-item'),i=+box.dataset.i,textarea=$('.q-desc',box),status=$('.ai-status',box),original=state.quoteItems[i]?.aiOriginal||'';
-      if(!original)return;
-      state.quoteItems[i].description=original;state.quoteItems[i].aiOriginal='';if(textarea)textarea.value=original;b.classList.add('hidden');if(status)status.textContent='Original description restored.';renderPrintSheet();saveAutosave()
     }
     if(b.id==='addQuoteItem'){state.quoteItems.push(blankQuote());renderQuotation();saveAutosave()}
     if(b.classList.contains('remove-quote')){const i=+b.closest('.quote-item').dataset.i;state.quoteItems=state.quoteItems.length===1?[blankQuote()]:state.quoteItems.filter((_,j)=>j!==i);renderQuotation();saveAutosave()}
@@ -427,9 +438,7 @@
 
   document.addEventListener('input',e=>{
     const t=e.target;
-    if(t.id==='aiApiKey'){updateDetectedProvider(t.value);return}
-    if(t.id==='aiEndpoint')t.dataset.userEdited='true';
-    if(t.id==='aiModel')t.dataset.userEdited='true';
+    if(t.classList.contains('log-input')){const i=+t.closest('.log-row').dataset.index;logRows[i][t.dataset.key]=t.value;const r=logRows[i];t.closest('.log-row').querySelector('.log-result').textContent=validLog(r)?logCftRounded(r.length,r.girth).toFixed(2)+' CFT':'—';updateLogTotal();return}
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
@@ -451,15 +460,100 @@
     if(ec&&t.classList.contains('labour-mode')){state.costings[+ec.dataset.i].labourMode=t.value;renderEstimation();saveAutosave()}
     if(ec&&t.classList.contains('polish-mode')){state.costings[+ec.dataset.i].polishMode=t.value;renderEstimation();saveAutosave()}
     if(t.id==='discountType'){state.quote.discountType=t.value;renderQuoteTotals();renderPrintSheet();saveAutosave()}
-    if(t.classList.contains('q-images')){const i=+t.closest('.quote-item').dataset.i,files=[...t.files].slice(0,6);for(const f of files){if(state.quoteItems[i].images.length>=6)break;state.quoteItems[i].images.push(await resizeImage(f))}renderQuotation();saveAutosave()}
+    if(t.classList.contains('q-images')){
+      const i=+t.closest('.quote-item').dataset.i;
+      const files=Array.from(t.files||[]).slice(0,6);
+      let added=0;
+      for(const file of files){
+        if(state.quoteItems[i].images.length>=6)break;
+        try{
+          if(!file.type.startsWith('image/'))throw new Error('Selected file is not an image.');
+          const converted=await resizeImage(file);
+          if(!converted || !converted.startsWith('data:image/'))throw new Error('Image could not be read.');
+          state.quoteItems[i].images.push(converted);
+          added++;
+        }catch(error){alert('Could not add image: '+(error.message||'Unknown error'))}
+      }
+      t.value='';
+      if(added){saveAutosave();renderQuotation();}
+      else if(files.length===0){/* User cancelled the picker. */}
+      else alert('No image was added. Try selecting a JPG or PNG file.');
+    }
   });
 
-  document.addEventListener('keydown',e=>{
-    const t=e.target;if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
+  // Keep every editor visible while Android's keyboard is open.
+  // Native window insets resize the WebView; this also handles WebView viewport quirks.
+  let editorScrollJob;
+  function ensureEditorVisible(){
+    const field=document.activeElement;
+    if(!field || !field.matches?.('input:not([type="file"]),textarea,select,[contenteditable="true"]'))return;
+    const viewport=window.visualViewport;
+    const visibleTop=viewport ? viewport.offsetTop : 0;
+    const visibleBottom=viewport ? viewport.offsetTop+viewport.height : window.innerHeight;
+    const box=field.getBoundingClientRect();
+    const header=$('.tabs');
+    const headerHeight=header && !header.closest('.hidden') ? Math.min(header.getBoundingClientRect().height,70) : 0;
+    const upper=visibleTop+headerHeight+16;
+    const lower=visibleBottom-28;
+    if(box.top<upper){
+      window.scrollBy({top:box.top-upper,behavior:'instant'});
+    }else if(box.bottom>lower){
+      window.scrollBy({top:box.bottom-lower+16,behavior:'instant'});
+    }
+  }
+  function scheduleEditorVisibility(){
+    clearTimeout(editorScrollJob);
+    requestAnimationFrame(ensureEditorVisible);
+    editorScrollJob=setTimeout(ensureEditorVisible,220);
+  }
+  document.addEventListener('focusin',e=>{
+    if(e.target.matches?.('input:not([type="file"]),textarea,select,[contenteditable="true"]'))scheduleEditorVisibility();
+  });
+  document.addEventListener('input',e=>{
+    if(e.target===document.activeElement && e.target.matches?.('input:not([type="file"]),textarea,[contenteditable="true"]'))scheduleEditorVisibility();
+  });
+  window.addEventListener('resize',scheduleEditorVisibility);
+  window.visualViewport?.addEventListener('resize',scheduleEditorVisibility);
+  window.visualViewport?.addEventListener('scroll',scheduleEditorVisibility);
+  // Notes can grow as the user types. Auto-size textareas so the cursor does
+  // not disappear inside a small, internally scrolling two-line field.
+  function expandNotesEditor(field){
+    if(!field?.matches?.('.note-text,.saved-note-edit,.q-desc'))return;
+    field.style.height='auto';
+    field.style.height=Math.min(Math.max(field.scrollHeight+6,120),420)+'px';
+    scheduleEditorVisibility();
+  }
+  document.addEventListener('focusin',e=>expandNotesEditor(e.target));
+  document.addEventListener('input',e=>expandNotesEditor(e.target));
+  document.querySelectorAll('.note-text,.saved-note-edit,.q-desc').forEach(expandNotesEditor);
+
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#floatingConverterPanel').classList.contains('hidden'))setFloatingConverter(false);
+
+    const t=e.target;
+    if(t instanceof HTMLInputElement && t.classList.contains('log-input') && e.key==='Enter'){
+      e.preventDefault();
+      const row=t.closest('.log-row'),i=Number(row.dataset.index);
+      logRows[i][t.dataset.key]=t.value;
+      if(t.dataset.key==='length'){
+        const next=row.querySelector('.log-input[data-key="girth"]');
+        next?.focus();next?.select();
+      }else if(validLog(logRows[i])){
+        // Keep the completed row and its calculated CFT; open a fresh entry.
+        if(i===logRows.length-1)logRows.push({length:'',girth:''});
+        renderLogVolume();
+        const next=$(`.log-row[data-index="${i+1}"] .log-input[data-key="length"]`);
+        next?.focus();next?.scrollIntoView({block:'nearest'});
+      }else{
+        t.focus();
+      }
+      updateLogTotal();
+      return;
+    }
+    if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
   });
 
   function saveProject(){const name=(state.projectName||state.customer.name||'').trim();const status=$('#projectStatus');if(!name){status.textContent='Enter a project name before saving.';return}state.projectName=name;const list=savedList(),now=new Date().toISOString(),existing=list.findIndex(x=>x.name.toLowerCase()===name.toLowerCase());let snapshot;try{snapshot=JSON.parse(JSON.stringify(state))}catch{status.textContent='Could not prepare project for saving.';return}const rec={id:existing>=0?list[existing].id:uid(),name,updatedAt:now,snapshot};if(existing>=0)list[existing]=rec;else list.unshift(rec);try{writeSaved(list);const check=savedList().find(x=>x.id===rec.id);if(!check||!check.snapshot)throw new Error('Save verification failed');status.textContent='Project saved successfully on this device.';saveAutosave()}catch{status.textContent='Could not save project. Try fewer/lower-resolution images.'}}
   function renderSavedProjects(){const panel=$('#savedProjectsPanel'),list=savedList();panel.classList.remove('hidden');panel.innerHTML=`<div class="saved-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>Saved Projects</strong><button id="closeSaved" class="secondary">Close</button></div>${list.length?list.map(x=>`<div class="saved-row" data-id="${x.id}"><div><b>${esc(x.name)}</b><small>${new Date(x.updatedAt).toLocaleString('en-IN')}</small></div><div class="saved-actions"><button class="secondary load-project">Load</button><button class="danger delete-project">Delete</button></div></div>`).join(''):'<p class="muted">No saved projects yet.</p>'}</div>`;$('#closeSaved').onclick=()=>panel.classList.add('hidden');$$('.load-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id,x=savedList().find(p=>p.id===id);if(x){state=normalizeUnits({...defaultState(),...x.snapshot});renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Project loaded.'}});$$('.delete-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id;writeSaved(savedList().filter(p=>p.id!==id));renderSavedProjects();const status=$('#projectStatus');if(status)status.textContent='Saved project deleted.'})}
 
-  loadAutosave(); renderAll(); renderLengthConverter(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  loadAutosave(); renderAll(); renderLogVolume(); renderLengthConverter(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 })();

@@ -9,11 +9,18 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
+import android.net.Uri
+import android.app.Activity
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import android.graphics.Color
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebViewAssetLoader
@@ -31,6 +38,8 @@ import javax.crypto.spec.GCMParameterSpec
 
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
+    private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
+    private val fileChooserRequest = 7024
     private val home = "https://appassets.androidplatform.net/index.html"
     private val aiExecutor = Executors.newSingleThreadExecutor()
     private val aiPreferences by lazy { getSharedPreferences("ai_settings", Context.MODE_PRIVATE) }
@@ -133,7 +142,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         web = WebView(this)
+        web.setBackgroundColor(Color.WHITE)
         setContentView(web)
+
+        // Prevent Android 15+ edge-to-edge layout from overlapping the web header.
+        window.statusBarColor = Color.rgb(47, 33, 24)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
+        ViewCompat.setOnApplyWindowInsetsListener(web) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            // Edge-to-edge Android layouts otherwise let the keyboard cover the WebView.
+            val bottomInset = maxOf(bars.bottom, ime.bottom)
+            view.setPadding(bars.left, bars.top, bars.right, bottomInset)
+            insets
+        }
+        ViewCompat.requestApplyInsets(web)
 
         setupWebView()
 
@@ -155,12 +178,33 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    @Deprecated("Used for the Android WebView file chooser result")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != fileChooserRequest) return
+        val callback = pendingFileChooser ?: return
+        pendingFileChooser = null
+        callback.onReceiveValue(
+            if (resultCode == Activity.RESULT_OK)
+                run {
+                    val chosen = mutableListOf<Uri>()
+                    data?.clipData?.let { clips ->
+                        for (i in 0 until clips.itemCount) chosen.add(clips.getItemAt(i).uri)
+                    }
+                    data?.data?.let { uri -> if (!chosen.contains(uri)) chosen.add(uri) }
+                    if (chosen.isNotEmpty()) chosen.toTypedArray()
+                    else WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+                }
+            else null
+        )
+    }
+
     private fun setupWebView() {
         web.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
             allowFileAccess = false
-            allowContentAccess = false
+            allowContentAccess = true
             setSupportMultipleWindows(false)
             databaseEnabled = true
         }
@@ -202,7 +246,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        web.webChromeClient = WebChromeClient()
+        web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                if (filePathCallback == null || fileChooserParams == null) return false
+                pendingFileChooser?.onReceiveValue(null)
+                pendingFileChooser = filePathCallback
+                return try {
+                    startActivityForResult(fileChooserParams.createIntent(), fileChooserRequest)
+                    true
+                } catch (error: Exception) {
+                    pendingFileChooser = null
+                    filePathCallback.onReceiveValue(null)
+                    false
+                }
+            }
+        }
     }
 
     private fun sendAiResult(requestId: String, success: Boolean, message: String) {
