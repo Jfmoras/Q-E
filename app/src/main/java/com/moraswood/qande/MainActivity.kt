@@ -14,6 +14,10 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import android.graphics.Color
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebViewAssetLoader
@@ -134,6 +138,16 @@ class MainActivity : AppCompatActivity() {
         
         web = WebView(this)
         setContentView(web)
+
+        // Prevent Android 15+ edge-to-edge layout from overlapping the web header.
+        window.statusBarColor = Color.rgb(47, 33, 24)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
+        ViewCompat.setOnApplyWindowInsetsListener(web) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(web)
 
         setupWebView()
 
