@@ -81,3 +81,20 @@ html{scroll-padding-bottom:120px}body{overflow-x:hidden}textarea.input{scroll-ma
 body{padding-bottom:env(safe-area-inset-bottom)}
 .main-content,.notes-view,.home-view{padding-bottom:max(160px,env(safe-area-inset-bottom))}
 input,textarea,select,[contenteditable="true"]{scroll-margin-top:85px;scroll-margin-bottom:36px}
+
+/* Printed references belong to their quotation line, not a separate image gallery. */
+@media print{
+.print-table th:nth-child(1){width:12mm}
+.print-table th:nth-child(3){width:46mm}
+.print-table th:nth-child(4){width:19mm}
+.print-table th:nth-child(5){width:27mm}
+.print-table th:nth-child(6){width:30mm}
+.print-ref{vertical-align:top;text-align:center}
+.print-item-photos{display:flex;flex-wrap:wrap;gap:1.5mm;align-items:flex-start;justify-content:center}
+.print-item-photos img{max-width:100%;width:auto;max-height:33mm;object-fit:contain;break-inside:avoid}
+.print-item-photos img:nth-child(n+2){max-width:47%}
+.print-desc{overflow-wrap:anywhere}
+}
+/* Notes editor should scroll itself with the cursor and remain above the keyboard. */
+.note-text,.saved-note-edit,.q-desc{min-height:120px;overflow-y:auto;overscroll-behavior:contain}
+.note-row{scroll-margin-top:90px;scroll-margin-bottom:180px}
