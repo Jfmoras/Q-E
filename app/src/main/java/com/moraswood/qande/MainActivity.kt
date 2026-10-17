@@ -150,7 +150,10 @@ class MainActivity : AppCompatActivity() {
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         ViewCompat.setOnApplyWindowInsetsListener(web) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            // Edge-to-edge Android layouts otherwise let the keyboard cover the WebView.
+            val bottomInset = maxOf(bars.bottom, ime.bottom)
+            view.setPadding(bars.left, bars.top, bars.right, bottomInset)
             insets
         }
         ViewCompat.requestApplyInsets(web)
