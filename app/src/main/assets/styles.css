@@ -76,3 +76,8 @@
 html{scroll-padding-bottom:120px}body{overflow-x:hidden}textarea.input{scroll-margin-bottom:145px;min-height:90px;resize:vertical}.quote-item,.note-row{scroll-margin-bottom:140px}.quote-fields .desc{min-width:0}.note-row{flex-wrap:wrap}.note-row .note-text{flex:1 1 calc(100% - 42px);min-width:0}.note-actions{flex-basis:100%;margin-left:30px}
 /* Do not render the surrounding dark frame in printed quotations */
 @media print{html,body,#workspaceView,#quotation,.main-content,.print-sheet{background:#fff!important;box-shadow:none!important;border:0!important;outline:0!important}.print-sheet{padding:0!important}.paper{border:0!important}}
+
+/* Ensure all editors have scrollable space when the Android keyboard is raised. */
+body{padding-bottom:env(safe-area-inset-bottom)}
+.main-content,.notes-view,.home-view{padding-bottom:max(160px,env(safe-area-inset-bottom))}
+input,textarea,select,[contenteditable="true"]{scroll-margin-top:85px;scroll-margin-bottom:36px}
