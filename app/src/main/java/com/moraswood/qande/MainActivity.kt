@@ -142,7 +142,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         web = WebView(this)
-        web.setBackgroundColor(Color.rgb(47, 33, 24))
+        web.setBackgroundColor(Color.WHITE)
         setContentView(web)
 
         // Prevent Android 15+ edge-to-edge layout from overlapping the web header.
@@ -183,7 +183,15 @@ class MainActivity : AppCompatActivity() {
         pendingFileChooser = null
         callback.onReceiveValue(
             if (resultCode == Activity.RESULT_OK)
-                WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+                run {
+                    val chosen = mutableListOf<Uri>()
+                    data?.clipData?.let { clips ->
+                        for (i in 0 until clips.itemCount) chosen.add(clips.getItemAt(i).uri)
+                    }
+                    data?.data?.let { uri -> if (!chosen.contains(uri)) chosen.add(uri) }
+                    if (chosen.isNotEmpty()) chosen.toTypedArray()
+                    else WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+                }
             else null
         )
     }
@@ -193,7 +201,7 @@ class MainActivity : AppCompatActivity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             allowFileAccess = false
-            allowContentAccess = false
+            allowContentAccess = true
             setSupportMultipleWindows(false)
             databaseEnabled = true
         }
