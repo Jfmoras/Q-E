@@ -243,7 +243,12 @@
     $('#goHome').classList.toggle('hidden',view==='home');
     if(view==='notes')renderNotesManager();
   }
-  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('.panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); if(name==='settings')loadAiSettingsFields(); saveAutosave(); }
+  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('.panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); saveAutosave(); }
+  function setFloatingConverter(open){
+    $('#floatingConverterPanel').classList.toggle('hidden',!open);
+    $('#floatingConverterButton').setAttribute('aria-expanded',String(open));
+    if(open)$('#lengthValue').focus();else $('#floatingConverterButton').focus();
+  }
   function renderLengthConverter(){
     const from=$('#lengthFrom'),to=$('#lengthTo');
     const options=Object.entries(converterUnits).map(([unit,data])=>`<option value="${unit}">${data.label}</option>`).join('');
@@ -323,7 +328,7 @@
     $('#customerName').value=state.customer.name; $('#customerLocation').value=state.customer.location; $('#discountType').value=state.quote.discountType; $('#discountValue').value=state.quote.discountValue; $('#gstPercent').value=state.quote.gstPercent;
     const date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); $('#quoteDateScreen').textContent=`Date: ${date}`;
     const host=$('#quotationItems'); host.innerHTML='';
-    state.quoteItems.forEach((it,i)=>{const box=document.createElement('div');box.className='quote-item';box.dataset.i=i;box.innerHTML=`<div class="quote-item-head"><strong>Item ${i+1}</strong><button class="danger remove-quote no-print">Remove</button></div><div class="quote-fields"><label class="field desc">Description<textarea class="input q-desc" rows="4" placeholder="Write the item description in your own words">${esc(it.description)}</textarea><div class="ai-desc-tools no-print"><select class="input ai-style" aria-label="AI description style"><option value="professional">Professional</option><option value="concise">Short & clear</option><option value="detailed">Detailed</option></select><button class="secondary ai-improve" type="button">✨ Improve with AI</button><button class="secondary ai-undo ${it.aiOriginal?'':'hidden'}" type="button">Undo AI</button><span class="ai-status muted" aria-live="polite"></span></div></label><label class="field">Units<input class="input q-unit" list="unitOptions" placeholder="Set / Piece / Lumpsum" value="${attr(it.unit)}"></label><label class="field">Quantity<input class="input q-qty" type="number" min="0" step="any" value="${attr(it.qty)}"></label><label class="field">Unit price<input class="input q-price" type="number" min="0" step="any" value="${attr(it.unitPrice)}"></label><div class="metric q-row-total"><span>Total</span><strong>${money(num(it.qty)*num(it.unitPrice))}</strong></div></div><div class="quote-image-actions no-print"><label class="secondary file-button">+ Add images<input class="q-images" type="file" accept="image/*" multiple></label> <small class="muted">Up to 6 images per item</small></div>${it.images.length?`<div class="image-grid">${it.images.map((src,j)=>`<div class="image-thumb"><img src="${src}" alt="Quotation item ${i+1} image ${j+1}"><button class="remove-image no-print" data-j="${j}">×</button></div>`).join('')}</div>`:''}`; host.appendChild(box)});
+    state.quoteItems.forEach((it,i)=>{const box=document.createElement('div');box.className='quote-item';box.dataset.i=i;box.innerHTML=`<div class="quote-item-head"><strong>Item ${i+1}</strong><button class="danger remove-quote no-print">Remove</button></div><div class="quote-fields"><label class="field desc">Description<textarea class="input q-desc" rows="4" placeholder="Write the item description in your own words">${esc(it.description)}</textarea></label><label class="field">Units<input class="input q-unit" list="unitOptions" placeholder="Set / Piece / Lumpsum" value="${attr(it.unit)}"></label><label class="field">Quantity<input class="input q-qty" type="number" min="0" step="any" value="${attr(it.qty)}"></label><label class="field">Unit price<input class="input q-price" type="number" min="0" step="any" value="${attr(it.unitPrice)}"></label><div class="metric q-row-total"><span>Total</span><strong>${money(num(it.qty)*num(it.unitPrice))}</strong></div></div><div class="quote-image-actions no-print"><label class="secondary file-button">+ Add images<input class="q-images" type="file" accept="image/*" multiple></label> <small class="muted">Up to 6 images per item</small></div>${it.images.length?`<div class="image-grid">${it.images.map((src,j)=>`<div class="image-thumb"><img src="${src}" alt="Quotation item ${i+1} image ${j+1}"><button class="remove-image no-print" data-j="${j}">×</button></div>`).join('')}</div>`:''}`; host.appendChild(box)});
     renderNotes(); renderQuoteTotals(); renderPrintSheet();
   }
   function renderNotes(){const host=$('#notesList');host.innerHTML='';state.quote.notes.forEach((note,i)=>{const d=document.createElement('div');d.className='note-row';d.dataset.i=i;d.innerHTML=`<span class="note-num">${i+1}.</span><textarea class="input note-text" rows="2" placeholder="Add note">${esc(note)}</textarea><div class="note-actions no-print"><button class="secondary save-note">Save</button><button class="secondary remove-note">Remove</button></div>`;host.appendChild(d)});renderSavedNoteOptions()}
@@ -380,40 +385,11 @@
       if(num(price)<=0){const status=$('.send-quote-status',card);if(status)status.textContent='Enter the estimated selling price before sending to Quotation.';input?.classList.add('input-error');input?.focus();return}
       input?.classList.remove('input-error');const q={description:it.name,unit:'',qty:'',unitPrice:String(price),images:[],aiOriginal:''};const onlyBlank=state.quoteItems.length===1&&!state.quoteItems[0].description&&!state.quoteItems[0].unit&&!state.quoteItems[0].qty&&!state.quoteItems[0].unitPrice&&!state.quoteItems[0].images.length;if(onlyBlank)state.quoteItems=[q];else state.quoteItems.push(q);renderQuotation();showTab('quotation');saveAutosave()
     }
-    if(b.id==='saveAiSettings'){
-      try{await saveAiSettings()}
-      catch(error){updateAiSettingsStatus(error?.message||'Could not save AI settings.')}
-    }
-    if(b.id==='removeAiKey'){
-      try{removeAiKey();$('#aiApiKey').value=''}
-      catch(error){updateAiSettingsStatus(error?.message||'Could not remove the API key.')}
-    }
+    if(b.id==='floatingConverterButton'){setFloatingConverter(true)}
+    if(b.id==='closeFloatingConverter'){setFloatingConverter(false)}
+    if(b.id==='floatingConverterPanel' && e.target===b){setFloatingConverter(false)}
     if(b.id==='swapLengthUnits'){
       const from=$('#lengthFrom'),to=$('#lengthTo'),unit=from.value;from.value=to.value;to.value=unit;updateLengthConversion();
-    }
-    if(b.classList.contains('ai-improve')){
-      const box=b.closest('.quote-item'),i=+box.dataset.i,textarea=$('.q-desc',box),status=$('.ai-status',box),style=$('.ai-style',box)?.value||'professional';
-      const text=(textarea?.value||'').trim();
-      if(!text){if(status)status.textContent='Write a description first.';textarea?.focus();return}
-      if(!hasAiKey()){if(status)status.textContent='Add an AI API key in Settings to use this feature.';return}
-      state.quoteItems[i].description=textarea.value;
-      const original=textarea.value;
-      b.disabled=true;b.textContent='Improving…';if(status)status.textContent='AI is rewriting the description.';
-      try{
-        const improved=await improveDescription(original,style);
-        state.quoteItems[i].aiOriginal=original;
-        state.quoteItems[i].description=improved;
-        textarea.value=state.quoteItems[i].description;
-        $('.ai-undo',box)?.classList.remove('hidden');
-        if(status)status.textContent='Updated. You can edit it further or undo.';
-        renderPrintSheet();saveAutosave();
-      }catch(err){if(status)status.textContent=err?.message||'Could not improve the description.'}
-      finally{b.disabled=false;b.textContent='✨ Improve with AI'}
-    }
-    if(b.classList.contains('ai-undo')){
-      const box=b.closest('.quote-item'),i=+box.dataset.i,textarea=$('.q-desc',box),status=$('.ai-status',box),original=state.quoteItems[i]?.aiOriginal||'';
-      if(!original)return;
-      state.quoteItems[i].description=original;state.quoteItems[i].aiOriginal='';if(textarea)textarea.value=original;b.classList.add('hidden');if(status)status.textContent='Original description restored.';renderPrintSheet();saveAutosave()
     }
     if(b.id==='addQuoteItem'){state.quoteItems.push(blankQuote());renderQuotation();saveAutosave()}
     if(b.classList.contains('remove-quote')){const i=+b.closest('.quote-item').dataset.i;state.quoteItems=state.quoteItems.length===1?[blankQuote()]:state.quoteItems.filter((_,j)=>j!==i);renderQuotation();saveAutosave()}
@@ -430,9 +406,6 @@
 
   document.addEventListener('input',e=>{
     const t=e.target;
-    if(t.id==='aiApiKey'){updateDetectedProvider(t.value);return}
-    
-    
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
@@ -457,7 +430,8 @@
     if(t.classList.contains('q-images')){const i=+t.closest('.quote-item').dataset.i,files=[...t.files].slice(0,6);for(const f of files){if(state.quoteItems[i].images.length>=6)break;state.quoteItems[i].images.push(await resizeImage(f))}renderQuotation();saveAutosave()}
   });
 
-  document.addEventListener('keydown',e=>{
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#floatingConverterPanel').classList.contains('hidden'))setFloatingConverter(false);
+
     const t=e.target;if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
   });
 
