@@ -12,7 +12,7 @@
   const volume=r=>{
     const l=Number(r.length),g=Number(r.girth),q=Number(r.quantity);
     if(!String(r.length).trim()||!String(r.girth).trim()||!String(r.quantity).trim()||!Number.isFinite(l)||!Number.isFinite(g)||!Number.isFinite(q)||l<=0||g<=0||!Number.isInteger(q)||q<1)return null;
-    return (g/4)**2*l/144*q;
+    return Math.round((((g/4)**2*l/144)+Number.EPSILON)*100)/100*q;
   };
   const fmt=x=>x.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   const save=()=>{try{localStorage.setItem(store,JSON.stringify(rows))}catch{}};
