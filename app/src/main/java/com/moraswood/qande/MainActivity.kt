@@ -137,6 +137,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         web = WebView(this)
+        web.setBackgroundColor(Color.rgb(47, 33, 24))
         setContentView(web)
 
         // Prevent Android 15+ edge-to-edge layout from overlapping the web header.
