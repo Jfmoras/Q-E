@@ -448,25 +448,40 @@
     }
   });
 
-  // The on-screen keyboard can cover fields inside an Android WebView.
-  // Wait for the visual viewport to resize, then scroll the focused editor into view.
-  let focusScrollHandle;
-  function keepEditorVisible(){
-    const active=document.activeElement;
-    if(!active?.matches?.('textarea, input[type="text"], input:not([type]), input[type="number"]'))return;
-    const rect=active.getBoundingClientRect();
+  // Keep every editor visible while Android's keyboard is open.
+  // Native window insets resize the WebView; this also handles WebView viewport quirks.
+  let editorScrollJob;
+  function ensureEditorVisible(){
+    const field=document.activeElement;
+    if(!field || !field.matches?.('input:not([type="file"]),textarea,select,[contenteditable="true"]'))return;
     const viewport=window.visualViewport;
-    const bottom=viewport ? viewport.offsetTop+viewport.height : window.innerHeight;
-    if(rect.bottom>bottom-24 || rect.top<0){
-      window.scrollBy({top:rect.bottom-bottom+110,behavior:'smooth'});
+    const visibleTop=viewport ? viewport.offsetTop : 0;
+    const visibleBottom=viewport ? viewport.offsetTop+viewport.height : window.innerHeight;
+    const box=field.getBoundingClientRect();
+    const header=$('.tabs');
+    const headerHeight=header && !header.closest('.hidden') ? Math.min(header.getBoundingClientRect().height,70) : 0;
+    const upper=visibleTop+headerHeight+16;
+    const lower=visibleBottom-28;
+    if(box.top<upper){
+      window.scrollBy({top:box.top-upper,behavior:'instant'});
+    }else if(box.bottom>lower){
+      window.scrollBy({top:box.bottom-lower+16,behavior:'instant'});
     }
   }
+  function scheduleEditorVisibility(){
+    clearTimeout(editorScrollJob);
+    requestAnimationFrame(ensureEditorVisible);
+    editorScrollJob=setTimeout(ensureEditorVisible,220);
+  }
   document.addEventListener('focusin',e=>{
-    if(!e.target.matches?.('textarea, input'))return;
-    clearTimeout(focusScrollHandle);
-    focusScrollHandle=setTimeout(keepEditorVisible,260);
+    if(e.target.matches?.('input:not([type="file"]),textarea,select,[contenteditable="true"]'))scheduleEditorVisibility();
   });
-  window.visualViewport?.addEventListener('resize',()=>setTimeout(keepEditorVisible,100));
+  document.addEventListener('input',e=>{
+    if(e.target===document.activeElement && e.target.matches?.('input:not([type="file"]),textarea,[contenteditable="true"]'))scheduleEditorVisibility();
+  });
+  window.addEventListener('resize',scheduleEditorVisibility);
+  window.visualViewport?.addEventListener('resize',scheduleEditorVisibility);
+  window.visualViewport?.addEventListener('scroll',scheduleEditorVisibility);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#floatingConverterPanel').classList.contains('hidden'))setFloatingConverter(false);
 
     const t=e.target;if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
