@@ -110,3 +110,16 @@ input,textarea,select,[contenteditable="true"]{scroll-margin-top:85px;scroll-mar
 .print-table.with-references th:nth-child(5){width:27mm}
 .print-table.with-references th:nth-child(6){width:30mm}
 }
+
+/* Independent quarter-girth log measurement */
+.log-volume-view{min-height:calc(100vh - 80px);padding-top:28px;padding-bottom:150px}
+.log-card{padding:16px;max-width:850px;margin:0 auto}
+.log-entry{display:grid;grid-template-columns:minmax(90px,1fr) minmax(90px,1fr) minmax(65px,.6fr) minmax(105px,1fr) auto;gap:10px;align-items:end;border-bottom:1px solid var(--line);padding:12px 0}
+.log-entry label{font-size:13px;font-weight:650;min-width:0}
+.log-entry .input{margin-top:6px}
+.log-result{background:var(--soft);padding:11px 9px;border-radius:8px;font-weight:800;min-height:42px;font-variant-numeric:tabular-nums}
+.log-remove{margin-bottom:0}
+.log-grand{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 10px;padding:18px;border-radius:12px;background:var(--brown);color:white}
+.log-grand strong{font-size:26px;font-variant-numeric:tabular-nums}
+.log-hint{line-height:1.6;margin:12px 0}
+@media(max-width:640px){.log-entry{grid-template-columns:repeat(2,minmax(0,1fr))}.log-entry .log-result-wrap{grid-column:1}.log-entry .log-remove{justify-self:end}.log-grand strong{font-size:22px}}
