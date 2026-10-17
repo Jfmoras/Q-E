@@ -240,8 +240,32 @@
     $('#homeView').classList.toggle('hidden',view!=='home');
     $('#workspaceView').classList.toggle('hidden',view!=='workspace');
     $('#notesView').classList.toggle('hidden',view!=='notes');
+    $('#logVolumeView').classList.toggle('hidden',view!=='log');
     $('#goHome').classList.toggle('hidden',view==='home');
     if(view==='notes')renderNotesManager();
+  }
+  // Quarter-girth (Hoppus) CFT: length (ft) × girth (in)^2 / 2304.
+  const logStore='mwi-log-volume-v1';
+  let logRows;
+  try { const stored=JSON.parse(localStorage.getItem(logStore)||'null');logRows=Array.isArray(stored)&&stored.length?stored:[{length:'',girth:''}]; }
+  catch { logRows=[{length:'',girth:''}]; }
+  const logCft=(length,girth)=>Number(length)*Number(girth)*Number(girth)/2304;
+  function renderLogVolume(){
+    const target=$('#logVolumeRows');
+    target.innerHTML=logRows.map((r,i)=>`<div class="log-row" data-index="${i}">
+      <span class="log-number">Log ${i+1}</span>
+      <label class="field">Length (ft)<input class="input log-input" data-key="length" type="number" inputmode="decimal" min="0" step="any" placeholder="Feet" value="${attr(r.length)}"></label>
+      <label class="field">Girth (in)<input class="input log-input" data-key="girth" type="number" inputmode="decimal" min="0" step="any" placeholder="Inches" value="${attr(r.girth)}"></label>
+      <strong class="log-result">${validLog(r)?logCft(r.length,r.girth).toFixed(2)+' CFT':'—'}</strong>
+      <button type="button" class="secondary remove-log" data-index="${i}" aria-label="Remove log ${i+1}">×</button>
+    </div>`).join('');
+    updateLogTotal();
+  }
+  function validLog(r){return r.length!=='' && r.girth!=='' && Number.isFinite(+r.length) && Number.isFinite(+r.girth) && +r.length>0 && +r.girth>0}
+  function updateLogTotal(){
+    const total=logRows.reduce((sum,r)=>sum+(validLog(r)?logCft(r.length,r.girth):0),0);
+    $('#logVolumeTotal').textContent=total.toFixed(2)+' CFT';
+    localStorage.setItem(logStore,JSON.stringify(logRows));
   }
   function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('.panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); saveAutosave(); }
   function setFloatingConverter(open){
@@ -342,6 +366,10 @@
   document.addEventListener('click',async e=>{
     const b=e.target.closest('button'); if(!b)return;
     if(b.id==='goHome'){showView('home');return}
+    if(b.id==='logVolumeHome'){renderLogVolume();showView('log');return}
+    if(b.id==='addLogRow'){logRows.push({length:'',girth:''});renderLogVolume();return}
+    if(b.id==='clearLogRows'){logRows=[{length:'',girth:''}];renderLogVolume();return}
+    if(b.classList.contains('remove-log')){logRows.splice(+b.dataset.index,1);if(!logRows.length)logRows=[{length:'',girth:''}];renderLogVolume();return}
     if(b.id==='newProjectHome'){startNewProject();return}
     if(b.id==='continueProjectHome'){showView('workspace');showTab(state.tab||'calculator');return}
     if(b.id==='savedProjectsHome'){renderSavedProjects();$('#savedProjectsPanel').scrollIntoView({behavior:'smooth',block:'start'});return}
@@ -406,6 +434,7 @@
 
   document.addEventListener('input',e=>{
     const t=e.target;
+    if(t.classList.contains('log-input')){const i=+t.closest('.log-row').dataset.index;logRows[i][t.dataset.key]=t.value;const r=logRows[i];t.closest('.log-row').querySelector('.log-result').textContent=validLog(r)?logCft(r.length,r.girth).toFixed(2)+' CFT':'—';updateLogTotal();return}
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
@@ -502,5 +531,5 @@
   function saveProject(){const name=(state.projectName||state.customer.name||'').trim();const status=$('#projectStatus');if(!name){status.textContent='Enter a project name before saving.';return}state.projectName=name;const list=savedList(),now=new Date().toISOString(),existing=list.findIndex(x=>x.name.toLowerCase()===name.toLowerCase());let snapshot;try{snapshot=JSON.parse(JSON.stringify(state))}catch{status.textContent='Could not prepare project for saving.';return}const rec={id:existing>=0?list[existing].id:uid(),name,updatedAt:now,snapshot};if(existing>=0)list[existing]=rec;else list.unshift(rec);try{writeSaved(list);const check=savedList().find(x=>x.id===rec.id);if(!check||!check.snapshot)throw new Error('Save verification failed');status.textContent='Project saved successfully on this device.';saveAutosave()}catch{status.textContent='Could not save project. Try fewer/lower-resolution images.'}}
   function renderSavedProjects(){const panel=$('#savedProjectsPanel'),list=savedList();panel.classList.remove('hidden');panel.innerHTML=`<div class="saved-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>Saved Projects</strong><button id="closeSaved" class="secondary">Close</button></div>${list.length?list.map(x=>`<div class="saved-row" data-id="${x.id}"><div><b>${esc(x.name)}</b><small>${new Date(x.updatedAt).toLocaleString('en-IN')}</small></div><div class="saved-actions"><button class="secondary load-project">Load</button><button class="danger delete-project">Delete</button></div></div>`).join(''):'<p class="muted">No saved projects yet.</p>'}</div>`;$('#closeSaved').onclick=()=>panel.classList.add('hidden');$$('.load-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id,x=savedList().find(p=>p.id===id);if(x){state=normalizeUnits({...defaultState(),...x.snapshot});renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Project loaded.'}});$$('.delete-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id;writeSaved(savedList().filter(p=>p.id!==id));renderSavedProjects();const status=$('#projectStatus');if(status)status.textContent='Saved project deleted.'})}
 
-  loadAutosave(); renderAll(); renderLengthConverter(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  loadAutosave(); renderAll(); renderLogVolume(); renderLengthConverter(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 })();
