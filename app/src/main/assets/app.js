@@ -430,6 +430,25 @@
     if(t.classList.contains('q-images')){const i=+t.closest('.quote-item').dataset.i,files=[...t.files].slice(0,6);for(const f of files){if(state.quoteItems[i].images.length>=6)break;state.quoteItems[i].images.push(await resizeImage(f))}renderQuotation();saveAutosave()}
   });
 
+  // The on-screen keyboard can cover fields inside an Android WebView.
+  // Wait for the visual viewport to resize, then scroll the focused editor into view.
+  let focusScrollHandle;
+  function keepEditorVisible(){
+    const active=document.activeElement;
+    if(!active?.matches?.('textarea, input[type="text"], input:not([type]), input[type="number"]'))return;
+    const rect=active.getBoundingClientRect();
+    const viewport=window.visualViewport;
+    const bottom=viewport ? viewport.offsetTop+viewport.height : window.innerHeight;
+    if(rect.bottom>bottom-24 || rect.top<0){
+      window.scrollBy({top:rect.bottom-bottom+110,behavior:'smooth'});
+    }
+  }
+  document.addEventListener('focusin',e=>{
+    if(!e.target.matches?.('textarea, input'))return;
+    clearTimeout(focusScrollHandle);
+    focusScrollHandle=setTimeout(keepEditorVisible,260);
+  });
+  window.visualViewport?.addEventListener('resize',()=>setTimeout(keepEditorVisible,100));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#floatingConverterPanel').classList.contains('hidden'))setFloatingConverter(false);
 
     const t=e.target;if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
