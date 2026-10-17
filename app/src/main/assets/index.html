@@ -151,22 +151,24 @@
     <section id="settings" class="panel">
       <div class="page-heading">
         <h2>Settings</h2>
-        <p>Configure an AI-compatible API and convert length measurements.</p>
+        <p>Manage your app preferences.</p>
       </div>
       <section class="card settings-card">
-        <h3>AI API</h3>
-        <p class="muted">Enter your API key. The app will automatically identify supported providers and choose the connection settings. An internet connection and an API key with model access are required.</p>
-        <label class="field">API key<input id="aiApiKey" class="input" type="password" autocomplete="off" placeholder="Paste your API key"></label>
-        <p id="aiDetectionStatus" class="muted" aria-live="polite">Provider detection starts when you paste an API key.</p>
-        <div class="settings-actions">
-          <button id="saveAiSettings" class="primary" type="button">Connect AI</button>
-          <button id="removeAiKey" class="secondary" type="button">Remove API key</button>
-          <span id="aiSettingsStatus" class="status" role="status" aria-live="polite"></span>
-        </div>
+        <h3>Preferences</h3>
+        <p class="muted">Use the floating ruler button to convert measurements anywhere in Q&E.</p>
       </section>
-      <section class="card settings-card">
-        <h3>Length converter</h3>
-        <p class="muted">Convert freely between millimetres, centimetres, metres, inches, feet, yards and miles.</p>
+    </section>
+  </main>
+  </div>
+
+  <button id="floatingConverterButton" class="floating-converter-button no-print" type="button" aria-label="Open length converter" aria-controls="floatingConverterPanel" aria-expanded="false" title="Convert measurements">📏</button>
+  <div id="floatingConverterPanel" class="floating-converter-overlay no-print hidden" role="presentation">
+    <div class="floating-converter-dialog" role="dialog" aria-modal="true" aria-labelledby="floatingConverterTitle">
+      <div class="floating-converter-title"><h2 id="floatingConverterTitle">Length converter</h2><button id="closeFloatingConverter" type="button" class="secondary" aria-label="Close converter">×</button></div>
+      <p class="muted">Convert between mm, cm, metres, inches, feet, yards and miles.</p>
+      <section class="card settings-card floating-converter-card">
+        
+        
         <div class="converter-grid">
           <label class="field">Value<input id="lengthValue" class="input" type="number" step="any" inputmode="decimal" placeholder="Enter a length"></label>
           <label class="field">From<select id="lengthFrom" class="input"></select></label>
@@ -175,10 +177,9 @@
         </div>
         <p id="lengthResult" class="length-result" aria-live="polite">Enter a value to convert.</p>
       </section>
-    </section>
-  </main>
-  </div>
 
+    </div>
+  </div>
   <datalist id="unitOptions">
     <option value="Set"></option><option value="Piece"></option><option value="Nos"></option><option value="Lumpsum"></option><option value="Sq.ft"></option><option value="Rft"></option><option value="Job"></option>
   </datalist>
