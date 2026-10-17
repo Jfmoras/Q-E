@@ -9,6 +9,9 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
+import android.net.Uri
+import android.app.Activity
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -35,6 +38,8 @@ import javax.crypto.spec.GCMParameterSpec
 
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
+    private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
+    private val fileChooserRequest = 7024
     private val home = "https://appassets.androidplatform.net/index.html"
     private val aiExecutor = Executors.newSingleThreadExecutor()
     private val aiPreferences by lazy { getSharedPreferences("ai_settings", Context.MODE_PRIVATE) }
@@ -170,6 +175,19 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    @Deprecated("Used for the Android WebView file chooser result")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != fileChooserRequest) return
+        val callback = pendingFileChooser ?: return
+        pendingFileChooser = null
+        callback.onReceiveValue(
+            if (resultCode == Activity.RESULT_OK)
+                WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+            else null
+        )
+    }
+
     private fun setupWebView() {
         web.settings.apply {
             javaScriptEnabled = true
@@ -217,7 +235,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        web.webChromeClient = WebChromeClient()
+        web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                if (filePathCallback == null || fileChooserParams == null) return false
+                pendingFileChooser?.onReceiveValue(null)
+                pendingFileChooser = filePathCallback
+                return try {
+                    startActivityForResult(fileChooserParams.createIntent(), fileChooserRequest)
+                    true
+                } catch (error: Exception) {
+                    pendingFileChooser = null
+                    filePathCallback.onReceiveValue(null)
+                    false
+                }
+            }
+        }
     }
 
     private fun sendAiResult(requestId: String, success: Boolean, message: String) {
