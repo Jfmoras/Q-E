@@ -125,9 +125,11 @@
     const apiKey=$('#aiApiKey').value.trim();
     if(!apiKey)throw new Error('Paste an API key first.');
     const provider=detectAiProvider(apiKey);
-    if(!provider||provider==='generic')throw new Error('Provider cannot be determined safely from this key. Use an identifiable OpenAI, Gemini, Anthropic, Groq, OpenRouter, xAI or Perplexity key.');
-    const preset=aiProviders[provider];
-    const settings={apiKey,provider,endpoint:preset.endpoint,model:preset.model};
+    if(!provider)throw new Error('Paste an API key first.');
+    // Unknown key formats are tested ONLY against Google's Gemini endpoint, never arbitrary hosts.
+    const selectedProvider=provider==='generic'?'google':provider;
+    const preset=aiProviders[selectedProvider];
+    const settings={apiKey,provider:selectedProvider,endpoint:preset.endpoint,model:preset.model};
     const button=$('#saveAiSettings');
     button.disabled=true;
     try{
@@ -138,13 +140,13 @@
         localStorage.setItem(aiSettingsStorage,JSON.stringify(settings));
       }
       Object.assign(aiSettings,settings);
-      updateAiSettingsStatus('Checking connection…');
+      updateAiSettingsStatus('Checking connection with '+preset.label+'…');
       await improveDescription('Wooden table', 'concise');
       $('#aiApiKey').value='';
       $('#aiDetectionStatus').textContent=`Connected to ${preset.label} (${preset.model}).`;
       updateAiSettingsStatus('AI connection tested successfully and saved.');
     }catch(error){
-      updateAiSettingsStatus(`Connection not verified: ${error?.message||error}. Check the key and model access.`);
+      updateAiSettingsStatus(`Connection not verified: ${error?.message||error}. Check that this is a Gemini API key and has model access.`);
     }finally{button.disabled=false}
   }
   function removeAiKey(){
