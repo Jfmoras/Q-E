@@ -11,8 +11,8 @@ android {
         applicationId = "com.moraswood.qande"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "10.0"
+        versionCode = 11
+        versionName = "10.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
