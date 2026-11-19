@@ -182,6 +182,8 @@ class MainActivity : AppCompatActivity() {
             override fun handleOnBackPressed() {
                 if (web.canGoBack()) {
                     web.goBack()
+                } else if (web.url != home) {
+                    web.loadUrl(home)
                 } else {
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
@@ -210,6 +212,10 @@ class MainActivity : AppCompatActivity() {
                 val uri = request.url
                 // Allow internal asset domain
                 if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") {
+                    if (uri.path.isNullOrEmpty() || uri.path == "/") {
+                        view.loadUrl(home)
+                        return true
+                    }
                     return false
                 }
                 // Open external links in the system browser
