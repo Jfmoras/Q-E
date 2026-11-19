@@ -7,10 +7,10 @@
   const rs = v => `Rs. ${Math.round(Number(v)||0).toLocaleString('en-IN')}`;
   const blankRow = () => ({l:'',lUnit:'ft',w:'',wUnit:'in',t:'',tUnit:'in',q:'',mode:'CFT'});
   const blankItem = () => ({name:'',rows:[blankRow()]});
-  const blankCosting = () => ({cftRate:'',kolRate:'',labourMode:'sqft',labourLength:'',labourLengthUnit:'ft',labourWidth:'',labourWidthUnit:'ft',labourQty:'',labourRate:'',labourLumpsum:'',polishMode:'sqft',polishRate:'',polishLumpsum:'',polishAreaOverride:'',consumables:'',other:'',sellingPrice:'',sellingAuto:true});
+  const blankCosting = () => ({rowRates:[],cftRate:'',kolRate:'',labourMode:'sqft',labourLength:'',labourLengthUnit:'ft',labourWidth:'',labourWidthUnit:'ft',labourQty:'',labourRate:'',labourLumpsum:'',polishMode:'sqft',polishRate:'',polishLumpsum:'',polishAreaOverride:'',consumables:'',other:'',sellingPrice:'',sellingAuto:true});
   const blankQuote = () => ({description:'',unit:'',qty:'',unitPrice:'',images:[],aiOriginal:''});
   const defaultState = () => ({
-    tab:'calculator', projectName:'', items:[blankItem()], estimationItems:[], costings:[], quoteItems:[blankQuote()],
+    tab:'calculator', projectName:'', revision:0, projectId:'', quoteOptions:[], activeQuoteOption:0, items:[blankItem()], estimationItems:[], costings:[], quoteItems:[blankQuote()],
     customer:{name:'',location:''}, quote:{discountType:'amount',discountValue:'',gstPercent:'',notes:['']},
     actual:{materials:'',labourHours:''}
   });
@@ -31,7 +31,7 @@
   const costingResult = i => {
     const item=state.estimationItems[i]||{rows:[]}, c=state.costings[i]||blankCosting(), tot=itemTotals(item), surface=itemSurface(item);
     const polishArea=num(c.polishAreaOverride)||surface;
-    const wood=tot.CFT*num(c.cftRate)+tot.KOL*num(c.kolRate);
+    const wood=item.rows.reduce((sum,row,j)=>{const calc=calcRow(row),override=c.rowRates?.[j];const rate=override===undefined||override===null||override===''?(calc.mode==='CFT'?c.cftRate:c.kolRate):override;return sum+calc.val*num(rate)},0);
     const labourArea=labourAreaSqft(c);
     const labour=(c.labourMode||'sqft')==='lumpsum'?num(c.labourLumpsum):labourArea*num(c.labourRate);
     const polish=c.polishMode==='sqft'?polishArea*num(c.polishRate):num(c.polishLumpsum);
@@ -41,6 +41,18 @@
     return {tot,surface,polishArea,wood,labourArea,labour,polish,cost,selling,profit,markup:cost?profit/cost*100:0,margin:selling?profit/selling*100:0};
   };
   const estimateGrand = () => state.estimationItems.reduce((a,_,i)=>{const r=costingResult(i);a.cost+=r.cost;a.selling+=r.selling;a.profit+=r.profit;return a},{cost:0,selling:0,profit:0});
+  const ensureQuoteOptions=()=>{
+    if(!Array.isArray(state.quoteOptions)||!state.quoteOptions.length)state.quoteOptions=[{name:'Option 1',items:state.quoteItems||[blankQuote()],discountType:state.quote.discountType,discountValue:state.quote.discountValue,gstPercent:state.quote.gstPercent}];
+    state.activeQuoteOption=Math.max(0,Math.min(Number(state.activeQuoteOption)||0,state.quoteOptions.length-1));
+  };
+  const syncActiveOption=()=>{ensureQuoteOptions();const opt=state.quoteOptions[state.activeQuoteOption];opt.items=state.quoteItems;opt.discountType=state.quote.discountType;opt.discountValue=state.quote.discountValue;opt.gstPercent=state.quote.gstPercent};
+  const activateOption=i=>{syncActiveOption();state.activeQuoteOption=i;const opt=state.quoteOptions[i];state.quoteItems=opt.items||[blankQuote()];state.quote.discountType=opt.discountType||'amount';state.quote.discountValue=opt.discountValue??'';state.quote.gstPercent=opt.gstPercent??'';renderQuotation();saveAutosave()};
+  const totalsForOption=opt=>{
+    const subtotal=(opt.items||[]).reduce((s,x)=>s+num(x.qty)*num(x.unitPrice),0);
+    const raw=opt.discountType==='percent'?subtotal*num(opt.discountValue)/100:num(opt.discountValue);
+    const discount=Math.min(subtotal,Math.max(0,raw)),taxable=Math.max(0,subtotal-discount),gst=taxable*num(opt.gstPercent)/100;
+    return {subtotal,discount,taxable,gst,grand:taxable+gst};
+  };
   const quoteTotals = () => {
     const subtotal=state.quoteItems.reduce((s,x)=>s+num(x.qty)*num(x.unitPrice),0);
     const raw=state.quote.discountType==='percent'?subtotal*num(state.quote.discountValue)/100:num(state.quote.discountValue);
@@ -52,7 +64,7 @@
   const esc = s => String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const attr = esc;
   const uid = () => Math.random().toString(36).slice(2,9);
-  const saveAutosave = () => { try { localStorage.setItem('mwi-autosave-v1',JSON.stringify(state)); } catch {} };
+  const saveAutosave = () => { try { syncActiveOption(); localStorage.setItem('mwi-autosave-v1',JSON.stringify(state)); } catch {} };
   const normalizeUnits = st => { (st.items||[]).forEach(item=>(item.rows||[]).forEach(r=>{r.lUnit=r.lUnit||'ft';r.wUnit=r.wUnit||'in';r.tUnit=r.tUnit||'in'}));(st.estimationItems||[]).forEach(item=>(item.rows||[]).forEach(r=>{r.lUnit=r.lUnit||'ft';r.wUnit=r.wUnit||'in';r.tUnit=r.tUnit||'in'}));(st.costings||[]).forEach(c=>{c.labourLengthUnit=c.labourLengthUnit||'ft';c.labourWidthUnit=c.labourWidthUnit||'ft'});return st; };
   const loadAutosave = () => { try { const x=JSON.parse(localStorage.getItem('mwi-autosave-v1')||'null'); if(x) state=normalizeUnits({...defaultState(),...x}); } catch {} };
   const savedList = () => { try { return JSON.parse(localStorage.getItem('mwi-projects-v1')||'[]'); } catch { return []; } };
@@ -263,7 +275,7 @@
   }
   function startNewProject(){
     if(hasProjectWork()&&!window.confirm('Start a new project? Your current unsaved work will be replaced. Save the current project first if you want to keep it.'))return;
-    state=defaultState();
+    state=defaultState();loadedReadOnly=false;
     saveAutosave();renderAll();showView('workspace');$('#projectName').focus();
   }
   function renderCalc(){
@@ -291,7 +303,7 @@
     if(!state.estimationItems.length){host.innerHTML='<div class="card" style="padding:16px;margin-bottom:16px;color:#57534e">No calculator items have been sent yet. You can still add an estimation item manually.</div>'}
     state.estimationItems.forEach((item,i)=>{
       if(!state.costings[i]) state.costings[i]=blankCosting(); const c=state.costings[i],r=costingResult(i),card=document.createElement('section'); card.className='estimate-card'; card.dataset.i=i;
-      const measures=item.rows.length?`<div class="table-wrap"><table class="calc-table estimate-measure-table"><thead><tr><th>Length</th><th>Width</th><th>Thickness</th><th>Pieces</th><th>Type</th><th>Total</th></tr></thead><tbody>${item.rows.map(x=>{const z=calcRow(x),lu=x.lUnit||'ft',wu=x.wUnit||'in',tu=x.tUnit||'in';return `<tr><td>${originalMeasure(x.l,lu)}${lu!=='ft'?`<small class="converted-measure">${fmtMeasure(z.lFt)} ft</small>`:''}</td><td>${originalMeasure(x.w,wu)}${wu!=='in'?`<small class="converted-measure">${fmtMeasure(z.wIn)} in</small>`:''}</td><td>${originalMeasure(x.t,tu)}${tu!=='in'?`<small class="converted-measure">${fmtMeasure(z.tIn)} in</small>`:''}</td><td>${esc(x.q||'-')}</td><td>${x.mode}</td><td><b>${z.val.toFixed(3)} ${z.mode}</b></td></tr>`}).join('')}</tbody></table></div>`:'';
+      const measures=item.rows.length?`<div class="table-wrap"><table class="calc-table estimate-measure-table"><thead><tr><th>Length</th><th>Width</th><th>Thickness</th><th>Pieces</th><th>Type</th><th>Total</th><th>Rate / unit (optional)</th><th>Wood amount</th></tr></thead><tbody>${item.rows.map(x=>{const z=calcRow(x),lu=x.lUnit||'ft',wu=x.wUnit||'in',tu=x.tUnit||'in';const rate=c.rowRates?.[item.rows.indexOf(x)]??'',effective=rate===''?(x.mode==='CFT'?c.cftRate:c.kolRate):rate;return `<tr><td>${originalMeasure(x.l,lu)}${lu!=='ft'?`<small class="converted-measure">${fmtMeasure(z.lFt)} ft</small>`:''}</td><td>${originalMeasure(x.w,wu)}${wu!=='in'?`<small class="converted-measure">${fmtMeasure(z.wIn)} in</small>`:''}</td><td>${originalMeasure(x.t,tu)}${tu!=='in'?`<small class="converted-measure">${fmtMeasure(z.tIn)} in</small>`:''}</td><td>${esc(x.q||'-')}</td><td>${x.mode}</td><td><b>${z.val.toFixed(3)} ${z.mode}</b></td><td><input class="input row-timber-rate" type="number" min="0" step="any" data-ri="${item.rows.indexOf(x)}" value="${attr(rate)}" placeholder="Default ${z.mode}"></td><td class="row-wood-amount">${money(z.val*num(effective))}</td></tr>`}).join('')}</tbody></table></div>`:'';
       card.innerHTML=`<div class="estimate-top"><label class="item-name field">Item<input class="input est-name" value="${attr(item.name)}"></label><div class="estimate-sizes"><b>${r.tot.CFT.toFixed(3)} CFT</b> · <b>${r.tot.KOL.toFixed(3)} KOL</b></div></div>${measures}<div class="estimate-grid"><div class="subcard"><h3>Wood cost</h3>${field('Rate / CFT','cftRate',c.cftRate)}${field('Rate / KOL','kolRate',c.kolRate)}<div class="calc-line est-wood">Wood: <b>${money(r.wood)}</b></div></div><div class="subcard"><h3>Labour</h3><label class="field">Pricing method<select class="input labour-mode" data-key="labourMode"><option value="sqft" ${(c.labourMode||'sqft')==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.labourMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${(c.labourMode||'sqft')==='sqft'?`<p class="muted">Enter finished door/window dimensions in any unit. The app converts both measurements to feet before calculating sq.ft.</p><div class="two-col">${measureField('Length','labourLength',c.labourLength,'labourLengthUnit',c.labourLengthUnit||'ft')}${measureField('Width','labourWidth',c.labourWidth,'labourWidthUnit',c.labourWidthUnit||'ft')}${field('Quantity','labourQty',c.labourQty)}${field('Rate / sq.ft','labourRate',c.labourRate)}</div><div class="calc-line est-labour">Area: <b>${r.labourArea.toFixed(2)} sq.ft</b> · Labour: <b>${money(r.labour)}</b></div>`:`${field('Labour lumpsum','labourLumpsum',c.labourLumpsum)}<div class="calc-line est-labour">Labour: <b>${money(r.labour)}</b></div>`}</div><div class="subcard"><h3>Polish</h3><label class="field">Pricing method<select class="input polish-mode" data-key="polishMode"><option value="sqft" ${c.polishMode==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.polishMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${c.polishMode==='sqft'?`<p class="muted">Timber surface area from Calculator (all faces): <b>${r.surface.toFixed(2)} sq.ft</b>. Mixed input units are converted automatically.</p>${field('Override polish area (optional)','polishAreaOverride',c.polishAreaOverride)}${field('Polish rate / sq.ft','polishRate',c.polishRate)}`:field('Polish lumpsum','polishLumpsum',c.polishLumpsum)}<div class="calc-line est-polish">Polish: <b>${money(r.polish)}</b></div></div></div><div class="estimate-bottom">${field('Consumables','consumables',c.consumables)}${field('Other costs','other',c.other)}<label class="field selling-price-field">Estimated selling price <span class="selling-price-hint">Auto-filled from estimated cost. Edit this amount to add your margin/profit; this is the price sent to Quotation.</span><input class="input est-input selling-price-input" type="number" min="0" step="any" inputmode="decimal" data-key="sellingPrice" value="${attr(c.sellingPrice)}"></label></div><div class="metrics"><div class="metric est-cost"><span>Estimated cost</span><strong>${money(r.cost)}</strong></div><div class="metric est-profit"><span>Profit</span><strong>${money(r.profit)}</strong></div><div class="metric est-markup"><span>Markup</span><strong>${r.markup.toFixed(1)}%</strong></div><div class="metric est-margin"><span>Margin</span><strong>${r.margin.toFixed(1)}%</strong></div></div><div class="estimate-send-row"><span class="muted">When the estimated selling price is ready, send this item to Quotation. Quotation will receive the item description and this estimated selling price; you add Unit and Quantity there.</span><div class="send-quote-actions"><span class="send-quote-status" aria-live="polite"></span><button class="primary send-one-quote" data-i="${i}">Send this item to Quotation →</button></div></div>`;
       host.appendChild(card);
     });
@@ -300,6 +312,7 @@
 
   function refreshEstimationNumbers(i){
     const card=$(`.estimate-card[data-i="${i}"]`);if(!card)return;const r=costingResult(i),c=state.costings[i]||blankCosting();
+    $('.row-timber-rate',card).forEach(input=>{const j=+input.dataset.ri,row=state.estimationItems[i].rows[j],z=calcRow(row),rate=(c.rowRates||[])[j];const effective=rate===undefined||rate===null||rate===''?(z.mode==='CFT'?c.cftRate:c.kolRate):rate;const amount=input.closest('tr')?.querySelector('.row-wood-amount');if(amount)amount.textContent=money(z.val*num(effective))});
     const wood=$('.est-wood',card);if(wood)wood.innerHTML=`Wood: <b>${money(r.wood)}</b>`;
     const labour=$('.est-labour',card);if(labour)labour.innerHTML=(c.labourMode||'sqft')==='lumpsum'?`Labour: <b>${money(r.labour)}</b>`:`Area: <b>${r.labourArea.toFixed(2)} sq.ft</b> · Labour: <b>${money(r.labour)}</b>`;
     const polish=$('.est-polish',card);if(polish)polish.innerHTML=`Polish: <b>${money(r.polish)}</b>`;
@@ -317,6 +330,9 @@
   }
 
   function renderQuotation(){
+    ensureQuoteOptions();
+    const selected=$('#quoteOptionsSelect');if(selected)selected.innerHTML=state.quoteOptions.map((o,i)=>`<option value="${i}" ${i===state.activeQuoteOption?'selected':''}>${esc(o.name||'Option '+(i+1))}</option>`).join('');
+    const optionName=$('#quoteOptionName');if(optionName)optionName.value=state.quoteOptions[state.activeQuoteOption].name;
     $('#customerName').value=state.customer.name; $('#customerLocation').value=state.customer.location; $('#discountType').value=state.quote.discountType; $('#discountValue').value=state.quote.discountValue; $('#gstPercent').value=state.quote.gstPercent;
     const date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); $('#quoteDateScreen').textContent=`Date: ${date}`;
     const host=$('#quotationItems'); host.innerHTML='';
@@ -326,11 +342,23 @@
   function renderNotes(){const host=$('#notesList');host.innerHTML='';state.quote.notes.forEach((note,i)=>{const d=document.createElement('div');d.className='note-row';d.dataset.i=i;d.innerHTML=`<span class="note-num">${i+1}.</span><textarea class="input note-text" rows="2" placeholder="Add note">${esc(note)}</textarea><div class="note-actions no-print"><button class="secondary save-note">Save</button><button class="secondary remove-note">Remove</button></div>`;host.appendChild(d)});renderSavedNoteOptions()}
   function renderSavedNoteOptions(){const select=$('#savedNoteSelect');if(!select)return;const notes=savedNotes();select.innerHTML='<option value="">Select saved note</option>'+notes.map((x,i)=>`<option value="${i}">${esc(x)}</option>`).join('')}
   function renderQuoteTotals(){const t=quoteTotals();$('#quoteTotalsScreen').innerHTML=`<div class="total-line"><span>Total Price</span><strong>${money(t.subtotal)}</strong></div><div class="total-line"><span>Discount${state.quote.discountType==='percent'&&num(state.quote.discountValue)?` (${num(state.quote.discountValue)}%)`:''}</span><strong>- ${money(t.discount)}</strong></div><div class="total-line"><span>GST (${num(state.quote.gstPercent)}%)</span><strong>${money(t.gst)}</strong></div><div class="total-line grand"><span>Grand Total</span><strong>${money(t.grand)}</strong></div>`}
-  function renderPrintSheet(){const t=quoteTotals(),date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),imgs=state.quoteItems.flatMap(x=>x.images).slice(0,4),notes=state.quote.notes.filter(x=>x.trim());$('#printSheet').innerHTML=`<div class="print-header"><img class="print-logo" src="/mwi-logo.png" alt="MWI"><div><div class="print-company-name">MORAS WOOD INDUSTRIES</div><div class="print-tagline">SAWMILL | CUSTOM FURNITURE | WOODWORKS</div></div><div class="print-company-details"><div>Moorukaveri, Kinnigoli, Mangaluru - 574150</div><div>+91 63616 95416 &nbsp; | &nbsp; info@moraswood.com</div><div>GSTIN: 29AFPPM1242L1Z1</div></div></div><div class="print-title-row"><div>QUOTATION</div><div class="print-date">Date: ${date}</div></div><div class="print-customer-bar"><div class="print-customer-label">CUSTOMER DETAILS</div><div><strong>${esc(state.customer.name||'-')}</strong><div>${esc(state.customer.location||'-')}</div></div></div>${imgs.length?`<div class="print-images ${imgs.length===1?'single':'multiple'}">${imgs.map((s,i)=>`<img src="${s}" alt="Quotation product ${i+1}">`).join('')}</div>`:''}<table class="print-table"><thead><tr><th>Sl. No.</th><th>Description</th><th>Units</th><th>Unit Price</th><th>Total Price</th></tr></thead><tbody>${state.quoteItems.map((x,i)=>`<tr><td class="print-sl">${i+1}</td><td class="print-desc">${esc(x.description||'-')}</td><td class="print-num">${esc([x.qty,x.unit].filter(Boolean).join(' ')||'-')}</td><td class="print-num">${rs(num(x.unitPrice))}</td><td class="print-num">${rs(num(x.qty)*num(x.unitPrice))}</td></tr>`).join('')}</tbody></table><div class="print-totals"><div><span>Total</span><strong>${rs(t.subtotal)}</strong></div>${t.discount>0?`<div><span>Discount${state.quote.discountType==='percent'&&num(state.quote.discountValue)?` (${num(state.quote.discountValue)}%)`:''}</span><strong>- ${rs(t.discount)}</strong></div>`:''}<div><span>GST (${num(state.quote.gstPercent)}%)</span><strong>${rs(t.gst)}</strong></div><div class="print-grand"><span>GRAND TOTAL</span><strong>${rs(t.grand)}</strong></div></div>${notes.length?`<div class="print-notes"><div class="print-notes-title">NOTES</div>${notes.map((x,i)=>`<div>${i+1}. ${esc(x)}</div>`).join('')}</div>`:''}<div class="print-footer"><strong>MORAS WOOD INDUSTRIES</strong><span>Digital copy - no signature required.</span></div>`}
+  function renderPrintSheet(){
+    syncActiveOption();
+    const date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),notes=state.quote.notes.filter(x=>x.trim());
+    const sections=state.quoteOptions.map((opt,oi)=>{
+      const t=totalsForOption(opt),imgs=(opt.items||[]).flatMap(x=>x.images||[]).slice(0,4);
+      return `<section class="print-option"><h3>OPTION ${oi+1}: ${esc(opt.name||'Option '+(oi+1))}</h3>
+      ${imgs.length?`<div class="print-images ${imgs.length===1?'single':'multiple'}">${imgs.map((s,i)=>`<img src="${s}" alt="Option ${oi+1} product ${i+1}">`).join('')}</div>`:''}
+      <table class="print-table"><thead><tr><th>Sl. No.</th><th>Description</th><th>Units</th><th>Unit Price</th><th>Total Price</th></tr></thead><tbody>${(opt.items||[]).map((x,i)=>`<tr><td class="print-sl">${i+1}</td><td class="print-desc">${esc(x.description||'-')}</td><td class="print-num">${esc([x.qty,x.unit].filter(Boolean).join(' ')||'-')}</td><td class="print-num">${rs(num(x.unitPrice))}</td><td class="print-num">${rs(num(x.qty)*num(x.unitPrice))}</td></tr>`).join('')}</tbody></table>
+      <div class="print-totals"><div><span>Total</span><strong>${rs(t.subtotal)}</strong></div>${t.discount>0?`<div><span>Discount</span><strong>- ${rs(t.discount)}</strong></div>`:''}<div><span>GST (${num(opt.gstPercent)}%)</span><strong>${rs(t.gst)}</strong></div><div class="print-grand"><span>GRAND TOTAL</span><strong>${rs(t.grand)}</strong></div></div></section>`;
+    }).join('');
+    $('#printSheet').innerHTML=`<div class="print-header"><img class="print-logo" src="/mwi-logo.png" alt="MWI"><div><div class="print-company-name">MORAS WOOD INDUSTRIES</div><div class="print-tagline">SAWMILL | CUSTOM FURNITURE | WOODWORKS</div></div><div class="print-company-details"><div>Moorukaveri, Kinnigoli, Mangaluru - 574150</div><div>+91 63616 95416 &nbsp; | &nbsp; info@moraswood.com</div><div>GSTIN: 29AFPPM1242L1Z1</div></div></div><div class="print-title-row"><div>QUOTATION · R${num(state.revision)}</div><div class="print-date">Date: ${date}</div></div><div class="print-customer-bar"><div class="print-customer-label">CUSTOMER DETAILS</div><div><strong>${esc(state.customer.name||'-')}</strong><div>${esc(state.customer.location||'-')}</div></div></div>${sections}${notes.length?`<div class="print-notes"><div class="print-notes-title">NOTES</div>${notes.map((x,i)=>`<div>${i+1}. ${esc(x)}</div>`).join('')}</div>`:''}<div class="print-footer"><strong>MORAS WOOD INDUSTRIES</strong><span>Digital copy - no signature required.</span></div>`;
+  }
 
   function renderReview(){ $('#actualMaterials').value=state.actual.materials; $('#actualLabourHours').value=state.actual.labourHours; $('#reviewEstimated').textContent=money(estimateGrand().cost) }
   function renderAll(){ $('#projectName').value=state.projectName; renderCalc(); renderEstimation(); renderQuotation(); renderReview(); showTab(state.tab||'calculator'); $('#continueProjectHome').classList.toggle('hidden',!hasProjectWork()); }
 
+  let loadedReadOnly=false;
   document.addEventListener('click',async e=>{
     const b=e.target.closest('button'); if(!b)return;
     if(b.id==='goHome'){showView('home');return}
@@ -356,6 +384,9 @@
       const index=Number(b.closest('.saved-note-row').dataset.i),list=savedNotes();list.splice(index,1);writeSavedNotes(list);renderNotesManager();renderSavedNoteOptions();$('#notesManagerStatus').textContent='Note deleted.';return;
     }
     if(b.classList.contains('tab')){showView('workspace');return showTab(b.dataset.tab)}
+    if(b.id==='addQuoteOption'){syncActiveOption();state.quoteOptions.push({name:'Option '+(state.quoteOptions.length+1),items:[blankQuote()],discountType:state.quote.discountType,discountValue:'',gstPercent:state.quote.gstPercent});activateOption(state.quoteOptions.length-1);return}
+    if(b.id==='duplicateQuoteOption'){syncActiveOption();const copy=JSON.parse(JSON.stringify(state.quoteOptions[state.activeQuoteOption]));copy.name=copy.name+' Copy';state.quoteOptions.push(copy);activateOption(state.quoteOptions.length-1);return}
+    if(b.id==='removeQuoteOption'){syncActiveOption();if(state.quoteOptions.length<=1){alert('At least one quotation option is required.');return}if(!confirm('Remove this quotation option?'))return;state.quoteOptions.splice(state.activeQuoteOption,1);state.activeQuoteOption=0;const opt=state.quoteOptions[0];state.quoteItems=opt.items;state.quote.discountType=opt.discountType;state.quote.discountValue=opt.discountValue;state.quote.gstPercent=opt.gstPercent;renderQuotation();saveAutosave();return}
     if(b.id==='newCalcItem'){state.items.push(blankItem());renderCalc();saveAutosave()}
     if(b.classList.contains('add-row')){state.items[+b.dataset.ii].rows.push(blankRow());renderCalc();saveAutosave()}
     if(b.id==='sendToEstimation'){
@@ -430,10 +461,11 @@
     if(t.id==='aiApiKey'){updateDetectedProvider(t.value);return}
     if(t.id==='aiEndpoint')t.dataset.userEdited='true';
     if(t.id==='aiModel')t.dataset.userEdited='true';
+    if(t.id==='quoteOptionName'){ensureQuoteOptions();state.quoteOptions[state.activeQuoteOption].name=t.value;$('#quoteOptionsSelect').options[state.activeQuoteOption].text=t.value||'Option '+(state.activeQuoteOption+1);renderPrintSheet();saveAutosave();return}
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
-    const card=t.closest('.estimate-card'); if(card){const i=+card.dataset.i;if(t.classList.contains('est-name'))state.estimationItems[i].name=t.value;if(t.classList.contains('est-input')){state.costings[i][t.dataset.key]=t.value;if(t.dataset.key==='sellingPrice'){state.costings[i].sellingAuto=false;t.classList.remove('input-error');const status=$('.send-quote-status',card);if(status)status.textContent=''}refreshEstimationNumbers(i)}saveAutosave()}
+    const card=t.closest('.estimate-card'); if(card){const i=+card.dataset.i;if(t.classList.contains('est-name'))state.estimationItems[i].name=t.value;if(t.classList.contains('row-timber-rate')){const costing=state.costings[i];costing.rowRates=costing.rowRates||[];costing.rowRates[+t.dataset.ri]=t.value;refreshEstimationNumbers(i)}if(t.classList.contains('est-input')){state.costings[i][t.dataset.key]=t.value;if(t.dataset.key==='sellingPrice'){state.costings[i].sellingAuto=false;t.classList.remove('input-error');const status=$('.send-quote-status',card);if(status)status.textContent=''}refreshEstimationNumbers(i)}saveAutosave()}
     const qi=t.closest('.quote-item'); if(qi){const i=+qi.dataset.i;if(t.classList.contains('q-desc'))state.quoteItems[i].description=t.value;if(t.classList.contains('q-unit'))state.quoteItems[i].unit=t.value;if(t.classList.contains('q-qty'))state.quoteItems[i].qty=t.value;if(t.classList.contains('q-price'))state.quoteItems[i].unitPrice=t.value;const rowTotal=$('.q-row-total strong',qi);if(rowTotal)rowTotal.textContent=money(num(state.quoteItems[i].qty)*num(state.quoteItems[i].unitPrice));renderQuoteTotals();renderPrintSheet();saveAutosave()}
     if(t.classList.contains('note-text')){state.quote.notes[+t.closest('.note-row').dataset.i]=t.value;renderPrintSheet();saveAutosave()}
     if(t.id==='customerName'){state.customer.name=t.value;renderPrintSheet();saveAutosave()} if(t.id==='customerLocation'){state.customer.location=t.value;renderPrintSheet();saveAutosave()}
@@ -444,6 +476,7 @@
 
   document.addEventListener('change',async e=>{
     const t=e.target;
+    if(t.id==='quoteOptionsSelect'){activateOption(+t.value);return}
     if(t.id==='lengthFrom'||t.id==='lengthTo'){updateLengthConversion()}
     if(t.classList.contains('row-mode')){state.items[+t.dataset.ii].rows[+t.dataset.ri].mode=t.value;refreshCalcNumbers(+t.dataset.ii,+t.dataset.ri);saveAutosave()}
     if(t.classList.contains('measure-unit')){const ii=+t.dataset.ii,ri=+t.dataset.ri;state.items[ii].rows[ri][t.dataset.unitKey]=t.value;refreshCalcNumbers(ii,ri);saveAutosave()}
@@ -458,8 +491,28 @@
     const t=e.target;if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
   });
 
-  function saveProject(){const name=(state.projectName||state.customer.name||'').trim();const status=$('#projectStatus');if(!name){status.textContent='Enter a project name before saving.';return}state.projectName=name;const list=savedList(),now=new Date().toISOString(),existing=list.findIndex(x=>x.name.toLowerCase()===name.toLowerCase());let snapshot;try{snapshot=JSON.parse(JSON.stringify(state))}catch{status.textContent='Could not prepare project for saving.';return}const rec={id:existing>=0?list[existing].id:uid(),name,updatedAt:now,snapshot};if(existing>=0)list[existing]=rec;else list.unshift(rec);try{writeSaved(list);const check=savedList().find(x=>x.id===rec.id);if(!check||!check.snapshot)throw new Error('Save verification failed');status.textContent='Project saved successfully on this device.';saveAutosave()}catch{status.textContent='Could not save project. Try fewer/lower-resolution images.'}}
-  function renderSavedProjects(){const panel=$('#savedProjectsPanel'),list=savedList();panel.classList.remove('hidden');panel.innerHTML=`<div class="saved-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>Saved Projects</strong><button id="closeSaved" class="secondary">Close</button></div>${list.length?list.map(x=>`<div class="saved-row" data-id="${x.id}"><div><b>${esc(x.name)}</b><small>${new Date(x.updatedAt).toLocaleString('en-IN')}</small></div><div class="saved-actions"><button class="secondary load-project">Load</button><button class="danger delete-project">Delete</button></div></div>`).join(''):'<p class="muted">No saved projects yet.</p>'}</div>`;$('#closeSaved').onclick=()=>panel.classList.add('hidden');$$('.load-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id,x=savedList().find(p=>p.id===id);if(x){state=normalizeUnits({...defaultState(),...x.snapshot});renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Project loaded.'}});$$('.delete-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id;writeSaved(savedList().filter(p=>p.id!==id));renderSavedProjects();const status=$('#projectStatus');if(status)status.textContent='Saved project deleted.'})}
+  function saveProject(){
+    syncActiveOption();
+    const name=(state.projectName||state.customer.name||'').trim(),status=$('#projectStatus');
+    if(!name){status.textContent='Enter a project name before saving.';return}
+    if(loadedReadOnly){status.textContent='Loaded revision is protected. Use Revise in Saved Projects to create a new revision.';return}
+    state.projectName=name;
+    const list=savedList(),now=new Date().toISOString();
+    const rootId=state.projectId||uid();state.projectId=rootId;state.revision=num(state.revision);
+    let snapshot;try{snapshot=JSON.parse(JSON.stringify(state))}catch{status.textContent='Could not prepare project for saving.';return}
+    const existing=list.findIndex(x=>(x.rootId||x.id)===rootId && num(x.revision)===state.revision);
+    const record={id:existing>=0?list[existing].id:(state.revision===0?rootId:uid()),rootId,revision:state.revision,name,updatedAt:now,snapshot};
+    if(existing>=0)list[existing]=record;else list.unshift(record);
+    try{writeSaved(list);const check=savedList().find(x=>x.id===record.id);if(!check?.snapshot)throw Error('Save verification failed');status.textContent='Saved '+name+' · R'+state.revision+' on this device.';saveAutosave()}catch{status.textContent='Could not save project. Try fewer/lower-resolution images.'}
+  }
+  function renderSavedProjects(){
+    const panel=$('#savedProjectsPanel'),list=savedList();panel.classList.remove('hidden');
+    panel.innerHTML=`<div class="saved-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>Saved Projects & Revisions</strong><button id="closeSaved" class="secondary">Close</button></div>${list.length?list.map(x=>`<div class="saved-row" data-id="${attr(x.id)}"><div><b>${esc(x.name)} · R${num(x.revision)}</b><small>${new Date(x.updatedAt).toLocaleString('en-IN')}</small></div><div class="saved-actions"><button class="secondary load-project">View / Print</button><button class="primary revise-project">Revise</button><button class="danger delete-project">Delete</button></div></div>`).join(''):'<p class="muted">No saved projects yet.</p>'}</div>`;
+    $('#closeSaved').onclick=()=>panel.classList.add('hidden');
+    $$('.load-project',panel).forEach(b=>b.onclick=()=>{const x=savedList().find(p=>p.id===b.closest('.saved-row').dataset.id);if(!x)return;state=normalizeUnits({...defaultState(),...JSON.parse(JSON.stringify(x.snapshot))});state.projectId=x.rootId||x.id;state.revision=num(x.revision);loadedReadOnly=true;renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Viewing R'+state.revision+'. Use Revise to make changes without altering this revision.'});
+    $$('.revise-project',panel).forEach(b=>b.onclick=()=>{const x=savedList().find(p=>p.id===b.closest('.saved-row').dataset.id);if(!x)return;const root=x.rootId||x.id,latest=Math.max(...savedList().filter(p=>(p.rootId||p.id)===root).map(p=>num(p.revision)));state=normalizeUnits({...defaultState(),...JSON.parse(JSON.stringify(x.snapshot))});state.projectId=root;state.revision=latest+1;loadedReadOnly=false;renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Editing R'+state.revision+' based on R'+num(x.revision)+'. Save to preserve the new revision.'});
+    $$('.delete-project',panel).forEach(b=>b.onclick=()=>{if(!confirm('Delete this saved revision?'))return;const id=b.closest('.saved-row').dataset.id;writeSaved(savedList().filter(p=>p.id!==id));renderSavedProjects();$('#projectStatus').textContent='Saved revision deleted.'});
+  }
 
   loadAutosave(); renderAll(); renderLengthConverter(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 })();
