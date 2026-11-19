@@ -585,7 +585,7 @@
     $('#quickTotal').textContent='Total '+CFT.toFixed(3)+' CFT; '+KOL.toFixed(3)+' KOL | Cost '+money(cost);
   }
   function drawLogs(){
-    $('#hoppusRows').innerHTML=logs.rows.map((r,i)=>'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px"><span>Log '+(i+1)+'</span>'+[['length','Length ft'],['girth','Girth in']].map(([k,label])=>'<label>'+label+'<input type="number" min="0" step="any" class="input hoppusField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<strong class="logVolume" data-i="'+i+'"></strong><button class="secondary hoppusRemove" data-i="'+i+'">Remove</button></div>').join('');
+    $('#hoppusRows').innerHTML=logs.rows.map((r,i)=>'<div style="display:grid;grid-template-columns:48px minmax(0,1fr) minmax(0,1fr) 72px 62px;gap:5px;align-items:end;padding:8px 2px;border-bottom:1px solid #ddd"><span>Log '+(i+1)+'</span>'+[['length','Length ft'],['girth','Girth in']].map(([k,label])=>'<label style="min-width:0;font-size:12px">'+label+'<input style="width:100%;min-width:0;box-sizing:border-box" type="number" min="0" step="any" class="input hoppusField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<strong style="font-size:12px;white-space:nowrap" class="logVolume" data-i="'+i+'"></strong><button style="padding:6px 4px;font-size:11px" class="secondary hoppusRemove" data-i="'+i+'">Remove</button></div>').join('');
     $('#hoppusSawRate').value=logs.sawRate;calcLogs();
   }
   function calcLogs(){
