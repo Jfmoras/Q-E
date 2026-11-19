@@ -7,7 +7,7 @@
   const rs = v => `Rs. ${Math.round(Number(v)||0).toLocaleString('en-IN')}`;
   const blankRow = () => ({l:'',lUnit:'ft',w:'',wUnit:'in',t:'',tUnit:'in',q:'',mode:'CFT'});
   const blankItem = () => ({name:'',rows:[blankRow()]});
-  const blankCosting = () => ({rowRates:[],cftRate:'',kolRate:'',labourMode:'sqft',labourLength:'',labourLengthUnit:'ft',labourWidth:'',labourWidthUnit:'ft',labourQty:'',labourRate:'',labourLumpsum:'',polishMode:'sqft',polishRate:'',polishLumpsum:'',polishAreaOverride:'',consumables:'',other:'',sellingPrice:'',sellingAuto:true});
+  const blankCosting = () => ({rateGroups:[],rowRates:[],cftRate:'',kolRate:'',labourMode:'sqft',labourLength:'',labourLengthUnit:'ft',labourWidth:'',labourWidthUnit:'ft',labourQty:'',labourRate:'',labourLumpsum:'',polishMode:'sqft',polishRate:'',polishLumpsum:'',polishAreaOverride:'',consumables:'',other:'',sellingPrice:'',sellingAuto:true});
   const blankQuote = () => ({description:'',unit:'',qty:'',unitPrice:'',images:[],aiOriginal:''});
   const defaultState = () => ({
     tab:'calculator', projectName:'', revision:0, projectId:'', quoteOptions:[], activeQuoteOption:0, items:[blankItem()], estimationItems:[], costings:[], quoteItems:[blankQuote()],
@@ -28,10 +28,21 @@
   const originalMeasure=(value,unit)=>value?`${esc(value)} ${esc(unitLabel(unit))}`:'-';
   const itemTotals = item => item.rows.reduce((a,r)=>{const x=calcRow(r);a[x.mode]+=x.val;return a},{CFT:0,KOL:0});
   const itemSurface = item => item.rows.reduce((a,r)=>a+surfaceSqft(r),0);
+  const rateGroupForRow=(c,j)=>Array.isArray(c.rateGroups)?c.rateGroups.find(g=>Array.isArray(g.rows)&&g.rows.includes(j)):null;
+  const effectiveTimberRate=(c,row,j)=>{
+    const group=rateGroupForRow(c,j);
+    if(group)return group.rate;
+    const legacy=c.rowRates?.[j];
+    return legacy!==undefined&&legacy!==null&&legacy!==''?legacy:(row.mode==='CFT'?c.cftRate:c.kolRate);
+  };
+  const groupSummary=(item,g)=>{
+    const volume=(g.rows||[]).reduce((total,j)=>total+(item.rows[j]&&item.rows[j].mode===g.mode?calcRow(item.rows[j]).val:0),0);
+    return {volume,amount:volume*num(g.rate)};
+  };
   const costingResult = i => {
     const item=state.estimationItems[i]||{rows:[]}, c=state.costings[i]||blankCosting(), tot=itemTotals(item), surface=itemSurface(item);
     const polishArea=num(c.polishAreaOverride)||surface;
-    const wood=item.rows.reduce((sum,row,j)=>{const calc=calcRow(row),override=c.rowRates?.[j];const rate=override===undefined||override===null||override===''?(calc.mode==='CFT'?c.cftRate:c.kolRate):override;return sum+calc.val*num(rate)},0);
+    const wood=item.rows.reduce((sum,row,j)=>sum+calcRow(row).val*num(effectiveTimberRate(c,row,j)),0);
     const labourArea=labourAreaSqft(c);
     const labour=(c.labourMode||'sqft')==='lumpsum'?num(c.labourLumpsum):labourArea*num(c.labourRate);
     const polish=c.polishMode==='sqft'?polishArea*num(c.polishRate):num(c.polishLumpsum);
@@ -303,7 +314,7 @@
     if(!state.estimationItems.length){host.innerHTML='<div class="card" style="padding:16px;margin-bottom:16px;color:#57534e">No calculator items have been sent yet. You can still add an estimation item manually.</div>'}
     state.estimationItems.forEach((item,i)=>{
       if(!state.costings[i]) state.costings[i]=blankCosting(); const c=state.costings[i],r=costingResult(i),card=document.createElement('section'); card.className='estimate-card'; card.dataset.i=i;
-      const measures=item.rows.length?`<div class="table-wrap"><table class="calc-table estimate-measure-table"><thead><tr><th>Length</th><th>Width</th><th>Thickness</th><th>Pieces</th><th>Type</th><th>Total</th><th>Rate / unit (optional)</th><th>Wood amount</th></tr></thead><tbody>${item.rows.map(x=>{const z=calcRow(x),lu=x.lUnit||'ft',wu=x.wUnit||'in',tu=x.tUnit||'in';const rate=c.rowRates?.[item.rows.indexOf(x)]??'',effective=rate===''?(x.mode==='CFT'?c.cftRate:c.kolRate):rate;return `<tr><td>${originalMeasure(x.l,lu)}${lu!=='ft'?`<small class="converted-measure">${fmtMeasure(z.lFt)} ft</small>`:''}</td><td>${originalMeasure(x.w,wu)}${wu!=='in'?`<small class="converted-measure">${fmtMeasure(z.wIn)} in</small>`:''}</td><td>${originalMeasure(x.t,tu)}${tu!=='in'?`<small class="converted-measure">${fmtMeasure(z.tIn)} in</small>`:''}</td><td>${esc(x.q||'-')}</td><td>${x.mode}</td><td><b>${z.val.toFixed(3)} ${z.mode}</b></td><td><input class="input row-timber-rate" type="number" min="0" step="any" data-ri="${item.rows.indexOf(x)}" value="${attr(rate)}" placeholder="Default ${z.mode}"></td><td class="row-wood-amount">${money(z.val*num(effective))}</td></tr>`}).join('')}</tbody></table></div>`:'';
+      const measures=item.rows.length?`<div class="table-wrap"><table class="calc-table estimate-measure-table"><thead><tr><th>Length</th><th>Width</th><th>Thickness</th><th>Pieces</th><th>Type</th><th>Total</th><th>Select</th><th>Rate group</th><th>Wood amount</th></tr></thead><tbody>${item.rows.map(x=>{const z=calcRow(x),lu=x.lUnit||'ft',wu=x.wUnit||'in',tu=x.tUnit||'in';const j=item.rows.indexOf(x),group=rateGroupForRow(c,j),effective=effectiveTimberRate(c,x,j);return `<tr><td>${originalMeasure(x.l,lu)}${lu!=='ft'?`<small class="converted-measure">${fmtMeasure(z.lFt)} ft</small>`:''}</td><td>${originalMeasure(x.w,wu)}${wu!=='in'?`<small class="converted-measure">${fmtMeasure(z.wIn)} in</small>`:''}</td><td>${originalMeasure(x.t,tu)}${tu!=='in'?`<small class="converted-measure">${fmtMeasure(z.tIn)} in</small>`:''}</td><td>${esc(x.q||'-')}</td><td>${x.mode}</td><td><b>${z.val.toFixed(3)} ${z.mode}</b></td><td><input class="timber-group-check" type="checkbox" data-ri="${j}" aria-label="Select timber row ${j+1}"></td><td>${group?esc(group.name):"Default "+z.mode}</td><td class="row-wood-amount">${money(z.val*num(effective))}</td></tr>`}).join('')}</tbody></table><div class="timber-group-controls no-print" style="display:flex;gap:8px;flex-wrap:wrap;padding:12px"><button class="secondary group-timber-rows" type="button">Group selected rows</button><button class="secondary ungroup-timber-rows" type="button">Ungroup selected rows</button><small>Select rows of the same CFT or KOL type to share a rate.</small></div><div class="timber-rate-groups">${(c.rateGroups||[]).map(g=>{const sum=groupSummary(item,g);return `<div class="subcard timber-rate-group" data-gid="${attr(g.id)}"><strong>${esc(g.name)} · ${sum.volume.toFixed(3)} ${esc(g.mode)}</strong><label class="field">Rate / ${esc(g.mode)}<input class="input grouped-timber-rate" type="number" min="0" step="any" value="${attr(g.rate)}"></label><span class="group-amount">${money(sum.amount)}</span><button class="secondary remove-timber-group" type="button">Remove group</button></div>`}).join('')}</div></div>`:'';
       card.innerHTML=`<div class="estimate-top"><label class="item-name field">Item<input class="input est-name" value="${attr(item.name)}"></label><div class="estimate-sizes"><b>${r.tot.CFT.toFixed(3)} CFT</b> · <b>${r.tot.KOL.toFixed(3)} KOL</b></div></div>${measures}<div class="estimate-grid"><div class="subcard"><h3>Wood cost</h3>${field('Rate / CFT','cftRate',c.cftRate)}${field('Rate / KOL','kolRate',c.kolRate)}<div class="calc-line est-wood">Wood: <b>${money(r.wood)}</b></div></div><div class="subcard"><h3>Labour</h3><label class="field">Pricing method<select class="input labour-mode" data-key="labourMode"><option value="sqft" ${(c.labourMode||'sqft')==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.labourMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${(c.labourMode||'sqft')==='sqft'?`<p class="muted">Enter finished door/window dimensions in any unit. The app converts both measurements to feet before calculating sq.ft.</p><div class="two-col">${measureField('Length','labourLength',c.labourLength,'labourLengthUnit',c.labourLengthUnit||'ft')}${measureField('Width','labourWidth',c.labourWidth,'labourWidthUnit',c.labourWidthUnit||'ft')}${field('Quantity','labourQty',c.labourQty)}${field('Rate / sq.ft','labourRate',c.labourRate)}</div><div class="calc-line est-labour">Area: <b>${r.labourArea.toFixed(2)} sq.ft</b> · Labour: <b>${money(r.labour)}</b></div>`:`${field('Labour lumpsum','labourLumpsum',c.labourLumpsum)}<div class="calc-line est-labour">Labour: <b>${money(r.labour)}</b></div>`}</div><div class="subcard"><h3>Polish</h3><label class="field">Pricing method<select class="input polish-mode" data-key="polishMode"><option value="sqft" ${c.polishMode==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.polishMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${c.polishMode==='sqft'?`<p class="muted">Timber surface area from Calculator (all faces): <b>${r.surface.toFixed(2)} sq.ft</b>. Mixed input units are converted automatically.</p>${field('Override polish area (optional)','polishAreaOverride',c.polishAreaOverride)}${field('Polish rate / sq.ft','polishRate',c.polishRate)}`:field('Polish lumpsum','polishLumpsum',c.polishLumpsum)}<div class="calc-line est-polish">Polish: <b>${money(r.polish)}</b></div></div></div><div class="estimate-bottom">${field('Consumables','consumables',c.consumables)}${field('Other costs','other',c.other)}<label class="field selling-price-field">Estimated selling price <span class="selling-price-hint">Auto-filled from estimated cost. Edit this amount to add your margin/profit; this is the price sent to Quotation.</span><input class="input est-input selling-price-input" type="number" min="0" step="any" inputmode="decimal" data-key="sellingPrice" value="${attr(c.sellingPrice)}"></label></div><div class="metrics"><div class="metric est-cost"><span>Estimated cost</span><strong>${money(r.cost)}</strong></div><div class="metric est-profit"><span>Profit</span><strong>${money(r.profit)}</strong></div><div class="metric est-markup"><span>Markup</span><strong>${r.markup.toFixed(1)}%</strong></div><div class="metric est-margin"><span>Margin</span><strong>${r.margin.toFixed(1)}%</strong></div></div><div class="estimate-send-row"><span class="muted">When the estimated selling price is ready, send this item to Quotation. Quotation will receive the item description and this estimated selling price; you add Unit and Quantity there.</span><div class="send-quote-actions"><span class="send-quote-status" aria-live="polite"></span><button class="primary send-one-quote" data-i="${i}">Send this item to Quotation →</button></div></div>`;
       host.appendChild(card);
     });
@@ -312,7 +323,8 @@
 
   function refreshEstimationNumbers(i){
     const card=$(`.estimate-card[data-i="${i}"]`);if(!card)return;const r=costingResult(i),c=state.costings[i]||blankCosting();
-    $('.row-timber-rate',card).forEach(input=>{const j=+input.dataset.ri,row=state.estimationItems[i].rows[j],z=calcRow(row),rate=(c.rowRates||[])[j];const effective=rate===undefined||rate===null||rate===''?(z.mode==='CFT'?c.cftRate:c.kolRate):rate;const amount=input.closest('tr')?.querySelector('.row-wood-amount');if(amount)amount.textContent=money(z.val*num(effective))});
+    $$('.row-wood-amount',card).forEach((amount,j)=>{const row=state.estimationItems[i].rows[j];if(row)amount.textContent=money(calcRow(row).val*num(effectiveTimberRate(c,row,j)))});
+    $$('.timber-rate-group',card).forEach(box=>{const group=(c.rateGroups||[]).find(g=>g.id===box.dataset.gid);if(!group)return;const summary=groupSummary(state.estimationItems[i],group);const title=$('strong',box);if(title)title.textContent=group.name+' · '+summary.volume.toFixed(3)+' '+group.mode;const amount=$('.group-amount',box);if(amount)amount.textContent=money(summary.amount)});
     const wood=$('.est-wood',card);if(wood)wood.innerHTML=`Wood: <b>${money(r.wood)}</b>`;
     const labour=$('.est-labour',card);if(labour)labour.innerHTML=(c.labourMode||'sqft')==='lumpsum'?`Labour: <b>${money(r.labour)}</b>`:`Area: <b>${r.labourArea.toFixed(2)} sq.ft</b> · Labour: <b>${money(r.labour)}</b>`;
     const polish=$('.est-polish',card);if(polish)polish.innerHTML=`Polish: <b>${money(r.polish)}</b>`;
@@ -387,6 +399,29 @@
     if(b.id==='addQuoteOption'){syncActiveOption();state.quoteOptions.push({name:'Option '+(state.quoteOptions.length+1),items:[blankQuote()],discountType:state.quote.discountType,discountValue:'',gstPercent:state.quote.gstPercent});activateOption(state.quoteOptions.length-1);return}
     if(b.id==='duplicateQuoteOption'){syncActiveOption();const copy=JSON.parse(JSON.stringify(state.quoteOptions[state.activeQuoteOption]));copy.name=copy.name+' Copy';state.quoteOptions.push(copy);activateOption(state.quoteOptions.length-1);return}
     if(b.id==='removeQuoteOption'){syncActiveOption();if(state.quoteOptions.length<=1){alert('At least one quotation option is required.');return}if(!confirm('Remove this quotation option?'))return;state.quoteOptions.splice(state.activeQuoteOption,1);state.activeQuoteOption=0;const opt=state.quoteOptions[0];state.quoteItems=opt.items;state.quote.discountType=opt.discountType;state.quote.discountValue=opt.discountValue;state.quote.gstPercent=opt.gstPercent;renderQuotation();saveAutosave();return}
+    if(b.classList.contains('group-timber-rows')){
+      const card=b.closest('.estimate-card'),i=+card.dataset.i,item=state.estimationItems[i],c=state.costings[i];
+      const rows=$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
+      if(!rows.length){alert('Select at least one timber row.');return}
+      const types=[...new Set(rows.map(j=>item.rows[j]?.mode))];
+      if(types.length!==1||!['CFT','KOL'].includes(types[0])){alert('CFT and KOL rows must be grouped separately.');return}
+      c.rateGroups=c.rateGroups||[];
+      c.rateGroups.forEach(g=>g.rows=g.rows.filter(j=>!rows.includes(j)));
+      c.rateGroups=c.rateGroups.filter(g=>g.rows.length);
+      const mode=types[0],name='Group '+(c.rateGroups.length+1);
+      c.rateGroups.push({id:uid(),name,mode,rate:mode==='CFT'?c.cftRate:c.kolRate,rows});
+      renderEstimation();saveAutosave();return;
+    }
+    if(b.classList.contains('ungroup-timber-rows')){
+      const card=b.closest('.estimate-card'),i=+card.dataset.i,c=state.costings[i];
+      const rows=$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
+      c.rateGroups=(c.rateGroups||[]).map(g=>({...g,rows:g.rows.filter(j=>!rows.includes(j))})).filter(g=>g.rows.length);
+      renderEstimation();saveAutosave();return;
+    }
+    if(b.classList.contains('remove-timber-group')){
+      const card=b.closest('.estimate-card'),i=+card.dataset.i,id=b.closest('.timber-rate-group').dataset.gid,c=state.costings[i];
+      c.rateGroups=(c.rateGroups||[]).filter(g=>g.id!==id);renderEstimation();saveAutosave();return;
+    }
     if(b.id==='newCalcItem'){state.items.push(blankItem());renderCalc();saveAutosave()}
     if(b.classList.contains('add-row')){state.items[+b.dataset.ii].rows.push(blankRow());renderCalc();saveAutosave()}
     if(b.id==='sendToEstimation'){
@@ -463,6 +498,7 @@
     if(t.id==='aiModel')t.dataset.userEdited='true';
     if(t.id==='quoteOptionName'){ensureQuoteOptions();state.quoteOptions[state.activeQuoteOption].name=t.value;$('#quoteOptionsSelect').options[state.activeQuoteOption].text=t.value||'Option '+(state.activeQuoteOption+1);renderPrintSheet();saveAutosave();return}
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
+    if(t.classList.contains('grouped-timber-rate')){const card=t.closest('.estimate-card'),i=+card.dataset.i,g=state.costings[i].rateGroups?.find(x=>x.id===t.closest('.timber-rate-group').dataset.gid);if(g){g.rate=t.value;refreshEstimationNumbers(i);saveAutosave()}return}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
     const card=t.closest('.estimate-card'); if(card){const i=+card.dataset.i;if(t.classList.contains('est-name'))state.estimationItems[i].name=t.value;if(t.classList.contains('row-timber-rate')){const costing=state.costings[i];costing.rowRates=costing.rowRates||[];costing.rowRates[+t.dataset.ri]=t.value;refreshEstimationNumbers(i)}if(t.classList.contains('est-input')){state.costings[i][t.dataset.key]=t.value;if(t.dataset.key==='sellingPrice'){state.costings[i].sellingAuto=false;t.classList.remove('input-error');const status=$('.send-quote-status',card);if(status)status.textContent=''}refreshEstimationNumbers(i)}saveAutosave()}
