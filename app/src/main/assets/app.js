@@ -602,6 +602,6 @@
   window.QEImportBackupData=content=>{try{const b=JSON.parse(content);if(b.format!=='moras-qe-backup'||b.version!==1||!b.storage||typeof b.storage!=='object')throw Error('Invalid file');const keys=Object.keys(b.storage);if(keys.some(k=>!k.startsWith('mwi-')||k==='mwi-ai-settings-v1'||typeof b.storage[k]!=='string'))throw Error('Invalid data');if(!confirm('Replace existing saved data with backup?'))return;keys.forEach(k=>localStorage.setItem(k,b.storage[k]));alert('Restored. Reloading.');location.reload()}catch(e){alert('Restore failed: '+e.message)}};
   document.addEventListener('change',async e=>{if(e.target.id==='backupFileInput'&&e.target.files[0])window.QEImportBackupData(await e.target.files[0].text())});
 
-  $('#settingsView').appendChild($('#settings'));
+  $('#settingsView').appendChild($('#settings'));$('#settings').classList.add('active-panel');
   loadAutosave(); renderAll(); renderLengthConverter(); drawQuick(); drawLogs(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 })();
