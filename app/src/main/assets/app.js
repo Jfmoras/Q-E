@@ -412,7 +412,7 @@
     if(b.id==='removeQuoteOption'){syncActiveOption();if(state.quoteOptions.length<=1){alert('At least one quotation option is required.');return}if(!confirm('Remove this quotation option?'))return;state.quoteOptions.splice(state.activeQuoteOption,1);state.activeQuoteOption=0;const opt=state.quoteOptions[0];state.quoteItems=opt.items;state.quote.discountType=opt.discountType;state.quote.discountValue=opt.discountValue;state.quote.gstPercent=opt.gstPercent;renderQuotation();saveAutosave();return}
     if(b.classList.contains('group-timber-rows')){
       const card=b.closest('.estimate-card'),i=+card.dataset.i,item=state.estimationItems[i],c=state.costings[i];
-      const rows=$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
+      const rows=$$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
       if(!rows.length){alert('Select at least one timber row.');return}
       const types=[...new Set(rows.map(j=>item.rows[j]?.mode))];
       if(types.length!==1||!['CFT','KOL'].includes(types[0])){alert('CFT and KOL rows must be grouped separately.');return}
@@ -425,7 +425,7 @@
     }
     if(b.classList.contains('ungroup-timber-rows')){
       const card=b.closest('.estimate-card'),i=+card.dataset.i,c=state.costings[i];
-      const rows=$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
+      const rows=$$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
       c.rateGroups=(c.rateGroups||[]).map(g=>({...g,rows:g.rows.filter(j=>!rows.includes(j))})).filter(g=>g.rows.length);
       renderEstimation();saveAutosave();return;
     }
