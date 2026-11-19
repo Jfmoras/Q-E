@@ -1,4 +1,4 @@
-name: Build Q&E V10.1 Android APK
+name: Build Q&E V10.1 Android APK and Play Bundle
 on:
   push:
     branches:
@@ -43,7 +43,7 @@ jobs:
           QE_KEYSTORE_PASSWORD: ${{ secrets.QE_KEYSTORE_PASSWORD }}
           QE_KEY_PASSWORD: ${{ secrets.QE_KEY_PASSWORD }}
           QE_KEY_ALIAS: ${{ secrets.QE_KEY_ALIAS }}
-        run: gradle :app:assembleRelease --no-daemon
+        run: gradle :app:assembleRelease :app:bundleRelease --no-daemon
       - name: Verify APK signature
         run: |
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk
@@ -51,4 +51,10 @@ jobs:
         with:
           name: Q-E-v10-1-permanently-signed-apk
           path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+      - name: Upload Google Play Android App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Q-E-v10-1-google-play-aab
+          path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
