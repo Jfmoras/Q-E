@@ -259,6 +259,8 @@
     $('#homeView').classList.toggle('hidden',view!=='home');
     $('#workspaceView').classList.toggle('hidden',view!=='workspace');
     $('#notesView').classList.toggle('hidden',view!=='notes');
+    for(const v of ['quick','hoppus','settings'])$('#'+v+'View').classList.toggle('hidden',view!==v);
+    if(view==='settings')loadAiSettingsFields();
     $('#goHome').classList.toggle('hidden',view==='home');
     if(view==='notes')renderNotesManager();
   }
@@ -377,6 +379,16 @@
     if(b.id==='continueProjectHome'){showView('workspace');showTab(state.tab||'calculator');return}
     if(b.id==='savedProjectsHome'){renderSavedProjects();$('#savedProjectsPanel').scrollIntoView({behavior:'smooth',block:'start'});return}
     if(b.id==='notesHome'){showView('notes');return}
+    if(b.id==='settingsHome'){showView('settings');return}
+    if(b.id==='quickCalcHome'){drawQuick();showView('quick');return}
+    if(b.id==='hoppusHome'){drawLogs();showView('hoppus');return}
+    if(b.id==='backupExport'){exportBackup();return}
+    if(b.id==='backupImport'){$('#backupFileInput').click();return}
+    if(b.id==='quickAdd'){quick.rows.push(blankRow());drawQuick();storeQuick();return}
+    if(b.id==='hoppusAdd'){logs.rows.push({length:'',girth:''});drawLogs();storeLogs();return}
+    if(b.id==='quickMakeGroup'){const rows=$('#quickRows input[type=checkbox]:checked').map(x=>+x.dataset.i);if(!rows.length)return alert('Select rows first.');const modes=[...new Set(rows.map(i=>quick.rows[i].mode))];if(modes.length!==1)return alert('Separate CFT and KOL groups.');quick.groups.forEach(g=>g.rows=g.rows.filter(i=>!rows.includes(i)));quick.groups=quick.groups.filter(g=>g.rows.length);quick.groups.push({id:uid(),rows,mode:modes[0],rate:modes[0]==='CFT'?quick.cftRate:quick.kolRate,color:['red','blue','green','orange','purple'][quick.groups.length%5]});drawQuick();storeQuick();return}
+    if(b.classList.contains('quickUngroup')){quick.groups=quick.groups.filter(g=>g.id!==b.dataset.id);drawQuick();storeQuick();return}
+    if(b.classList.contains('hoppusRemove')){logs.rows.splice(+b.dataset.i,1);drawLogs();storeLogs();return}
     if(b.id==='createSavedNote'){
       const text=$('#newSavedNote').value.trim(),status=$('#notesManagerStatus');
       if(!text){status.textContent='Enter a note before saving.';return}
@@ -492,6 +504,11 @@
 
   document.addEventListener('input',e=>{
     const t=e.target;
+    if(t.id==='quickCftRate'||t.id==='quickKolRate'){quick[t.id==='quickCftRate'?'cftRate':'kolRate']=t.value;calcQuick();storeQuick();return}
+    if(t.classList.contains('quickField')){quick.rows[+t.dataset.i][t.dataset.key]=t.value;calcQuick();storeQuick();return}
+    if(t.classList.contains('quickGroupRate')){const g=quick.groups.find(g=>g.id===t.dataset.id);if(g)g.rate=t.value;calcQuick();storeQuick();return}
+    if(t.classList.contains('hoppusField')){logs.rows[+t.dataset.i][t.dataset.key]=t.value;calcLogs();storeLogs();return}
+    if(t.id==='hoppusSawRate'){logs.sawRate=t.value;calcLogs();storeLogs();return}
     if(t.id==='aiApiKey'){updateDetectedProvider(t.value);return}
     if(t.id==='aiEndpoint')t.dataset.userEdited='true';
     if(t.id==='aiModel')t.dataset.userEdited='true';
@@ -549,5 +566,42 @@
     $$('.delete-project',panel).forEach(b=>b.onclick=()=>{if(!confirm('Delete this saved revision?'))return;const id=b.closest('.saved-row').dataset.id;writeSaved(savedList().filter(p=>p.id!==id));renderSavedProjects();$('#projectStatus').textContent='Saved revision deleted.'});
   }
 
-  loadAutosave(); renderAll(); renderLengthConverter(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+  const restoreJSON=(key,fallback)=>{try{return {...fallback,...JSON.parse(localStorage.getItem(key)||'{}')}}catch{return {...fallback}}};
+  let quick=restoreJSON('mwi-quick-calc-v1',{rows:[blankRow()],groups:[],cftRate:'',kolRate:''});
+  let logs=restoreJSON('mwi-hoppus-v1',{rows:[{length:'',girth:''}],sawRate:''});
+  const storeQuick=()=>localStorage.setItem('mwi-quick-calc-v1',JSON.stringify(quick));
+  const storeLogs=()=>localStorage.setItem('mwi-hoppus-v1',JSON.stringify(logs));
+  function drawQuick(){
+    $('#quickCftRate').value=quick.cftRate;$('#quickKolRate').value=quick.kolRate;
+    $('#quickRows').innerHTML=quick.rows.map((r,i)=>'<div style="display:flex;flex-wrap:wrap;gap:7px;padding:9px;border-bottom:1px solid #ddd"><input type="checkbox" data-i="'+i+'"><span>Row '+(i+1)+'</span>'+[['l','Length ft'],['w','Width in'],['t','Thickness in'],['q','Qty']].map(([k,label])=>'<label>'+label+'<input style="width:72px" type="number" min="0" step="any" class="input quickField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<select class="input quickField" data-i="'+i+'" data-key="mode"><option '+(r.mode==='CFT'?'selected':'')+'>CFT</option><option '+(r.mode==='KOL'?'selected':'')+'>KOL</option></select><strong class="quickVolume" data-i="'+i+'"></strong></div>').join('');
+    $('#quickGroups').innerHTML=quick.groups.map(g=>'<div style="padding:7px;border-left:6px solid '+g.color+'"><strong>'+g.color+' · '+g.mode+'</strong><label>Rate ₹/'+g.mode+'<input class="input quickGroupRate" type="number" min="0" step="any" data-id="'+g.id+'" value="'+attr(g.rate)+'"></label><span class="quickGroupTotal" data-id="'+g.id+'"></span> <button class="secondary quickUngroup" data-id="'+g.id+'">Ungroup</button></div>').join('');
+    calcQuick();
+  }
+  function calcQuick(){
+    let CFT=0,KOL=0,cost=0;
+    quick.rows.forEach((r,i)=>{const x=calcRow(r);if(x.mode==='CFT')CFT+=x.val;else KOL+=x.val;const g=quick.groups.find(g=>g.rows.includes(i)&&g.mode===x.mode);const rate=g?g.rate:(x.mode==='CFT'?quick.cftRate:quick.kolRate);cost+=x.val*num(rate);const el=$('.quickVolume[data-i="'+i+'"]');if(el)el.textContent=x.val.toFixed(3)+' '+x.mode+' · '+money(x.val*num(rate))});
+    quick.groups.forEach(g=>{const vol=g.rows.reduce((n,i)=>n+(quick.rows[i]?.mode===g.mode?calcRow(quick.rows[i]).val:0),0);const el=$('.quickGroupTotal[data-id="'+g.id+'"]');if(el)el.textContent=' · '+vol.toFixed(3)+' '+g.mode+' · '+money(vol*num(g.rate))});
+    $('#quickTotal').textContent='Total '+CFT.toFixed(3)+' CFT; '+KOL.toFixed(3)+' KOL | Cost '+money(cost);
+  }
+  function drawLogs(){
+    $('#hoppusRows').innerHTML=logs.rows.map((r,i)=>'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px"><span>Log '+(i+1)+'</span>'+[['length','Length ft'],['girth','Girth in']].map(([k,label])=>'<label>'+label+'<input type="number" min="0" step="any" class="input hoppusField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<strong class="logVolume" data-i="'+i+'"></strong><button class="secondary hoppusRemove" data-i="'+i+'">Remove</button></div>').join('');
+    $('#hoppusSawRate').value=logs.sawRate;calcLogs();
+  }
+  function calcLogs(){
+    let total=0;logs.rows.forEach((r,i)=>{const volume=num(r.length)*num(r.girth)*num(r.girth)/2304;total+=volume;const el=$('.logVolume[data-i="'+i+'"]');if(el)el.textContent=volume.toFixed(2)+' CFT'});
+    $('#hoppusTotal').textContent='Total '+total.toFixed(2)+' CFT | Sawing charges '+money(total*num(logs.sawRate));
+  }
+  document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!e.target.classList.contains('hoppusField'))return;e.preventDefault();let i=+e.target.dataset.i;if(e.target.dataset.key==='length'){$('.hoppusField[data-i="'+i+'"][data-key="girth"]')?.focus();return}if(i===logs.rows.length-1){logs.rows.push({length:'',girth:''});drawLogs();storeLogs()}$('.hoppusField[data-i="'+(i+1)+'"][data-key="length"]')?.focus()});
+  function exportBackup(){
+    saveAutosave();storeQuick();storeLogs();const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('mwi-')&&k!=='mwi-ai-settings-v1')storage[k]=localStorage.getItem(k)}
+    const content=JSON.stringify({format:'moras-qe-backup',version:1,date:new Date().toISOString(),storage},null,2);
+    if(window.QENative?.exportBackup){QENative.exportBackup(content);return}
+    const blob=new Blob([content],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='moras-qe-full-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+  }
+  window.QEImportBackupData=content=>{try{const b=JSON.parse(content);if(b.format!=='moras-qe-backup'||b.version!==1||!b.storage||typeof b.storage!=='object')throw Error('Invalid file');const keys=Object.keys(b.storage);if(keys.some(k=>!k.startsWith('mwi-')||k==='mwi-ai-settings-v1'||typeof b.storage[k]!=='string'))throw Error('Invalid data');if(!confirm('Replace existing saved data with backup?'))return;keys.forEach(k=>localStorage.setItem(k,b.storage[k]));alert('Restored. Reloading.');location.reload()}catch(e){alert('Restore failed: '+e.message)}};
+  document.addEventListener('change',async e=>{if(e.target.id==='backupFileInput'&&e.target.files[0])window.QEImportBackupData(await e.target.files[0].text())});
+
+  $('#settingsView').appendChild($('#settings'));
+  loadAutosave(); renderAll(); renderLengthConverter(); drawQuick(); drawLogs(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 })();
