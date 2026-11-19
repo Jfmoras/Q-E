@@ -60,3 +60,5 @@
 .estimate-measure-table td small{display:block}
 .estimate-measure{grid-template-columns:minmax(0,1fr) 76px}
 @media(max-width:640px){.measure-entry{grid-template-columns:minmax(90px,1fr) 68px}.unit-calc-table{min-width:860px}}
+
+.quote-option-editor{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;padding:14px;border:1px solid #d6d3d1;border-radius:10px}.quote-option-buttons{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}.row-timber-rate{min-width:105px;max-width:140px}.print-option{margin:18px 0 28px;break-inside:avoid-page}.print-option h3{font-size:15px;margin:14px 0 12px;padding-bottom:5px;border-bottom:1px solid #ccc}@media(max-width:650px){.quote-option-editor{grid-template-columns:1fr}}@media print{.print-option{break-inside:auto}.print-option h3{break-after:avoid}}
