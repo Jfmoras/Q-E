@@ -8,6 +8,9 @@ on:
       - 'build.gradle.kts'
       - '.github/workflows/build-qe-android.yml'
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 jobs:
   signed-release:
     runs-on: ubuntu-latest
@@ -31,6 +34,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.QE_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.QE_KEY_ALIAS }}
         run: |
+          if [ "$KEY_ALIAS" != "moras-qe" ]; then echo "::error::Expected permanent signing alias moras-qe"; exit 1; fi
           if [ -z "$KEYSTORE_BASE64" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
             echo "::error::Set four QE signing repository secrets first."
             exit 1
