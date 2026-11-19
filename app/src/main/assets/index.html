@@ -30,11 +30,16 @@
       <button id="newProjectHome" class="home-action primary" type="button"><strong>New Project</strong><span>Start a calculator, estimate and quotation.</span></button>
       <button id="savedProjectsHome" class="home-action secondary" type="button"><strong>Saved Projects</strong><span>Open or remove a project saved on this device.</span></button>
       <button id="notesHome" class="home-action secondary" type="button"><strong>Notes</strong><span>Manage notes to reuse in quotations.</span></button>
+      <button id="quickCalcHome" class="home-action secondary" type="button"><strong>CFT / KOL Calculator</strong><span>Independent timber sizes, color groups and prices.</span></button>
+      <button id="hoppusHome" class="home-action secondary" type="button"><strong>Hoppus Log Volume</strong><span>Quarter-girth log measurement and sawing charges.</span></button>
+      <button id="settingsHome" class="home-action secondary" type="button"><strong>⚙ Settings</strong><span>AI, length converter, backup and restore.</span></button>
       <button id="continueProjectHome" class="home-action secondary hidden" type="button"><strong>Continue Current Project</strong><span>Resume your latest automatically saved work.</span></button>
     </div>
     <div id="savedProjectsPanel" class="saved-panel hidden"></div>
   </main>
 
+  <main id="quickView" class="container notes-view hidden"><h2>General CFT / KOL Calculator</h2><p>Independent of estimations. Length in feet, width and thickness in inches.</p><div class="card"><div class="project-row"><label>Default ₹/CFT <input class="input" id="quickCftRate" type="number" min="0"></label><label>Default ₹/KOL <input class="input" id="quickKolRate" type="number" min="0"></label><button id="quickAdd" class="secondary">Add row</button></div><div id="quickRows"></div><div id="quickGroups"></div><button id="quickMakeGroup" class="secondary">Group checked rows</button><p id="quickTotal"></p></div></main>
+  <main id="hoppusView" class="container notes-view hidden"><h2>Hoppus Log Volume Calculator</h2><p>Quarter-girth method: girth² × length ÷ 2304, with girth in inches and length in feet.</p><div class="card"><div id="hoppusRows"></div><button id="hoppusAdd" class="secondary">Add log</button><label class="field">Sawing rate ₹/CFT<input class="input" id="hoppusSawRate" type="number" min="0" step="any"></label><p id="hoppusTotal"></p></div></main>
   <main id="notesView" class="container notes-view hidden">
     <div class="page-heading">
       <h2>Saved Notes</h2>
@@ -48,6 +53,7 @@
     </div>
   </main>
 
+  <div id="settingsView" class="workspace-view hidden"></div>
   <div id="workspaceView" class="workspace-view hidden">
   <nav class="tabs no-print" aria-label="Main navigation">
     <div class="container tab-row">
@@ -55,7 +61,7 @@
       <button class="tab" data-tab="estimation">Estimation</button>
       <button class="tab" data-tab="quotation">Quotation</button>
       <button class="tab" data-tab="review">Job Review</button>
-      <button class="tab" data-tab="settings">Settings</button>
+
     </div>
   </nav>
 
