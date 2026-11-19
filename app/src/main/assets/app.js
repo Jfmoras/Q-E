@@ -594,12 +594,12 @@
   }
   document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!e.target.classList.contains('hoppusField'))return;e.preventDefault();let i=+e.target.dataset.i;if(e.target.dataset.key==='length'){$('.hoppusField[data-i="'+i+'"][data-key="girth"]')?.focus();return}if(i===logs.rows.length-1){logs.rows.push({length:'',girth:''});drawLogs();storeLogs()}$('.hoppusField[data-i="'+(i+1)+'"][data-key="length"]')?.focus()});
   function exportBackup(){
-    saveAutosave();storeQuick();storeLogs();const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('mwi-')&&k!=='mwi-ai-settings-v1')storage[k]=localStorage.getItem(k)}
+    saveAutosave();storeQuick();storeLogs();const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('mwi-')){if(k==='mwi-ai-settings-v1'){try{const settings=JSON.parse(localStorage.getItem(k)||'{}');delete settings.apiKey;delete settings.key;storage[k]=JSON.stringify(settings)}catch{}}else storage[k]=localStorage.getItem(k)}}
     const content=JSON.stringify({format:'moras-qe-backup',version:1,date:new Date().toISOString(),storage},null,2);
     if(window.QENative?.exportBackup){QENative.exportBackup(content);return}
     const blob=new Blob([content],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='moras-qe-full-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
   }
-  window.QEImportBackupData=content=>{try{const b=JSON.parse(content);if(b.format!=='moras-qe-backup'||b.version!==1||!b.storage||typeof b.storage!=='object')throw Error('Invalid file');const keys=Object.keys(b.storage);if(keys.some(k=>!k.startsWith('mwi-')||k==='mwi-ai-settings-v1'||typeof b.storage[k]!=='string'))throw Error('Invalid data');if(!confirm('Replace existing saved data with backup?'))return;keys.forEach(k=>localStorage.setItem(k,b.storage[k]));alert('Restored. Reloading.');location.reload()}catch(e){alert('Restore failed: '+e.message)}};
+  window.QEImportBackupData=content=>{try{const b=JSON.parse(content);if(b.format!=='moras-qe-backup'||b.version!==1||!b.storage||typeof b.storage!=='object')throw Error('Invalid file');const keys=Object.keys(b.storage);if(keys.some(k=>!k.startsWith('mwi-')||typeof b.storage[k]!=='string'))throw Error('Invalid data');if(!confirm('Replace existing saved data with backup?'))return;keys.forEach(k=>localStorage.setItem(k,b.storage[k]));alert('Restored. Reloading.');location.reload()}catch(e){alert('Restore failed: '+e.message)}};
   document.addEventListener('change',async e=>{if(e.target.id==='backupFileInput'&&e.target.files[0])window.QEImportBackupData(await e.target.files[0].text())});
 
   $('#settingsView').appendChild($('#settings'));$('#settings').classList.add('active-panel');
