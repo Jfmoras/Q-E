@@ -15,6 +15,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebViewAssetLoader
 import org.json.JSONArray
@@ -30,6 +31,27 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 class MainActivity : AppCompatActivity() {
+    private var pendingBackup: String? = null
+    private val saveBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            try {
+                contentResolver.openOutputStream(uri)?.use { it.write((pendingBackup ?: "").toByteArray(Charsets.UTF_8)) }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(this, "Backup export failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+        pendingBackup = null
+    }
+    private val openBackup = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            try {
+                val data = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+                web.evaluateJavascript("window.QEImportBackupData(${JSONObject.quote(data)});", null)
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(this, "Backup import failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
     private lateinit var web: WebView
     private val home = "https://appassets.androidplatform.net/index.html"
     private val aiExecutor = Executors.newSingleThreadExecutor()
@@ -60,6 +82,19 @@ class MainActivity : AppCompatActivity() {
                 val adapter = web.createPrintDocumentAdapter("Moras Wood Quotation")
                 manager.print("Moras Wood Q&E Quotation", adapter, PrintAttributes.Builder().build())
             }
+        }
+
+        @JavascriptInterface
+        fun exportBackup(content: String) {
+            runOnUiThread {
+                pendingBackup = content
+                saveBackup.launch("moras-qe-full-backup.json")
+            }
+        }
+
+        @JavascriptInterface
+        fun importBackup() {
+            runOnUiThread { openBackup.launch(arrayOf("application/json", "text/plain")) }
         }
 
         @JavascriptInterface
