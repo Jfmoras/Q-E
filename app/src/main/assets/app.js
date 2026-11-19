@@ -255,7 +255,11 @@
     if(status)status.textContent=message||(hasAiKey()?'API key saved on this device.':'No API key saved.');
   }
 
-  function showView(view){
+  let currentView='home';
+  window.addEventListener('popstate',()=>{if(currentView!=='home')showView('home',true);else if(window.AndroidBack?.goHome)window.AndroidBack.goHome();});
+  function showView(view,fromBack=false){
+    if(view!==currentView&&!fromBack){try{history.pushState({qeView:view},'',location.href)}catch(e){}}
+    currentView=view;
     $('#homeView').classList.toggle('hidden',view!=='home');
     $('#workspaceView').classList.toggle('hidden',view!=='workspace');
     $('#notesView').classList.toggle('hidden',view!=='notes');
@@ -574,7 +578,7 @@
   const storeLogs=()=>localStorage.setItem('mwi-hoppus-v1',JSON.stringify(logs));
   function drawQuick(){
     $('#quickCftRate').value=quick.cftRate;$('#quickKolRate').value=quick.kolRate;
-    $('#quickRows').innerHTML=quick.rows.map((r,i)=>'<div style="display:flex;flex-wrap:wrap;gap:7px;padding:9px;border-bottom:1px solid #ddd"><input type="checkbox" data-i="'+i+'"><span>Row '+(i+1)+'</span>'+[['l','Length ft'],['w','Width in'],['t','Thickness in'],['q','Qty']].map(([k,label])=>'<label>'+label+'<input style="width:72px" type="number" min="0" step="any" class="input quickField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<select class="input quickField" data-i="'+i+'" data-key="mode"><option '+(r.mode==='CFT'?'selected':'')+'>CFT</option><option '+(r.mode==='KOL'?'selected':'')+'>KOL</option></select><strong class="quickVolume" data-i="'+i+'"></strong></div>').join('');
+    $('#quickRows').innerHTML=quick.rows.map((r,i)=>'<div class="quick-grid-row"><label class="quick-check"><input type="checkbox" data-i="'+i+'"> Row '+(i+1)+'</label><span></span>'+[['l','Length (ft)'],['w','Width (in)'],['t','Thickness (in)'],['q','Pieces']].map(([k,label])=>'<label>'+label+'<input type="number" min="0" step="any" class="input quickField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<label>Volume unit<select class="input quickField" data-i="'+i+'" data-key="mode"><option '+(r.mode==='CFT'?'selected':'')+'>CFT</option><option '+(r.mode==='KOL'?'selected':'')+'>KOL</option></select></label><strong class="quickVolume quick-result" data-i="'+i+'"></strong></div>').join('');
     $('#quickGroups').innerHTML=quick.groups.map(g=>'<div style="padding:7px;border-left:6px solid '+g.color+'"><strong>'+g.color+' · '+g.mode+'</strong><label>Rate ₹/'+g.mode+'<input class="input quickGroupRate" type="number" min="0" step="any" data-id="'+g.id+'" value="'+attr(g.rate)+'"></label><span class="quickGroupTotal" data-id="'+g.id+'"></span> <button class="secondary quickUngroup" data-id="'+g.id+'">Ungroup</button></div>').join('');
     calcQuick();
   }
