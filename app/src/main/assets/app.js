@@ -264,7 +264,7 @@
     $('#goHome').classList.toggle('hidden',view==='home');
     if(view==='notes')renderNotesManager();
   }
-  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('.panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); if(name==='settings')loadAiSettingsFields(); saveAutosave(); }
+  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $('#workspaceView .panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); if(name==='settings')loadAiSettingsFields(); saveAutosave(); }
   function renderLengthConverter(){
     const from=$('#lengthFrom'),to=$('#lengthTo');
     const options=Object.entries(converterUnits).map(([unit,data])=>`<option value="${unit}">${data.label}</option>`).join('');
