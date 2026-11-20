@@ -8,6 +8,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
@@ -65,18 +67,18 @@ fun NativeCalculatorScreen(context:Context, showSaved:Boolean=false) {
                 }
             }
         } else {
-            OutlinedTextField(l,{l=it},label={Text("Length")},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(l,{l=it},label={Text("Length")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
             unitSelector("Length unit",lu,{lu=it})
-            OutlinedTextField(w,{w=it},label={Text("Width")},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(w,{w=it},label={Text("Width")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
             unitSelector("Width unit",wu,{wu=it})
-            OutlinedTextField(t,{t=it},label={Text("Thickness")},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(t,{t=it},label={Text("Thickness")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
             unitSelector("Thickness unit",tu,{tu=it})
-            OutlinedTextField(qty,{qty=it},label={Text("Quantity")},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(qty,{qty=it},label={Text("Quantity")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
             Row {
                 listOf("Auto","CFT","KOL").forEach { option -> TextButton(onClick={mode=option}) { Text(if(mode==option)"✓ $option" else option) } }
             }
-            OutlinedTextField(rate,{rate=it},label={Text("Rate per CFT / KOL (₹)")},modifier=Modifier.fillMaxWidth())
-            OutlinedTextField(group,{group=it},label={Text("Group / wood species (optional)")},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(rate,{rate=it},label={Text("Rate per CFT / KOL (₹)")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
+            OutlinedTextField(group,{group=it},label={Text("Group / wood species (optional)")},singleLine=true,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
             val valid=(l.toDoubleOrNull()?:0.0)>0 && (w.toDoubleOrNull()?:0.0)>0 && (t.toDoubleOrNull()?:0.0)>0 && (qty.toIntOrNull()?:0)>0 && (rate.toDoubleOrNull()?:0.0)>=0
             Button(enabled=valid,onClick={
                 val actual=if(mode=="Auto") if(inches(w.toDouble(),wu)<=6.0)"CFT" else "KOL" else mode
@@ -95,7 +97,7 @@ fun NativeCalculatorScreen(context:Context, showSaved:Boolean=false) {
             val total=rows.sumOf { it.cost }
             Text("Total: %.3f CFT | %.3f KOL".format(cft,kol),style=MaterialTheme.typography.titleLarge)
             Text("Value: ₹%.2f".format(total))
-            OutlinedTextField(title,{title=it},label={Text("Calculation name")},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(title,{title=it},label={Text("Calculation name")},singleLine=true,modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
             Button(enabled=rows.isNotEmpty() && title.isNotBlank(),onClick={
                 val a=saved(context)
                 a.put(JSONObject().put("title",title.trim()).put("date",LocalDate.now().toString()).put("cft",cft).put("kol",kol).put("total",total))
