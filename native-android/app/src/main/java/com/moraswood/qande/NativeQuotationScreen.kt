@@ -109,7 +109,7 @@ fun NativeQuotationScreen(ctx:Context,dao:MwiDao,mode:String,onProjectCreated:()
                             TextButton(onClick={share(q)}) { Text("Share PDF") }
                             TextButton(onClick={
                                 scope.launch {
-                                    dao.putProject(ProjectEntity(q.id,q.customer,q.customer,q.total,notes=q.notes))
+                                    dao.putProject(ProjectEntity(UUID.randomUUID().toString(),q.customer,q.customer,q.total,notes=q.notes))
                                     message="Project created: ${q.customer}";onProjectCreated()
                                 }
                             }) { Text("Convert to Project") }
