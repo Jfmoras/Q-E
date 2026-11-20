@@ -9,6 +9,8 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
+import android.net.Uri
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -31,6 +33,12 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 class MainActivity : AppCompatActivity() {
+    private var pendingFileSelection: ValueCallback<Array<Uri>>? = null
+    private val chooseWebFiles = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val callback = pendingFileSelection
+        pendingFileSelection = null
+        callback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
+    }
     private var pendingBackup: String? = null
     private val saveBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -243,7 +251,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        web.webChromeClient = WebChromeClient()
+        web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(view: WebView, filePathCallback: ValueCallback<Array<Uri>>, fileChooserParams: FileChooserParams): Boolean {
+                pendingFileSelection?.onReceiveValue(null)
+                pendingFileSelection = filePathCallback
+                return try {
+                    chooseWebFiles.launch(fileChooserParams.createIntent().apply { addCategory(Intent.CATEGORY_OPENABLE) })
+                    true
+                } catch (error: Exception) {
+                    pendingFileSelection = null
+                    filePathCallback.onReceiveValue(null)
+                    android.widget.Toast.makeText(this@MainActivity, "Cannot open file picker: ${error.message}", android.widget.Toast.LENGTH_LONG).show()
+                    true
+                }
+            }
+        }
     }
 
     private fun sendAiResult(requestId: String, success: Boolean, message: String) {
@@ -467,6 +489,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        pendingFileSelection?.onReceiveValue(null)
+        pendingFileSelection = null
         aiExecutor.shutdownNow()
         if (::web.isInitialized) {
             web.destroy()
