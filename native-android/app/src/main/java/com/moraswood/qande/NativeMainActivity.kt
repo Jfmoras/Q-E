@@ -124,7 +124,8 @@ class NativeMainActivity : ComponentActivity() {
                             }
                             "Machines" -> MachineScreen(this@NativeMainActivity)
                             "Estimation", "Quotation", "Saved Quotations" -> NativeQuotationScreen(this@NativeMainActivity, database.dao(), tab) { refresh() }
-                            "Saved Calculations" -> Column { Text("Saved Calculations"); Text("Native saved calculations pending.") }
+                            "Saved Calculations" -> NativeCalculatorScreen(this@NativeMainActivity, showSaved = true)
+                            "Calculators" -> NativeCalculatorScreen(this@NativeMainActivity)
                             "Hoppus" -> {
                                 var girth by remember { mutableStateOf("") }
                                 var logLength by remember { mutableStateOf("") }
