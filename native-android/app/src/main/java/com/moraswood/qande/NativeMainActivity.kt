@@ -74,7 +74,7 @@ class NativeMainActivity : ComponentActivity() {
                 }
                 val openAttachment = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
                 Scaffold(topBar = {
-                    Column(Modifier.fillMaxWidth().padding(top = 22.dp, start = 18.dp, end = 18.dp, bottom = 12.dp)) {
+                    Column(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 8.dp, start = 18.dp, end = 18.dp, bottom = 8.dp)) {
                         Text("MORAS WOOD INDUSTRIES", style = MaterialTheme.typography.titleMedium)
                         Text("MWI • $tab", style = MaterialTheme.typography.bodySmall)
                     }
