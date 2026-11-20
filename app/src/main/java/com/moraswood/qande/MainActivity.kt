@@ -9,6 +9,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import android.view.WindowInsets
 import android.webkit.ValueCallback
 import android.net.Uri
 import android.webkit.WebChromeClient
@@ -177,6 +178,13 @@ class MainActivity : AppCompatActivity() {
         
         web = WebView(this)
         setContentView(web)
+        // Android edge-to-edge layouts can draw WebView content under the status bar.
+        // Apply the actual system inset instead of a hard-coded pixel offset.
+        web.setOnApplyWindowInsetsListener { view, insets ->
+            val topInset = insets.getInsets(WindowInsets.Type.statusBars()).top
+            view.setPadding(0, topInset, 0, 0)
+            insets
+        }
 
         setupWebView()
 
