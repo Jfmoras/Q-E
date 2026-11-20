@@ -142,9 +142,29 @@ class NativeMainActivity : ComponentActivity() {
                                     }
                                 }
                             }
-                            else -> Column {
-                                Text("Calculators", style = MaterialTheme.typography.headlineSmall)
-                                Text("CFT / KOL, Hoppus, estimates and quotation screens are pending migration. The old app remains the production version.")
+                            else -> {
+                                var length by remember { mutableStateOf("") }
+                                var width by remember { mutableStateOf("") }
+                                var thickness by remember { mutableStateOf("") }
+                                var qty by remember { mutableStateOf("1") }
+                                var rate by remember { mutableStateOf("") }
+                                val l = length.toDoubleOrNull() ?: 0.0
+                                val w = width.toDoubleOrNull() ?: 0.0
+                                val t = thickness.toDoubleOrNull() ?: 0.0
+                                val n = qty.toIntOrNull()?.coerceAtLeast(0) ?: 0
+                                val unit = if (w <= 6.0) "CFT" else "KOL"
+                                val volume = TimberMath.volume(l, w, t, n)
+                                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text("Timber Calculator", style = MaterialTheme.typography.headlineSmall)
+                                    OutlinedTextField(length, { length = it }, label = { Text("Length (feet)") }, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(width, { width = it }, label = { Text("Width (inches)") }, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(thickness, { thickness = it }, label = { Text("Thickness (inches)") }, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(qty, { qty = it }, label = { Text("Quantity") }, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(rate, { rate = it }, label = { Text("Rate per $unit (₹)") }, modifier = Modifier.fillMaxWidth())
+                                    Text("Volume: %.3f %s".format(java.util.Locale.US, volume, unit), style = MaterialTheme.typography.titleLarge)
+                                    Text("Timber cost: ₹%.2f".format(java.util.Locale.US, volume * (rate.toDoubleOrNull() ?: 0.0)))
+                                    Text("Other calculators, grouped rates, estimates and quotations are pending migration.")
+                                }
                             }
                         }
                     }
