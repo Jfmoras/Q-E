@@ -346,7 +346,7 @@
 
   async function resizeImage(file){
     const data=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(file)});
-    return await new Promise(resolve=>{const img=new Image();img.onload=()=>{const max=1200,scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.82))};img.onerror=()=>resolve(data);img.src=data});
+    return await new Promise(resolve=>{const img=new Image();img.onload=()=>{const max=720,scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.65))};img.onerror=()=>resolve(data);img.src=data});
   }
 
   function renderQuotation(){
@@ -544,7 +544,7 @@
     if(ec&&t.classList.contains('labour-mode')){state.costings[+ec.dataset.i].labourMode=t.value;renderEstimation();saveAutosave()}
     if(ec&&t.classList.contains('polish-mode')){state.costings[+ec.dataset.i].polishMode=t.value;renderEstimation();saveAutosave()}
     if(t.id==='discountType'){state.quote.discountType=t.value;renderQuoteTotals();renderPrintSheet();saveAutosave()}
-    if(t.classList.contains('q-images')){const card=t.closest('.quote-item'),i=Number(card?.dataset.i),files=Array.from(t.files||[]).filter(f=>f.type.startsWith('image/')).slice(0,6);if(!Number.isInteger(i)||!state.quoteItems[i]){alert('Could not identify quotation item.');return}if(!files.length){alert('Select image files to attach.');return}let added=0;for(const f of files){if(state.quoteItems[i].images.length>=6)break;try{const src=await resizeImage(f);if(src&&src.startsWith('data:image/')){state.quoteItems[i].images.push(src);added++}}catch(err){console.error('Image import failed',err)}}if(added){renderQuotation();saveAutosave()}else alert('No images were added. Please try a JPG or PNG photo.');}
+    if(t.classList.contains('q-images')){const card=t.closest('.quote-item'),i=Number(card?.dataset.i),files=Array.from(t.files||[]).filter(f=>f.type.startsWith('image/')).slice(0,6);if(!Number.isInteger(i)||!state.quoteItems[i]){alert('Could not identify quotation item.');return}if(!files.length){alert('Select image files to attach.');return}let added=0;for(const f of files){if(state.quoteItems[i].images.length>=6)break;try{const src=await resizeImage(f);if(src&&src.startsWith('data:image/')){state.quoteItems[i].images.push(src);added++}}catch(err){console.error('Image import failed',err)}}if(added){try{syncActiveOption();localStorage.setItem('mwi-autosave-v1',JSON.stringify(state));renderQuotation();alert(added+' image(s) added and saved to this quotation.')}catch(error){state.quoteItems[i].images.splice(-added,added);renderQuotation();alert('Images could not be saved. Device storage is full or the quotation is too large. Existing quotation preserved.')}}else alert('No images were added. Please try a JPG or PNG photo.');}
   });
 
   document.addEventListener('keydown',e=>{
