@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,7 +30,7 @@ class NativeMainActivity : ComponentActivity() {
         val storage = NativeFiles(applicationContext, database.dao())
         val migration = LegacyMigration(database.dao())
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFFB8E47A), background = Color(0xFF171B1E), surface = Color(0xFF292F32), onSurface = Color(0xFFF0F3F2))) {
                 val scope = rememberCoroutineScope()
                 var tab by remember { mutableStateOf("Dashboard") }
                 var projects by remember { mutableStateOf<List<ProjectEntity>>(emptyList()) }
@@ -86,11 +87,52 @@ class NativeMainActivity : ComponentActivity() {
                         if (message.isNotBlank()) Text(message, color = MaterialTheme.colorScheme.secondary)
                         when (tab) {
                             "Dashboard" -> Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Text("Native MWI foundation", style = MaterialTheme.typography.headlineSmall)
-                                Text("Project records and file attachments are stored natively. Other existing modules are being migrated.")
-                                Button(onClick = { tab = "Projects" }) { Text("Projects & Payments") }
-                                OutlinedButton(onClick = { importLegacy.launch(arrayOf("application/json")) }) { Text("Import old MWI JSON backup") }
-                                Text("Do not uninstall the original app. This importer currently covers project metadata only, not quotation images or uploaded documents.")
+                                Text("Dashboard", style = MaterialTheme.typography.headlineSmall)
+                                listOf(
+                                    Triple("Hoppus Log Volume", "Quarter-girth log measurement and sawing charges.", "Hoppus"),
+                                    Triple("New Project", "Timber calculator, estimation and quotation workflow.", "Calculators"),
+                                    Triple("Saved Projects", "Open a saved project and its attachments.", "Projects"),
+                                    Triple("Projects · Expenses · Inventory · Machines", "Payments, materials, tools and reports.", "Projects"),
+                                    Triple("Notes", "Reusable quotation notes (migration pending).", "Notes"),
+                                    Triple("CFT / KOL Calculator", "Timber sizes and rates.", "Calculators"),
+                                    Triple("Settings", "Backup and restore.", "Settings")
+                                ).forEach { (title, description, destination) ->
+                                    OutlinedCard(onClick = { tab = destination }, modifier = Modifier.fillMaxWidth()) {
+                                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                                            Text(description, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                            "Hoppus" -> {
+                                var girth by remember { mutableStateOf("") }
+                                var logLength by remember { mutableStateOf("") }
+                                var count by remember { mutableStateOf("1") }
+                                var sawingRate by remember { mutableStateOf("") }
+                                val g = girth.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+                                val l = logLength.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+                                val n = count.toIntOrNull()?.coerceAtLeast(0) ?: 0
+                                val cft = g * g * l * n / 2304.0
+                                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text("Hoppus Log Volume", style = MaterialTheme.typography.headlineSmall)
+                                    Text("Quarter-girth method • girth in inches, length in feet")
+                                    OutlinedTextField(girth, { girth = it }, label = { Text("Girth (inches)") }, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(logLength, { logLength = it }, label = { Text("Length (feet)") }, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(count, { count = it }, label = { Text("Number of logs") }, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(sawingRate, { sawingRate = it }, label = { Text("Sawing rate (₹/CFT)") }, modifier = Modifier.fillMaxWidth())
+                                    Text("Hoppus volume: %.3f CFT".format(java.util.Locale.US, cft), style = MaterialTheme.typography.titleLarge)
+                                    Text("Sawing charges: ₹%.2f".format(java.util.Locale.US, cft * (sawingRate.toDoubleOrNull() ?: 0.0)))
+                                }
+                            }
+                            "Settings" -> Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("Settings", style = MaterialTheme.typography.headlineSmall)
+                                OutlinedButton(onClick = { importLegacy.launch(arrayOf("application/json")) }) { Text("Import existing MWI JSON backup") }
+                                Text("Only project metadata is currently supported. Full quotation, payment, expense and attachment migration is required before replacing the old app.")
+                            }
+                            "Notes" -> Column {
+                                Text("Saved Notes", style = MaterialTheme.typography.headlineSmall)
+                                Text("Native reusable notes are pending migration.")
                             }
                             "Projects" -> {
                                 if (selected == null) {
