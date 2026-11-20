@@ -1,7 +1,6 @@
 package com.moraswood.qande
 
 import android.net.Uri
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -89,8 +88,6 @@ class NativeMainActivity : ComponentActivity() {
                         when (tab) {
                             "Dashboard" -> Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text("Dashboard", style = MaterialTheme.typography.headlineSmall)
-                                Button(onClick = { startActivity(Intent(this@NativeMainActivity, LegacyWorkspaceActivity::class.java)) }, modifier = Modifier.fillMaxWidth()) { Text("Open Complete MWI Workspace") }
-                                Text("Existing calculator, estimation, quotations, notes, operations and reports. This compatibility workspace uses separate WebView storage.")
                                 listOf(
                                     Triple("Quotation & Estimation", "CFT, estimation, quotation, saved notes, quotations and calculations", "Quotation & Estimation"),
                                     Triple("Hoppus Calculator", "Quarter-girth log volume and sawing charges", "Hoppus"),
@@ -113,19 +110,22 @@ class NativeMainActivity : ComponentActivity() {
                                     OutlinedCard(onClick = {
                                         if (item == "CFT Calculator") tab = "Calculators"
                                         else if (item == "Saved Notes") tab = "Notes"
-                                        else startActivity(Intent(this@NativeMainActivity, LegacyWorkspaceActivity::class.java))
+                                        else tab = item
                                     }, modifier = Modifier.fillMaxWidth()) {
                                         Text(item, Modifier.padding(18.dp), style = MaterialTheme.typography.titleMedium)
                                     }
                                 }
-                                Text("Estimation, quotations and saved records currently open in the compatibility workspace.")
+                                Text("Native modules under construction. Existing WebView app is separate and unaffected.")
                             }
                             "Inventory & Expenses" -> Column {
                                 Text("Inventory & Expenses", style = MaterialTheme.typography.headlineSmall)
-                                Text("Requirements pending. Existing inventory and expense features remain available in the compatibility workspace.")
-                                Button(onClick = { startActivity(Intent(this@NativeMainActivity, LegacyWorkspaceActivity::class.java)) }) { Text("Open existing inventory") }
+                                Text("Requirements pending. Native module will be added after specifications are confirmed.")
                             }
                             "Machines" -> MachineScreen(this@NativeMainActivity)
+                            "Estimation", "Quotation", "Saved Quotations", "Saved Calculations" -> Column {
+                                Text(tab, style = MaterialTheme.typography.headlineSmall)
+                                Text("Native implementation pending. No WebView fallback.")
+                            }
                             "Hoppus" -> {
                                 var girth by remember { mutableStateOf("") }
                                 var logLength by remember { mutableStateOf("") }
