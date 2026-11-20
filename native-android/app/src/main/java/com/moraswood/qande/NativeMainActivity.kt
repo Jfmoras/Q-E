@@ -1,6 +1,7 @@
 package com.moraswood.qande
 
 import android.net.Uri
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -88,6 +89,8 @@ class NativeMainActivity : ComponentActivity() {
                         when (tab) {
                             "Dashboard" -> Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text("Dashboard", style = MaterialTheme.typography.headlineSmall)
+                                Button(onClick = { startActivity(Intent(this@NativeMainActivity, LegacyWorkspaceActivity::class.java)) }, modifier = Modifier.fillMaxWidth()) { Text("Open Complete MWI Workspace") }
+                                Text("Existing calculator, estimation, quotations, notes, operations and reports. This compatibility workspace uses separate WebView storage.")
                                 listOf(
                                     Triple("Hoppus Log Volume", "Quarter-girth log measurement and sawing charges.", "Hoppus"),
                                     Triple("New Project", "Timber calculator, estimation and quotation workflow.", "Calculators"),
