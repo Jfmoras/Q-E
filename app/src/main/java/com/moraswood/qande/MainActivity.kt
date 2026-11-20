@@ -213,7 +213,7 @@ class MainActivity : AppCompatActivity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             allowFileAccess = false
-            allowContentAccess = false
+            allowContentAccess = true
             setSupportMultipleWindows(false)
             databaseEnabled = true
         }
