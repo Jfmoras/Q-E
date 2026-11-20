@@ -92,13 +92,12 @@ class NativeMainActivity : ComponentActivity() {
                                 Button(onClick = { startActivity(Intent(this@NativeMainActivity, LegacyWorkspaceActivity::class.java)) }, modifier = Modifier.fillMaxWidth()) { Text("Open Complete MWI Workspace") }
                                 Text("Existing calculator, estimation, quotations, notes, operations and reports. This compatibility workspace uses separate WebView storage.")
                                 listOf(
-                                    Triple("Hoppus Log Volume", "Quarter-girth log measurement and sawing charges.", "Hoppus"),
-                                    Triple("New Project", "Timber calculator, estimation and quotation workflow.", "Calculators"),
-                                    Triple("Saved Projects", "Open a saved project and its attachments.", "Projects"),
-                                    Triple("Projects · Expenses · Inventory · Machines", "Payments, materials, tools and reports.", "Projects"),
-                                    Triple("Notes", "Reusable quotation notes (migration pending).", "Notes"),
-                                    Triple("CFT / KOL Calculator", "Timber sizes and rates.", "Calculators"),
-                                    Triple("Settings", "Backup and restore.", "Settings")
+                                    Triple("Quotation & Estimation", "CFT, estimation, quotation, saved notes, quotations and calculations", "Quotation & Estimation"),
+                                    Triple("Hoppus Calculator", "Quarter-girth log volume and sawing charges", "Hoppus"),
+                                    Triple("Projects & Payments", "Project details, quotations and payments", "Projects"),
+                                    Triple("Inventory & Expenses", "Requirements to follow", "Inventory & Expenses"),
+                                    Triple("Machines", "Running, QR, machine types and out-of-operation", "Machines"),
+                                    Triple("Settings", "Backup and app settings", "Settings")
                                 ).forEach { (title, description, destination) ->
                                     OutlinedCard(onClick = { tab = destination }, modifier = Modifier.fillMaxWidth()) {
                                         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -108,6 +107,25 @@ class NativeMainActivity : ComponentActivity() {
                                     }
                                 }
                             }
+                            "Quotation & Estimation" -> Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("Quotation & Estimation", style = MaterialTheme.typography.headlineSmall)
+                                listOf("CFT Calculator", "Estimation", "Quotation", "Saved Notes", "Saved Quotations", "Saved Calculations").forEach { item ->
+                                    OutlinedCard(onClick = {
+                                        if (item == "CFT Calculator") tab = "Calculators"
+                                        else if (item == "Saved Notes") tab = "Notes"
+                                        else startActivity(Intent(this@NativeMainActivity, LegacyWorkspaceActivity::class.java))
+                                    }, modifier = Modifier.fillMaxWidth()) {
+                                        Text(item, Modifier.padding(18.dp), style = MaterialTheme.typography.titleMedium)
+                                    }
+                                }
+                                Text("Estimation, quotations and saved records currently open in the compatibility workspace.")
+                            }
+                            "Inventory & Expenses" -> Column {
+                                Text("Inventory & Expenses", style = MaterialTheme.typography.headlineSmall)
+                                Text("Requirements pending. Existing inventory and expense features remain available in the compatibility workspace.")
+                                Button(onClick = { startActivity(Intent(this@NativeMainActivity, LegacyWorkspaceActivity::class.java)) }) { Text("Open existing inventory") }
+                            }
+                            "Machines" -> MachineScreen(this@NativeMainActivity)
                             "Hoppus" -> {
                                 var girth by remember { mutableStateOf("") }
                                 var logLength by remember { mutableStateOf("") }
