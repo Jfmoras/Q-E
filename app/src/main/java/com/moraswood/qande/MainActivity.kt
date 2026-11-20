@@ -9,12 +9,16 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import android.view.WindowInsets
+import android.webkit.ValueCallback
+import android.net.Uri
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebViewAssetLoader
 import org.json.JSONArray
@@ -30,6 +34,33 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 class MainActivity : AppCompatActivity() {
+    private var pendingFileSelection: ValueCallback<Array<Uri>>? = null
+    private val chooseWebFiles = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val callback = pendingFileSelection
+        pendingFileSelection = null
+        callback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
+    }
+    private var pendingBackup: String? = null
+    private val saveBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            try {
+                contentResolver.openOutputStream(uri)?.use { it.write((pendingBackup ?: "").toByteArray(Charsets.UTF_8)) }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(this, "Backup export failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+        pendingBackup = null
+    }
+    private val openBackup = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            try {
+                val data = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+                web.evaluateJavascript("window.QEImportBackupData(${JSONObject.quote(data)});", null)
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(this, "Backup import failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
     private lateinit var web: WebView
     private val home = "https://appassets.androidplatform.net/index.html"
     private val aiExecutor = Executors.newSingleThreadExecutor()
@@ -60,6 +91,19 @@ class MainActivity : AppCompatActivity() {
                 val adapter = web.createPrintDocumentAdapter("Moras Wood Quotation")
                 manager.print("Moras Wood Q&E Quotation", adapter, PrintAttributes.Builder().build())
             }
+        }
+
+        @JavascriptInterface
+        fun exportBackup(content: String) {
+            runOnUiThread {
+                pendingBackup = content
+                saveBackup.launch("moras-qe-full-backup.json")
+            }
+        }
+
+        @JavascriptInterface
+        fun importBackup() {
+            runOnUiThread { openBackup.launch(arrayOf("application/json", "text/plain")) }
         }
 
         @JavascriptInterface
@@ -134,6 +178,13 @@ class MainActivity : AppCompatActivity() {
         
         web = WebView(this)
         setContentView(web)
+        // Android edge-to-edge layouts can draw WebView content under the status bar.
+        // Apply the actual system inset instead of a hard-coded pixel offset.
+        web.setOnApplyWindowInsetsListener { view, insets ->
+            val topInset = insets.getInsets(WindowInsets.Type.statusBars()).top
+            view.setPadding(0, topInset, 0, 0)
+            insets
+        }
 
         setupWebView()
 
@@ -147,6 +198,8 @@ class MainActivity : AppCompatActivity() {
             override fun handleOnBackPressed() {
                 if (web.canGoBack()) {
                     web.goBack()
+                } else if (web.url != home) {
+                    web.loadUrl(home)
                 } else {
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
@@ -160,7 +213,7 @@ class MainActivity : AppCompatActivity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             allowFileAccess = false
-            allowContentAccess = false
+            allowContentAccess = true
             setSupportMultipleWindows(false)
             databaseEnabled = true
         }
@@ -175,6 +228,10 @@ class MainActivity : AppCompatActivity() {
                 val uri = request.url
                 // Allow internal asset domain
                 if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") {
+                    if (uri.path.isNullOrEmpty() || uri.path == "/") {
+                        view.loadUrl(home)
+                        return true
+                    }
                     return false
                 }
                 // Open external links in the system browser
@@ -202,7 +259,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        web.webChromeClient = WebChromeClient()
+        web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(view: WebView, filePathCallback: ValueCallback<Array<Uri>>, fileChooserParams: FileChooserParams): Boolean {
+                pendingFileSelection?.onReceiveValue(null)
+                pendingFileSelection = filePathCallback
+                return try {
+                    chooseWebFiles.launch(fileChooserParams.createIntent().apply { addCategory(Intent.CATEGORY_OPENABLE) })
+                    true
+                } catch (error: Exception) {
+                    pendingFileSelection = null
+                    filePathCallback.onReceiveValue(null)
+                    android.widget.Toast.makeText(this@MainActivity, "Cannot open file picker: ${error.message}", android.widget.Toast.LENGTH_LONG).show()
+                    true
+                }
+            }
+        }
     }
 
     private fun sendAiResult(requestId: String, success: Boolean, message: String) {
@@ -426,6 +497,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        pendingFileSelection?.onReceiveValue(null)
+        pendingFileSelection = null
         aiExecutor.shutdownNow()
         if (::web.isInitialized) {
             web.destroy()

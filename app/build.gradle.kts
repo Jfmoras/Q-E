@@ -11,14 +11,26 @@ android {
         applicationId = "com.moraswood.qande"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "10.0"
+        versionCode = 11
+        versionName = "10.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (!System.getenv("QE_KEYSTORE_PATH").isNullOrBlank()) {
+            create("qePermanent") {
+                storeFile = file(System.getenv("QE_KEYSTORE_PATH"))
+                storePassword = System.getenv("QE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("QE_KEY_ALIAS") ?: "moras-qe"
+                keyPassword = System.getenv("QE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("qePermanent")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

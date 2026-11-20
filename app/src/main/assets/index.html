@@ -12,29 +12,32 @@
 <body>
   <header class="topbar no-print">
     <div class="container brand-row">
-      <img src="/mwi-logo.png" alt="Moras Wood Industries" class="brand-logo" />
+      <svg class="brand-logo" viewBox="0 0 108 108" role="img" aria-label="MWI logo" xmlns="http://www.w3.org/2000/svg"><rect width="108" height="108" rx="24" fill="#111315"/><circle cx="54" cy="54" r="38" fill="none" stroke="#eeeeee" stroke-width="5"/><path d="M22 67V43h6l10 13 10-13h6v24h-6V52L38 64 28 52v15zM53 67V52h5l6 7 6-7h5v15h-6v-6l-5 6-5-6v6zM79 43h6v24h-6z" fill="#f4f4f4"/></svg>
       <div>
         <h1>MORAS WOOD INDUSTRIES</h1>
-        <p>Quotations & Estimations</p>
+        <p>Dashboard</p>
       </div>
       <button id="goHome" class="secondary home-button hidden" type="button">Home</button>
     </div>
   </header>
 
   <main id="homeView" class="container home-view">
-    <div class="page-heading">
-      <h2>Welcome to Moras Wood Q&amp;E</h2>
-      <p>Start a new job, open a saved project, or manage your reusable notes.</p>
-    </div>
-    <div class="home-actions">
+<div class="home-actions">
+      <button id="hoppusHome" class="home-action secondary" type="button"><strong>Hoppus Log Volume</strong><span>Quarter-girth log measurement and sawing charges.</span></button>
       <button id="newProjectHome" class="home-action primary" type="button"><strong>New Project</strong><span>Start a calculator, estimate and quotation.</span></button>
       <button id="savedProjectsHome" class="home-action secondary" type="button"><strong>Saved Projects</strong><span>Open or remove a project saved on this device.</span></button>
+      <a href="/operations.html" class="home-action secondary" style="display:block;text-decoration:none"><strong>Projects · Expenses · Inventory · Machines</strong><span>Manage project payments, material stock, machine status and monthly reports.</span></a>
       <button id="notesHome" class="home-action secondary" type="button"><strong>Notes</strong><span>Manage notes to reuse in quotations.</span></button>
+      <button id="quickCalcHome" class="home-action secondary" type="button"><strong>CFT / KOL Calculator</strong><span>Independent timber sizes, color groups and prices.</span></button>
+
+      <button id="settingsHome" class="home-action secondary" type="button"><strong>⚙ Settings</strong><span>AI, length converter, backup and restore.</span></button>
       <button id="continueProjectHome" class="home-action secondary hidden" type="button"><strong>Continue Current Project</strong><span>Resume your latest automatically saved work.</span></button>
     </div>
     <div id="savedProjectsPanel" class="saved-panel hidden"></div>
   </main>
 
+  <main id="quickView" class="container notes-view hidden"><h2>General CFT / KOL Calculator</h2><p>Independent of estimations. Length in feet, width and thickness in inches.</p><div class="card"><div class="project-row"><label>Default ₹/CFT <input class="input" id="quickCftRate" type="number" min="0"></label><label>Default ₹/KOL <input class="input" id="quickKolRate" type="number" min="0"></label><button id="quickAdd" class="secondary">Add row</button></div><div id="quickRows"></div><div id="quickGroups"></div><button id="quickMakeGroup" class="secondary">Group checked rows</button><p id="quickTotal"></p></div></main>
+  <main id="hoppusView" class="container notes-view hidden"><h2>Hoppus Log Volume Calculator</h2><p>Quarter-girth method: girth² × length ÷ 2304, with girth in inches and length in feet.</p><div class="card"><div id="hoppusRows"></div><button id="hoppusAdd" class="secondary">Add log</button><label class="field">Sawing rate ₹/CFT<input class="input" id="hoppusSawRate" type="number" min="0" step="any"></label><p id="hoppusTotal"></p></div></main>
   <main id="notesView" class="container notes-view hidden">
     <div class="page-heading">
       <h2>Saved Notes</h2>
@@ -48,6 +51,7 @@
     </div>
   </main>
 
+  <div id="settingsView" class="workspace-view hidden"></div>
   <div id="workspaceView" class="workspace-view hidden">
   <nav class="tabs no-print" aria-label="Main navigation">
     <div class="container tab-row">
@@ -55,7 +59,7 @@
       <button class="tab" data-tab="estimation">Estimation</button>
       <button class="tab" data-tab="quotation">Quotation</button>
       <button class="tab" data-tab="review">Job Review</button>
-      <button class="tab" data-tab="settings">Settings</button>
+
     </div>
   </nav>
 
@@ -99,7 +103,7 @@
 
     <section id="quotation" class="panel">
       <div class="quote-actions no-print">
-        <button id="printQuotation" class="primary">Print quotation</button>
+        <button id="printQuotation" class="primary">Print quotation</button><button id="exportToProjects" class="secondary" type="button">Export to Projects</button>
       </div>
       <div class="quotation-editor paper screen-quotation">
         <div class="quote-editor-head">
@@ -111,7 +115,7 @@
           <input id="customerName" class="input" placeholder="Customer name" />
           <input id="customerLocation" class="input" placeholder="Customer location" />
         </div>
-        <div id="quotationItems" class="quote-items"></div>
+        <div class="quote-option-editor no-print"><label class="field">Quotation option<select class="input" id="quoteOptionsSelect"></select></label><label class="field">Option name<input class="input" id="quoteOptionName" placeholder="Material, grade or design"></label><div class="quote-option-buttons"><button class="secondary" id="addQuoteOption" type="button">+ Add option</button><button class="secondary" id="duplicateQuoteOption" type="button">Duplicate option</button><button class="danger" id="removeQuoteOption" type="button">Remove option</button></div></div><div id="quotationItems" class="quote-items"></div>
         <button id="addQuoteItem" class="secondary no-print">+ Add quotation item</button>
 
         <div class="quote-controls no-print">
@@ -153,6 +157,7 @@
         <h2>Settings</h2>
         <p>Configure an AI-compatible API and convert length measurements.</p>
       </div>
+      <section class="card settings-card"><h3>Full Backup & Restore</h3><p>Export all local project records, revision history, notes, quick calculations and settings, excluding protected API credentials.</p><button id="backupExport" class="primary">Export Backup</button> <button id="backupImport" class="secondary">Import Backup</button><input type="file" id="backupFileInput" accept=".json,application/json" hidden></section>
       <section class="card settings-card">
         <h3>AI API</h3>
         <p class="muted">Paste a key and the app will recognize common provider key formats and suggest an endpoint and model. Keys that cannot be identified still work with a compatible API when you enter its endpoint and model. Model access depends on your provider account. Requests go directly to the configured provider; Android encrypts the key on this device.</p>

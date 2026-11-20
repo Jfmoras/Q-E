@@ -7,10 +7,10 @@
   const rs = v => `Rs. ${Math.round(Number(v)||0).toLocaleString('en-IN')}`;
   const blankRow = () => ({l:'',lUnit:'ft',w:'',wUnit:'in',t:'',tUnit:'in',q:'',mode:'CFT'});
   const blankItem = () => ({name:'',rows:[blankRow()]});
-  const blankCosting = () => ({cftRate:'',kolRate:'',labourMode:'sqft',labourLength:'',labourLengthUnit:'ft',labourWidth:'',labourWidthUnit:'ft',labourQty:'',labourRate:'',labourLumpsum:'',polishMode:'sqft',polishRate:'',polishLumpsum:'',polishAreaOverride:'',consumables:'',other:'',sellingPrice:'',sellingAuto:true});
+  const blankCosting = () => ({rateGroups:[],rowRates:[],cftRate:'',kolRate:'',labourMode:'sqft',labourLength:'',labourLengthUnit:'ft',labourWidth:'',labourWidthUnit:'ft',labourQty:'',labourRate:'',labourLumpsum:'',polishMode:'sqft',polishRate:'',polishLumpsum:'',polishAreaOverride:'',consumables:'',other:'',sellingPrice:'',sellingAuto:true});
   const blankQuote = () => ({description:'',unit:'',qty:'',unitPrice:'',images:[],aiOriginal:''});
   const defaultState = () => ({
-    tab:'calculator', projectName:'', items:[blankItem()], estimationItems:[], costings:[], quoteItems:[blankQuote()],
+    tab:'calculator', projectName:'', revision:0, projectId:'', quoteOptions:[], activeQuoteOption:0, items:[blankItem()], estimationItems:[], costings:[], quoteItems:[blankQuote()],
     customer:{name:'',location:''}, quote:{discountType:'amount',discountValue:'',gstPercent:'',notes:['']},
     actual:{materials:'',labourHours:''}
   });
@@ -28,19 +28,42 @@
   const originalMeasure=(value,unit)=>value?`${esc(value)} ${esc(unitLabel(unit))}`:'-';
   const itemTotals = item => item.rows.reduce((a,r)=>{const x=calcRow(r);a[x.mode]+=x.val;return a},{CFT:0,KOL:0});
   const itemSurface = item => item.rows.reduce((a,r)=>a+surfaceSqft(r),0);
+  const rateGroupForRow=(c,j)=>Array.isArray(c.rateGroups)?c.rateGroups.find(g=>Array.isArray(g.rows)&&g.rows.includes(j)):null;
+  const effectiveTimberRate=(c,row,j)=>{
+    const group=rateGroupForRow(c,j);
+    if(group)return group.rate;
+    return row.mode==='CFT'?c.cftRate:c.kolRate;
+  };
+  const groupSummary=(item,g)=>{
+    const volume=(g.rows||[]).reduce((total,j)=>total+(item.rows[j]&&item.rows[j].mode===g.mode?calcRow(item.rows[j]).val:0),0);
+    return {volume,amount:volume*num(g.rate)};
+  };
   const costingResult = i => {
     const item=state.estimationItems[i]||{rows:[]}, c=state.costings[i]||blankCosting(), tot=itemTotals(item), surface=itemSurface(item);
     const polishArea=num(c.polishAreaOverride)||surface;
-    const wood=tot.CFT*num(c.cftRate)+tot.KOL*num(c.kolRate);
+    const timberCosts=item.rows.reduce((a,row,j)=>{const amount=calcRow(row).val*num(effectiveTimberRate(c,row,j));if(rateGroupForRow(c,j))a.grouped+=amount;else a.ungrouped+=amount;return a},{grouped:0,ungrouped:0});
+    const wood=timberCosts.grouped+timberCosts.ungrouped;
     const labourArea=labourAreaSqft(c);
     const labour=(c.labourMode||'sqft')==='lumpsum'?num(c.labourLumpsum):labourArea*num(c.labourRate);
     const polish=c.polishMode==='sqft'?polishArea*num(c.polishRate):num(c.polishLumpsum);
     const cost=wood+labour+polish+num(c.consumables)+num(c.other);
     const sellingBlank=!String(c.sellingPrice||'').trim();if(sellingBlank || c.sellingAuto===true){c.sellingPrice=cost?String(Math.round(cost)):'';c.sellingAuto=true}
     const selling=num(c.sellingPrice), profit=selling-cost;
-    return {tot,surface,polishArea,wood,labourArea,labour,polish,cost,selling,profit,markup:cost?profit/cost*100:0,margin:selling?profit/selling*100:0};
+    return {tot,surface,polishArea,wood,groupedWood:timberCosts.grouped,ungroupedWood:timberCosts.ungrouped,labourArea,labour,polish,cost,selling,profit,markup:cost?profit/cost*100:0,margin:selling?profit/selling*100:0};
   };
   const estimateGrand = () => state.estimationItems.reduce((a,_,i)=>{const r=costingResult(i);a.cost+=r.cost;a.selling+=r.selling;a.profit+=r.profit;return a},{cost:0,selling:0,profit:0});
+  const ensureQuoteOptions=()=>{
+    if(!Array.isArray(state.quoteOptions)||!state.quoteOptions.length)state.quoteOptions=[{name:'Option 1',items:state.quoteItems||[blankQuote()],discountType:state.quote.discountType,discountValue:state.quote.discountValue,gstPercent:state.quote.gstPercent}];
+    state.activeQuoteOption=Math.max(0,Math.min(Number(state.activeQuoteOption)||0,state.quoteOptions.length-1));
+  };
+  const syncActiveOption=()=>{ensureQuoteOptions();const opt=state.quoteOptions[state.activeQuoteOption];opt.items=state.quoteItems;opt.discountType=state.quote.discountType;opt.discountValue=state.quote.discountValue;opt.gstPercent=state.quote.gstPercent};
+  const activateOption=i=>{syncActiveOption();state.activeQuoteOption=i;const opt=state.quoteOptions[i];state.quoteItems=opt.items||[blankQuote()];state.quote.discountType=opt.discountType||'amount';state.quote.discountValue=opt.discountValue??'';state.quote.gstPercent=opt.gstPercent??'';renderQuotation();saveAutosave()};
+  const totalsForOption=opt=>{
+    const subtotal=(opt.items||[]).reduce((s,x)=>s+num(x.qty)*num(x.unitPrice),0);
+    const raw=opt.discountType==='percent'?subtotal*num(opt.discountValue)/100:num(opt.discountValue);
+    const discount=Math.min(subtotal,Math.max(0,raw)),taxable=Math.max(0,subtotal-discount),gst=taxable*num(opt.gstPercent)/100;
+    return {subtotal,discount,taxable,gst,grand:taxable+gst};
+  };
   const quoteTotals = () => {
     const subtotal=state.quoteItems.reduce((s,x)=>s+num(x.qty)*num(x.unitPrice),0);
     const raw=state.quote.discountType==='percent'?subtotal*num(state.quote.discountValue)/100:num(state.quote.discountValue);
@@ -52,7 +75,7 @@
   const esc = s => String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const attr = esc;
   const uid = () => Math.random().toString(36).slice(2,9);
-  const saveAutosave = () => { try { localStorage.setItem('mwi-autosave-v1',JSON.stringify(state)); } catch {} };
+  const saveAutosave = () => { try { syncActiveOption(); localStorage.setItem('mwi-autosave-v1',JSON.stringify(state)); } catch {} };
   const normalizeUnits = st => { (st.items||[]).forEach(item=>(item.rows||[]).forEach(r=>{r.lUnit=r.lUnit||'ft';r.wUnit=r.wUnit||'in';r.tUnit=r.tUnit||'in'}));(st.estimationItems||[]).forEach(item=>(item.rows||[]).forEach(r=>{r.lUnit=r.lUnit||'ft';r.wUnit=r.wUnit||'in';r.tUnit=r.tUnit||'in'}));(st.costings||[]).forEach(c=>{c.labourLengthUnit=c.labourLengthUnit||'ft';c.labourWidthUnit=c.labourWidthUnit||'ft'});return st; };
   const loadAutosave = () => { try { const x=JSON.parse(localStorage.getItem('mwi-autosave-v1')||'null'); if(x) state=normalizeUnits({...defaultState(),...x}); } catch {} };
   const savedList = () => { try { return JSON.parse(localStorage.getItem('mwi-projects-v1')||'[]'); } catch { return []; } };
@@ -233,14 +256,20 @@
     if(status)status.textContent=message||(hasAiKey()?'API key saved on this device.':'No API key saved.');
   }
 
-  function showView(view){
+  let currentView='home';
+  window.addEventListener('popstate',()=>{if(currentView!=='home')showView('home',true);else if(window.AndroidBack?.goHome)window.AndroidBack.goHome();});
+  function showView(view,fromBack=false){
+    if(view!==currentView&&!fromBack){try{history.pushState({qeView:view},'',location.href)}catch(e){}}
+    currentView=view;
     $('#homeView').classList.toggle('hidden',view!=='home');
     $('#workspaceView').classList.toggle('hidden',view!=='workspace');
     $('#notesView').classList.toggle('hidden',view!=='notes');
+    for(const v of ['quick','hoppus','settings'])$('#'+v+'View').classList.toggle('hidden',view!==v);
+    if(view==='settings')loadAiSettingsFields();
     $('#goHome').classList.toggle('hidden',view==='home');
     if(view==='notes')renderNotesManager();
   }
-  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('.panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); if(name==='settings')loadAiSettingsFields(); saveAutosave(); }
+  function showTab(name){ state.tab=name; $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); $$('#workspaceView .panel').forEach(p=>p.classList.toggle('active-panel',p.id===name)); if(name==='settings')loadAiSettingsFields(); saveAutosave(); }
   function renderLengthConverter(){
     const from=$('#lengthFrom'),to=$('#lengthTo');
     const options=Object.entries(converterUnits).map(([unit,data])=>`<option value="${unit}">${data.label}</option>`).join('');
@@ -263,7 +292,7 @@
   }
   function startNewProject(){
     if(hasProjectWork()&&!window.confirm('Start a new project? Your current unsaved work will be replaced. Save the current project first if you want to keep it.'))return;
-    state=defaultState();
+    state=defaultState();loadedReadOnly=false;
     saveAutosave();renderAll();showView('workspace');$('#projectName').focus();
   }
   function renderCalc(){
@@ -291,8 +320,8 @@
     if(!state.estimationItems.length){host.innerHTML='<div class="card" style="padding:16px;margin-bottom:16px;color:#57534e">No calculator items have been sent yet. You can still add an estimation item manually.</div>'}
     state.estimationItems.forEach((item,i)=>{
       if(!state.costings[i]) state.costings[i]=blankCosting(); const c=state.costings[i],r=costingResult(i),card=document.createElement('section'); card.className='estimate-card'; card.dataset.i=i;
-      const measures=item.rows.length?`<div class="table-wrap"><table class="calc-table estimate-measure-table"><thead><tr><th>Length</th><th>Width</th><th>Thickness</th><th>Pieces</th><th>Type</th><th>Total</th></tr></thead><tbody>${item.rows.map(x=>{const z=calcRow(x),lu=x.lUnit||'ft',wu=x.wUnit||'in',tu=x.tUnit||'in';return `<tr><td>${originalMeasure(x.l,lu)}${lu!=='ft'?`<small class="converted-measure">${fmtMeasure(z.lFt)} ft</small>`:''}</td><td>${originalMeasure(x.w,wu)}${wu!=='in'?`<small class="converted-measure">${fmtMeasure(z.wIn)} in</small>`:''}</td><td>${originalMeasure(x.t,tu)}${tu!=='in'?`<small class="converted-measure">${fmtMeasure(z.tIn)} in</small>`:''}</td><td>${esc(x.q||'-')}</td><td>${x.mode}</td><td><b>${z.val.toFixed(3)} ${z.mode}</b></td></tr>`}).join('')}</tbody></table></div>`:'';
-      card.innerHTML=`<div class="estimate-top"><label class="item-name field">Item<input class="input est-name" value="${attr(item.name)}"></label><div class="estimate-sizes"><b>${r.tot.CFT.toFixed(3)} CFT</b> · <b>${r.tot.KOL.toFixed(3)} KOL</b></div></div>${measures}<div class="estimate-grid"><div class="subcard"><h3>Wood cost</h3>${field('Rate / CFT','cftRate',c.cftRate)}${field('Rate / KOL','kolRate',c.kolRate)}<div class="calc-line est-wood">Wood: <b>${money(r.wood)}</b></div></div><div class="subcard"><h3>Labour</h3><label class="field">Pricing method<select class="input labour-mode" data-key="labourMode"><option value="sqft" ${(c.labourMode||'sqft')==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.labourMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${(c.labourMode||'sqft')==='sqft'?`<p class="muted">Enter finished door/window dimensions in any unit. The app converts both measurements to feet before calculating sq.ft.</p><div class="two-col">${measureField('Length','labourLength',c.labourLength,'labourLengthUnit',c.labourLengthUnit||'ft')}${measureField('Width','labourWidth',c.labourWidth,'labourWidthUnit',c.labourWidthUnit||'ft')}${field('Quantity','labourQty',c.labourQty)}${field('Rate / sq.ft','labourRate',c.labourRate)}</div><div class="calc-line est-labour">Area: <b>${r.labourArea.toFixed(2)} sq.ft</b> · Labour: <b>${money(r.labour)}</b></div>`:`${field('Labour lumpsum','labourLumpsum',c.labourLumpsum)}<div class="calc-line est-labour">Labour: <b>${money(r.labour)}</b></div>`}</div><div class="subcard"><h3>Polish</h3><label class="field">Pricing method<select class="input polish-mode" data-key="polishMode"><option value="sqft" ${c.polishMode==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.polishMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${c.polishMode==='sqft'?`<p class="muted">Timber surface area from Calculator (all faces): <b>${r.surface.toFixed(2)} sq.ft</b>. Mixed input units are converted automatically.</p>${field('Override polish area (optional)','polishAreaOverride',c.polishAreaOverride)}${field('Polish rate / sq.ft','polishRate',c.polishRate)}`:field('Polish lumpsum','polishLumpsum',c.polishLumpsum)}<div class="calc-line est-polish">Polish: <b>${money(r.polish)}</b></div></div></div><div class="estimate-bottom">${field('Consumables','consumables',c.consumables)}${field('Other costs','other',c.other)}<label class="field selling-price-field">Estimated selling price <span class="selling-price-hint">Auto-filled from estimated cost. Edit this amount to add your margin/profit; this is the price sent to Quotation.</span><input class="input est-input selling-price-input" type="number" min="0" step="any" inputmode="decimal" data-key="sellingPrice" value="${attr(c.sellingPrice)}"></label></div><div class="metrics"><div class="metric est-cost"><span>Estimated cost</span><strong>${money(r.cost)}</strong></div><div class="metric est-profit"><span>Profit</span><strong>${money(r.profit)}</strong></div><div class="metric est-markup"><span>Markup</span><strong>${r.markup.toFixed(1)}%</strong></div><div class="metric est-margin"><span>Margin</span><strong>${r.margin.toFixed(1)}%</strong></div></div><div class="estimate-send-row"><span class="muted">When the estimated selling price is ready, send this item to Quotation. Quotation will receive the item description and this estimated selling price; you add Unit and Quantity there.</span><div class="send-quote-actions"><span class="send-quote-status" aria-live="polite"></span><button class="primary send-one-quote" data-i="${i}">Send this item to Quotation →</button></div></div>`;
+      const measures=item.rows.length?`<div class="table-wrap"><table class="calc-table estimate-measure-table"><thead><tr><th>Length</th><th>Width</th><th>Thickness</th><th>Pieces</th><th>Type</th><th>Total</th><th>Select</th><th>Rate group</th><th>Wood amount</th></tr></thead><tbody>${item.rows.map(x=>{const z=calcRow(x),lu=x.lUnit||'ft',wu=x.wUnit||'in',tu=x.tUnit||'in';const j=item.rows.indexOf(x),group=rateGroupForRow(c,j),effective=effectiveTimberRate(c,x,j);return `<tr><td>${originalMeasure(x.l,lu)}${lu!=='ft'?`<small class="converted-measure">${fmtMeasure(z.lFt)} ft</small>`:''}</td><td>${originalMeasure(x.w,wu)}${wu!=='in'?`<small class="converted-measure">${fmtMeasure(z.wIn)} in</small>`:''}</td><td>${originalMeasure(x.t,tu)}${tu!=='in'?`<small class="converted-measure">${fmtMeasure(z.tIn)} in</small>`:''}</td><td>${esc(x.q||'-')}</td><td>${x.mode}</td><td><b>${z.val.toFixed(3)} ${z.mode}</b></td><td><input class="timber-group-check" type="checkbox" data-ri="${j}" aria-label="Select timber row ${j+1}"></td><td>${group?`<span style="color:${group.color||'#3b82f6'};font-weight:bold">●</span> ${esc(group.name)}`:"Default "+z.mode}</td><td class="row-wood-amount">${money(z.val*num(effective))}</td></tr>`}).join('')}</tbody></table><div class="timber-group-controls no-print" style="display:flex;gap:8px;flex-wrap:wrap;padding:12px"><button class="secondary group-timber-rows" type="button">Group selected rows</button><button class="secondary ungroup-timber-rows" type="button">Ungroup selected rows</button><small>Select rows of the same CFT or KOL type to share a rate.</small></div><div class="timber-rate-groups">${(c.rateGroups||[]).map(g=>{const sum=groupSummary(item,g);return `<div class="subcard timber-rate-group" data-gid="${attr(g.id)}"><strong><span style="display:inline-block;width:14px;height:14px;background:${g.color||'#3b82f6'};border-radius:4px;margin-right:6px"></span>${esc(g.name)} · ${sum.volume.toFixed(3)} ${esc(g.mode)}</strong><label class="field">Rate / ${esc(g.mode)}<input class="input grouped-timber-rate" type="number" min="0" step="any" value="${attr(g.rate)}"></label><span class="group-amount">${money(sum.amount)}</span><button class="secondary remove-timber-group" type="button">Remove group</button></div>`}).join('')}</div></div>`:'';
+      card.innerHTML=`<div class="estimate-top"><label class="item-name field">Item<input class="input est-name" value="${attr(item.name)}"></label><div class="estimate-sizes"><b>${r.tot.CFT.toFixed(3)} CFT</b> · <b>${r.tot.KOL.toFixed(3)} KOL</b></div></div>${measures}<div class="estimate-grid"><div class="subcard"><h3>Wood cost</h3>${field('Rate / CFT','cftRate',c.cftRate)}${field('Rate / KOL','kolRate',c.kolRate)}<div class="calc-line est-grouped-wood">Grouped cost: <b>${money(r.groupedWood)}</b></div><div class="calc-line est-ungrouped-wood">Ungrouped cost: <b>${money(r.ungroupedWood)}</b></div><div class="calc-line est-wood"><strong>Total wood cost: ${money(r.wood)}</strong></div></div><div class="subcard"><h3>Labour</h3><label class="field">Pricing method<select class="input labour-mode" data-key="labourMode"><option value="sqft" ${(c.labourMode||'sqft')==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.labourMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${(c.labourMode||'sqft')==='sqft'?`<p class="muted">Enter finished door/window dimensions in any unit. The app converts both measurements to feet before calculating sq.ft.</p><div class="two-col">${measureField('Length','labourLength',c.labourLength,'labourLengthUnit',c.labourLengthUnit||'ft')}${measureField('Width','labourWidth',c.labourWidth,'labourWidthUnit',c.labourWidthUnit||'ft')}${field('Quantity','labourQty',c.labourQty)}${field('Rate / sq.ft','labourRate',c.labourRate)}</div><div class="calc-line est-labour">Area: <b>${r.labourArea.toFixed(2)} sq.ft</b> · Labour: <b>${money(r.labour)}</b></div>`:`${field('Labour lumpsum','labourLumpsum',c.labourLumpsum)}<div class="calc-line est-labour">Labour: <b>${money(r.labour)}</b></div>`}</div><div class="subcard"><h3>Polish</h3><label class="field">Pricing method<select class="input polish-mode" data-key="polishMode"><option value="sqft" ${c.polishMode==='sqft'?'selected':''}>Per sq.ft</option><option value="lumpsum" ${c.polishMode==='lumpsum'?'selected':''}>Lumpsum</option></select></label>${c.polishMode==='sqft'?`<p class="muted">Timber surface area from Calculator (all faces): <b>${r.surface.toFixed(2)} sq.ft</b>. Mixed input units are converted automatically.</p>${field('Override polish area (optional)','polishAreaOverride',c.polishAreaOverride)}${field('Polish rate / sq.ft','polishRate',c.polishRate)}`:field('Polish lumpsum','polishLumpsum',c.polishLumpsum)}<div class="calc-line est-polish">Polish: <b>${money(r.polish)}</b></div></div></div><div class="estimate-bottom">${field('Consumables','consumables',c.consumables)}${field('Other costs','other',c.other)}<label class="field selling-price-field">Estimated selling price <span class="selling-price-hint">Auto-filled from estimated cost. Edit this amount to add your margin/profit; this is the price sent to Quotation.</span><input class="input est-input selling-price-input" type="number" min="0" step="any" inputmode="decimal" data-key="sellingPrice" value="${attr(c.sellingPrice)}"></label></div><div class="metrics"><div class="metric est-cost"><span>Estimated cost</span><strong>${money(r.cost)}</strong></div><div class="metric est-profit"><span>Profit</span><strong>${money(r.profit)}</strong></div><div class="metric est-markup"><span>Markup</span><strong>${r.markup.toFixed(1)}%</strong></div><div class="metric est-margin"><span>Margin</span><strong>${r.margin.toFixed(1)}%</strong></div></div><div class="estimate-send-row"><span class="muted">When the estimated selling price is ready, send this item to Quotation. Quotation will receive the item description and this estimated selling price; you add Unit and Quantity there.</span><div class="send-quote-actions"><span class="send-quote-status" aria-live="polite"></span><button class="primary send-one-quote" data-i="${i}">Send this item to Quotation →</button></div></div>`;
       host.appendChild(card);
     });
     const g=estimateGrand(); $('#estimateGrand').textContent=`Estimated Selling Price ${money(g.selling)}`; $('#reviewEstimated').textContent=money(g.cost);
@@ -300,7 +329,11 @@
 
   function refreshEstimationNumbers(i){
     const card=$(`.estimate-card[data-i="${i}"]`);if(!card)return;const r=costingResult(i),c=state.costings[i]||blankCosting();
-    const wood=$('.est-wood',card);if(wood)wood.innerHTML=`Wood: <b>${money(r.wood)}</b>`;
+    $$('.row-wood-amount',card).forEach((amount,j)=>{const row=state.estimationItems[i].rows[j];if(row)amount.textContent=money(calcRow(row).val*num(effectiveTimberRate(c,row,j)))});
+    $$('.timber-rate-group',card).forEach(box=>{const group=(c.rateGroups||[]).find(g=>g.id===box.dataset.gid);if(!group)return;const summary=groupSummary(state.estimationItems[i],group);const title=$('strong',box);if(title)title.textContent=group.name+' · '+summary.volume.toFixed(3)+' '+group.mode;const amount=$('.group-amount',box);if(amount)amount.textContent=money(summary.amount)});
+    const groupedWood=$('.est-grouped-wood b',card);if(groupedWood)groupedWood.textContent=money(r.groupedWood);
+    const ungroupedWood=$('.est-ungrouped-wood b',card);if(ungroupedWood)ungroupedWood.textContent=money(r.ungroupedWood);
+    const wood=$('.est-wood strong',card);if(wood)wood.textContent=`Total wood cost: ${money(r.wood)}`;
     const labour=$('.est-labour',card);if(labour)labour.innerHTML=(c.labourMode||'sqft')==='lumpsum'?`Labour: <b>${money(r.labour)}</b>`:`Area: <b>${r.labourArea.toFixed(2)} sq.ft</b> · Labour: <b>${money(r.labour)}</b>`;
     const polish=$('.est-polish',card);if(polish)polish.innerHTML=`Polish: <b>${money(r.polish)}</b>`;
     const cost=$('.est-cost strong',card);if(cost)cost.textContent=money(r.cost);
@@ -313,10 +346,13 @@
 
   async function resizeImage(file){
     const data=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(file)});
-    return await new Promise(resolve=>{const img=new Image();img.onload=()=>{const max=1200,scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.82))};img.onerror=()=>resolve(data);img.src=data});
+    return await new Promise(resolve=>{const img=new Image();img.onload=()=>{const max=720,scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.65))};img.onerror=()=>resolve(data);img.src=data});
   }
 
   function renderQuotation(){
+    ensureQuoteOptions();
+    const selected=$('#quoteOptionsSelect');if(selected)selected.innerHTML=state.quoteOptions.map((o,i)=>`<option value="${i}" ${i===state.activeQuoteOption?'selected':''}>${esc(o.name||'Option '+(i+1))}</option>`).join('');
+    const optionName=$('#quoteOptionName');if(optionName)optionName.value=state.quoteOptions[state.activeQuoteOption].name;
     $('#customerName').value=state.customer.name; $('#customerLocation').value=state.customer.location; $('#discountType').value=state.quote.discountType; $('#discountValue').value=state.quote.discountValue; $('#gstPercent').value=state.quote.gstPercent;
     const date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); $('#quoteDateScreen').textContent=`Date: ${date}`;
     const host=$('#quotationItems'); host.innerHTML='';
@@ -326,11 +362,23 @@
   function renderNotes(){const host=$('#notesList');host.innerHTML='';state.quote.notes.forEach((note,i)=>{const d=document.createElement('div');d.className='note-row';d.dataset.i=i;d.innerHTML=`<span class="note-num">${i+1}.</span><textarea class="input note-text" rows="2" placeholder="Add note">${esc(note)}</textarea><div class="note-actions no-print"><button class="secondary save-note">Save</button><button class="secondary remove-note">Remove</button></div>`;host.appendChild(d)});renderSavedNoteOptions()}
   function renderSavedNoteOptions(){const select=$('#savedNoteSelect');if(!select)return;const notes=savedNotes();select.innerHTML='<option value="">Select saved note</option>'+notes.map((x,i)=>`<option value="${i}">${esc(x)}</option>`).join('')}
   function renderQuoteTotals(){const t=quoteTotals();$('#quoteTotalsScreen').innerHTML=`<div class="total-line"><span>Total Price</span><strong>${money(t.subtotal)}</strong></div><div class="total-line"><span>Discount${state.quote.discountType==='percent'&&num(state.quote.discountValue)?` (${num(state.quote.discountValue)}%)`:''}</span><strong>- ${money(t.discount)}</strong></div><div class="total-line"><span>GST (${num(state.quote.gstPercent)}%)</span><strong>${money(t.gst)}</strong></div><div class="total-line grand"><span>Grand Total</span><strong>${money(t.grand)}</strong></div>`}
-  function renderPrintSheet(){const t=quoteTotals(),date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),imgs=state.quoteItems.flatMap(x=>x.images).slice(0,4),notes=state.quote.notes.filter(x=>x.trim());$('#printSheet').innerHTML=`<div class="print-header"><img class="print-logo" src="/mwi-logo.png" alt="MWI"><div><div class="print-company-name">MORAS WOOD INDUSTRIES</div><div class="print-tagline">SAWMILL | CUSTOM FURNITURE | WOODWORKS</div></div><div class="print-company-details"><div>Moorukaveri, Kinnigoli, Mangaluru - 574150</div><div>+91 63616 95416 &nbsp; | &nbsp; info@moraswood.com</div><div>GSTIN: 29AFPPM1242L1Z1</div></div></div><div class="print-title-row"><div>QUOTATION</div><div class="print-date">Date: ${date}</div></div><div class="print-customer-bar"><div class="print-customer-label">CUSTOMER DETAILS</div><div><strong>${esc(state.customer.name||'-')}</strong><div>${esc(state.customer.location||'-')}</div></div></div>${imgs.length?`<div class="print-images ${imgs.length===1?'single':'multiple'}">${imgs.map((s,i)=>`<img src="${s}" alt="Quotation product ${i+1}">`).join('')}</div>`:''}<table class="print-table"><thead><tr><th>Sl. No.</th><th>Description</th><th>Units</th><th>Unit Price</th><th>Total Price</th></tr></thead><tbody>${state.quoteItems.map((x,i)=>`<tr><td class="print-sl">${i+1}</td><td class="print-desc">${esc(x.description||'-')}</td><td class="print-num">${esc([x.qty,x.unit].filter(Boolean).join(' ')||'-')}</td><td class="print-num">${rs(num(x.unitPrice))}</td><td class="print-num">${rs(num(x.qty)*num(x.unitPrice))}</td></tr>`).join('')}</tbody></table><div class="print-totals"><div><span>Total</span><strong>${rs(t.subtotal)}</strong></div>${t.discount>0?`<div><span>Discount${state.quote.discountType==='percent'&&num(state.quote.discountValue)?` (${num(state.quote.discountValue)}%)`:''}</span><strong>- ${rs(t.discount)}</strong></div>`:''}<div><span>GST (${num(state.quote.gstPercent)}%)</span><strong>${rs(t.gst)}</strong></div><div class="print-grand"><span>GRAND TOTAL</span><strong>${rs(t.grand)}</strong></div></div>${notes.length?`<div class="print-notes"><div class="print-notes-title">NOTES</div>${notes.map((x,i)=>`<div>${i+1}. ${esc(x)}</div>`).join('')}</div>`:''}<div class="print-footer"><strong>MORAS WOOD INDUSTRIES</strong><span>Digital copy - no signature required.</span></div>`}
+  function renderPrintSheet(){
+    syncActiveOption();
+    const date=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),notes=state.quote.notes.filter(x=>x.trim());
+    const sections=state.quoteOptions.map((opt,oi)=>{
+      const t=totalsForOption(opt),imgs=(opt.items||[]).flatMap(x=>x.images||[]).slice(0,4);
+      return `<section class="print-option"><h3>OPTION ${oi+1}: ${esc(opt.name||'Option '+(oi+1))}</h3>
+      ${imgs.length?`<div class="print-images ${imgs.length===1?'single':'multiple'}">${imgs.map((s,i)=>`<img src="${s}" alt="Option ${oi+1} product ${i+1}">`).join('')}</div>`:''}
+      <table class="print-table"><thead><tr><th>Sl. No.</th><th>Description</th><th>Units</th><th>Unit Price</th><th>Total Price</th></tr></thead><tbody>${(opt.items||[]).map((x,i)=>`<tr><td class="print-sl">${i+1}</td><td class="print-desc">${esc(x.description||'-')}</td><td class="print-num">${esc([x.qty,x.unit].filter(Boolean).join(' ')||'-')}</td><td class="print-num">${rs(num(x.unitPrice))}</td><td class="print-num">${rs(num(x.qty)*num(x.unitPrice))}</td></tr>`).join('')}</tbody></table>
+      <div class="print-totals"><div><span>Total</span><strong>${rs(t.subtotal)}</strong></div>${t.discount>0?`<div><span>Discount</span><strong>- ${rs(t.discount)}</strong></div>`:''}<div><span>GST (${num(opt.gstPercent)}%)</span><strong>${rs(t.gst)}</strong></div><div class="print-grand"><span>GRAND TOTAL</span><strong>${rs(t.grand)}</strong></div></div></section>`;
+    }).join('');
+    $('#printSheet').innerHTML=`<div class="print-header"><img class="print-logo" src="/mwi-logo.png" alt="MWI"><div><div class="print-company-name">MORAS WOOD INDUSTRIES</div><div class="print-tagline">SAWMILL | CUSTOM FURNITURE | WOODWORKS</div></div><div class="print-company-details"><div>Moorukaveri, Kinnigoli, Mangaluru - 574150</div><div>+91 63616 95416 &nbsp; | &nbsp; info@moraswood.com</div><div>GSTIN: 29AFPPM1242L1Z1</div></div></div><div class="print-title-row"><div>QUOTATION · R${num(state.revision)}</div><div class="print-date">Date: ${date}</div></div><div class="print-customer-bar"><div class="print-customer-label">CUSTOMER DETAILS</div><div><strong>${esc(state.customer.name||'-')}</strong><div>${esc(state.customer.location||'-')}</div></div></div>${sections}${notes.length?`<div class="print-notes"><div class="print-notes-title">NOTES</div>${notes.map((x,i)=>`<div>${i+1}. ${esc(x)}</div>`).join('')}</div>`:''}<div class="print-footer"><strong>MORAS WOOD INDUSTRIES</strong><span>Digital copy - no signature required.</span></div>`;
+  }
 
   function renderReview(){ $('#actualMaterials').value=state.actual.materials; $('#actualLabourHours').value=state.actual.labourHours; $('#reviewEstimated').textContent=money(estimateGrand().cost) }
   function renderAll(){ $('#projectName').value=state.projectName; renderCalc(); renderEstimation(); renderQuotation(); renderReview(); showTab(state.tab||'calculator'); $('#continueProjectHome').classList.toggle('hidden',!hasProjectWork()); }
 
+  let loadedReadOnly=false;
   document.addEventListener('click',async e=>{
     const b=e.target.closest('button'); if(!b)return;
     if(b.id==='goHome'){showView('home');return}
@@ -338,6 +386,16 @@
     if(b.id==='continueProjectHome'){showView('workspace');showTab(state.tab||'calculator');return}
     if(b.id==='savedProjectsHome'){renderSavedProjects();$('#savedProjectsPanel').scrollIntoView({behavior:'smooth',block:'start'});return}
     if(b.id==='notesHome'){showView('notes');return}
+    if(b.id==='settingsHome'){showView('settings');return}
+    if(b.id==='quickCalcHome'){drawQuick();showView('quick');return}
+    if(b.id==='hoppusHome'){drawLogs();showView('hoppus');return}
+    if(b.id==='backupExport'){exportBackup();return}
+    if(b.id==='backupImport'){$('#backupFileInput').click();return}
+    if(b.id==='quickAdd'){quick.rows.push(blankRow());drawQuick();storeQuick();return}
+    if(b.id==='hoppusAdd'){logs.rows.push({length:'',girth:''});drawLogs();storeLogs();return}
+    if(b.id==='quickMakeGroup'){const rows=$('#quickRows input[type=checkbox]:checked').map(x=>+x.dataset.i);if(!rows.length)return alert('Select rows first.');const modes=[...new Set(rows.map(i=>quick.rows[i].mode))];if(modes.length!==1)return alert('Separate CFT and KOL groups.');quick.groups.forEach(g=>g.rows=g.rows.filter(i=>!rows.includes(i)));quick.groups=quick.groups.filter(g=>g.rows.length);quick.groups.push({id:uid(),rows,mode:modes[0],rate:modes[0]==='CFT'?quick.cftRate:quick.kolRate,color:['red','blue','green','orange','purple'][quick.groups.length%5]});drawQuick();storeQuick();return}
+    if(b.classList.contains('quickUngroup')){quick.groups=quick.groups.filter(g=>g.id!==b.dataset.id);drawQuick();storeQuick();return}
+    if(b.classList.contains('hoppusRemove')){logs.rows.splice(+b.dataset.i,1);drawLogs();storeLogs();return}
     if(b.id==='createSavedNote'){
       const text=$('#newSavedNote').value.trim(),status=$('#notesManagerStatus');
       if(!text){status.textContent='Enter a note before saving.';return}
@@ -356,6 +414,32 @@
       const index=Number(b.closest('.saved-note-row').dataset.i),list=savedNotes();list.splice(index,1);writeSavedNotes(list);renderNotesManager();renderSavedNoteOptions();$('#notesManagerStatus').textContent='Note deleted.';return;
     }
     if(b.classList.contains('tab')){showView('workspace');return showTab(b.dataset.tab)}
+    if(b.id==='addQuoteOption'){syncActiveOption();state.quoteOptions.push({name:'Option '+(state.quoteOptions.length+1),items:[blankQuote()],discountType:state.quote.discountType,discountValue:'',gstPercent:state.quote.gstPercent});activateOption(state.quoteOptions.length-1);return}
+    if(b.id==='duplicateQuoteOption'){syncActiveOption();const copy=JSON.parse(JSON.stringify(state.quoteOptions[state.activeQuoteOption]));copy.name=copy.name+' Copy';state.quoteOptions.push(copy);activateOption(state.quoteOptions.length-1);return}
+    if(b.id==='removeQuoteOption'){syncActiveOption();if(state.quoteOptions.length<=1){alert('At least one quotation option is required.');return}if(!confirm('Remove this quotation option?'))return;state.quoteOptions.splice(state.activeQuoteOption,1);state.activeQuoteOption=0;const opt=state.quoteOptions[0];state.quoteItems=opt.items;state.quote.discountType=opt.discountType;state.quote.discountValue=opt.discountValue;state.quote.gstPercent=opt.gstPercent;renderQuotation();saveAutosave();return}
+    if(b.classList.contains('group-timber-rows')){
+      const card=b.closest('.estimate-card'),i=+card.dataset.i,item=state.estimationItems[i],c=state.costings[i];
+      const rows=$$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
+      if(!rows.length){alert('Select at least one timber row.');return}
+      const types=[...new Set(rows.map(j=>item.rows[j]?.mode))];
+      if(types.length!==1||!['CFT','KOL'].includes(types[0])){alert('CFT and KOL rows must be grouped separately.');return}
+      c.rateGroups=c.rateGroups||[];
+      c.rateGroups.forEach(g=>g.rows=g.rows.filter(j=>!rows.includes(j)));
+      c.rateGroups=c.rateGroups.filter(g=>g.rows.length);
+      const mode=types[0],name='Group '+(c.rateGroups.length+1);
+      c.rateGroups.push({id:uid(),name,mode,color:['#ef4444','#3b82f6','#22c55e','#f59e0b','#a855f7'][c.rateGroups.length%5],rate:mode==='CFT'?c.cftRate:c.kolRate,rows});
+      renderEstimation();saveAutosave();return;
+    }
+    if(b.classList.contains('ungroup-timber-rows')){
+      const card=b.closest('.estimate-card'),i=+card.dataset.i,c=state.costings[i];
+      const rows=$$('.timber-group-check:checked',card).map(el=>+el.dataset.ri);
+      c.rateGroups=(c.rateGroups||[]).map(g=>({...g,rows:g.rows.filter(j=>!rows.includes(j))})).filter(g=>g.rows.length);
+      renderEstimation();saveAutosave();return;
+    }
+    if(b.classList.contains('remove-timber-group')){
+      const card=b.closest('.estimate-card'),i=+card.dataset.i,id=b.closest('.timber-rate-group').dataset.gid,c=state.costings[i];
+      c.rateGroups=(c.rateGroups||[]).filter(g=>g.id!==id);renderEstimation();saveAutosave();return;
+    }
     if(b.id==='newCalcItem'){state.items.push(blankItem());renderCalc();saveAutosave()}
     if(b.classList.contains('add-row')){state.items[+b.dataset.ii].rows.push(blankRow());renderCalc();saveAutosave()}
     if(b.id==='sendToEstimation'){
@@ -421,19 +505,27 @@
     if(b.id==='addSavedNote'){const sel=$('#savedNoteSelect');if(sel.value==='')return;const idx=Number(sel.value),list=savedNotes();if(Number.isInteger(idx)&&idx>=0&&list[idx]){if(state.quote.notes.length===1&&!state.quote.notes[0].trim())state.quote.notes[0]=list[idx];else state.quote.notes.push(list[idx]);renderNotes();renderPrintSheet();saveAutosave()}}
     if(b.id==='deleteSavedNote'){const sel=$('#savedNoteSelect');if(sel.value==='')return;const idx=Number(sel.value),list=savedNotes();if(Number.isInteger(idx)&&idx>=0&&list[idx]){list.splice(idx,1);writeSavedNotes(list);renderSavedNoteOptions();const st=$('#noteStatus');if(st)st.textContent='Saved note deleted.'}}
     if(b.id==='printQuotation'){renderPrintSheet();window.print()}
+    if(b.id==='exportToProjects'){syncActiveOption();const q=state.quoteOptions[state.activeQuoteOption],total=totalsForOption(q).grand;const payload={name:state.projectName||'Quotation '+new Date().toLocaleDateString('en-IN'),customer:state.customer.name||'Customer not specified',amount:total,notes:'Imported from Q&E quotation option: '+(q.name||'Option 1'),quotation:{items:q.items.map(it=>({description:it.description,unit:it.unit,qty:it.qty,unitPrice:it.unitPrice})),option:q.name,discountType:q.discountType,discountValue:q.discountValue,gstPercent:q.gstPercent}};try{localStorage.setItem('mwi-project-import-pending',JSON.stringify(payload));saveAutosave();window.location.href='/operations.html?import=quotation'}catch(error){alert('Could not export quotation: '+error.message)}}
     if(b.id==='saveProject'){saveProject()}
     if(b.id==='showProjects'){showView('home');renderSavedProjects();$('#savedProjectsPanel').scrollIntoView({behavior:'smooth',block:'start'})}
   });
 
   document.addEventListener('input',e=>{
     const t=e.target;
+    if(t.id==='quickCftRate'||t.id==='quickKolRate'){quick[t.id==='quickCftRate'?'cftRate':'kolRate']=t.value;calcQuick();storeQuick();return}
+    if(t.classList.contains('quickField')){quick.rows[+t.dataset.i][t.dataset.key]=t.value;calcQuick();storeQuick();return}
+    if(t.classList.contains('quickGroupRate')){const g=quick.groups.find(g=>g.id===t.dataset.id);if(g)g.rate=t.value;calcQuick();storeQuick();return}
+    if(t.classList.contains('hoppusField')){logs.rows[+t.dataset.i][t.dataset.key]=t.value;calcLogs();storeLogs();return}
+    if(t.id==='hoppusSawRate'){logs.sawRate=t.value;calcLogs();storeLogs();return}
     if(t.id==='aiApiKey'){updateDetectedProvider(t.value);return}
     if(t.id==='aiEndpoint')t.dataset.userEdited='true';
     if(t.id==='aiModel')t.dataset.userEdited='true';
+    if(t.id==='quoteOptionName'){ensureQuoteOptions();state.quoteOptions[state.activeQuoteOption].name=t.value;$('#quoteOptionsSelect').options[state.activeQuoteOption].text=t.value||'Option '+(state.activeQuoteOption+1);renderPrintSheet();saveAutosave();return}
     if(t.id==='projectName'){state.projectName=t.value;saveAutosave()}
+    if(t.classList.contains('grouped-timber-rate')){const card=t.closest('.estimate-card'),i=+card.dataset.i,g=state.costings[i].rateGroups?.find(x=>x.id===t.closest('.timber-rate-group').dataset.gid);if(g){g.rate=t.value;refreshEstimationNumbers(i);saveAutosave()}return}
     if(t.classList.contains('item-name')){state.items[+t.dataset.ii].name=t.value;saveAutosave()}
     if(t.classList.contains('calc-cell')){const {ii,ri,key}=t.dataset;state.items[+ii].rows[+ri][key]=t.value;refreshCalcNumbers(+ii,+ri);saveAutosave()}
-    const card=t.closest('.estimate-card'); if(card){const i=+card.dataset.i;if(t.classList.contains('est-name'))state.estimationItems[i].name=t.value;if(t.classList.contains('est-input')){state.costings[i][t.dataset.key]=t.value;if(t.dataset.key==='sellingPrice'){state.costings[i].sellingAuto=false;t.classList.remove('input-error');const status=$('.send-quote-status',card);if(status)status.textContent=''}refreshEstimationNumbers(i)}saveAutosave()}
+    const card=t.closest('.estimate-card'); if(card){const i=+card.dataset.i;if(t.classList.contains('est-name'))state.estimationItems[i].name=t.value;if(t.classList.contains('row-timber-rate')){const costing=state.costings[i];costing.rowRates=costing.rowRates||[];costing.rowRates[+t.dataset.ri]=t.value;refreshEstimationNumbers(i)}if(t.classList.contains('est-input')){state.costings[i][t.dataset.key]=t.value;if(t.dataset.key==='sellingPrice'){state.costings[i].sellingAuto=false;t.classList.remove('input-error');const status=$('.send-quote-status',card);if(status)status.textContent=''}refreshEstimationNumbers(i)}saveAutosave()}
     const qi=t.closest('.quote-item'); if(qi){const i=+qi.dataset.i;if(t.classList.contains('q-desc'))state.quoteItems[i].description=t.value;if(t.classList.contains('q-unit'))state.quoteItems[i].unit=t.value;if(t.classList.contains('q-qty'))state.quoteItems[i].qty=t.value;if(t.classList.contains('q-price'))state.quoteItems[i].unitPrice=t.value;const rowTotal=$('.q-row-total strong',qi);if(rowTotal)rowTotal.textContent=money(num(state.quoteItems[i].qty)*num(state.quoteItems[i].unitPrice));renderQuoteTotals();renderPrintSheet();saveAutosave()}
     if(t.classList.contains('note-text')){state.quote.notes[+t.closest('.note-row').dataset.i]=t.value;renderPrintSheet();saveAutosave()}
     if(t.id==='customerName'){state.customer.name=t.value;renderPrintSheet();saveAutosave()} if(t.id==='customerLocation'){state.customer.location=t.value;renderPrintSheet();saveAutosave()}
@@ -444,6 +536,7 @@
 
   document.addEventListener('change',async e=>{
     const t=e.target;
+    if(t.id==='quoteOptionsSelect'){activateOption(+t.value);return}
     if(t.id==='lengthFrom'||t.id==='lengthTo'){updateLengthConversion()}
     if(t.classList.contains('row-mode')){state.items[+t.dataset.ii].rows[+t.dataset.ri].mode=t.value;refreshCalcNumbers(+t.dataset.ii,+t.dataset.ri);saveAutosave()}
     if(t.classList.contains('measure-unit')){const ii=+t.dataset.ii,ri=+t.dataset.ri;state.items[ii].rows[ri][t.dataset.unitKey]=t.value;refreshCalcNumbers(ii,ri);saveAutosave()}
@@ -451,15 +544,72 @@
     if(ec&&t.classList.contains('labour-mode')){state.costings[+ec.dataset.i].labourMode=t.value;renderEstimation();saveAutosave()}
     if(ec&&t.classList.contains('polish-mode')){state.costings[+ec.dataset.i].polishMode=t.value;renderEstimation();saveAutosave()}
     if(t.id==='discountType'){state.quote.discountType=t.value;renderQuoteTotals();renderPrintSheet();saveAutosave()}
-    if(t.classList.contains('q-images')){const i=+t.closest('.quote-item').dataset.i,files=[...t.files].slice(0,6);for(const f of files){if(state.quoteItems[i].images.length>=6)break;state.quoteItems[i].images.push(await resizeImage(f))}renderQuotation();saveAutosave()}
+    if(t.classList.contains('q-images')){const card=t.closest('.quote-item'),i=Number(card?.dataset.i),files=Array.from(t.files||[]).filter(f=>f.type.startsWith('image/')).slice(0,6);if(!Number.isInteger(i)||!state.quoteItems[i]){alert('Could not identify quotation item.');return}if(!files.length){alert('Select image files to attach.');return}let added=0;for(const f of files){if(state.quoteItems[i].images.length>=6)break;try{const src=await resizeImage(f);if(src&&src.startsWith('data:image/')){state.quoteItems[i].images.push(src);added++}}catch(err){console.error('Image import failed',err)}}if(added){try{syncActiveOption();localStorage.setItem('mwi-autosave-v1',JSON.stringify(state));renderQuotation();alert(added+' image(s) added and saved to this quotation.')}catch(error){state.quoteItems[i].images.splice(-added,added);renderQuotation();alert('Images could not be saved. Device storage is full or the quotation is too large. Existing quotation preserved.')}}else alert('No images were added. Please try a JPG or PNG photo.');}
   });
 
   document.addEventListener('keydown',e=>{
     const t=e.target;if(!(t instanceof HTMLInputElement)||!t.classList.contains('calc-cell')||e.key!=='Enter')return;e.preventDefault();const ii=+t.dataset.ii,ri=+t.dataset.ri,key=t.dataset.key;state.items[ii].rows[ri][key]=t.value;const seq=['l','w','t','q'],idx=seq.indexOf(key);if(idx<3){const n=$(`.calc-cell[data-ii="${ii}"][data-ri="${ri}"][data-key="${seq[idx+1]}"]`);n?.focus();n?.select()}else{state.items[ii].rows.push(blankRow());renderCalc();setTimeout(()=>{$(`.calc-cell[data-ii="${ii}"][data-ri="${ri+1}"][data-key="l"]`)?.focus()},0);saveAutosave()}
   });
 
-  function saveProject(){const name=(state.projectName||state.customer.name||'').trim();const status=$('#projectStatus');if(!name){status.textContent='Enter a project name before saving.';return}state.projectName=name;const list=savedList(),now=new Date().toISOString(),existing=list.findIndex(x=>x.name.toLowerCase()===name.toLowerCase());let snapshot;try{snapshot=JSON.parse(JSON.stringify(state))}catch{status.textContent='Could not prepare project for saving.';return}const rec={id:existing>=0?list[existing].id:uid(),name,updatedAt:now,snapshot};if(existing>=0)list[existing]=rec;else list.unshift(rec);try{writeSaved(list);const check=savedList().find(x=>x.id===rec.id);if(!check||!check.snapshot)throw new Error('Save verification failed');status.textContent='Project saved successfully on this device.';saveAutosave()}catch{status.textContent='Could not save project. Try fewer/lower-resolution images.'}}
-  function renderSavedProjects(){const panel=$('#savedProjectsPanel'),list=savedList();panel.classList.remove('hidden');panel.innerHTML=`<div class="saved-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>Saved Projects</strong><button id="closeSaved" class="secondary">Close</button></div>${list.length?list.map(x=>`<div class="saved-row" data-id="${x.id}"><div><b>${esc(x.name)}</b><small>${new Date(x.updatedAt).toLocaleString('en-IN')}</small></div><div class="saved-actions"><button class="secondary load-project">Load</button><button class="danger delete-project">Delete</button></div></div>`).join(''):'<p class="muted">No saved projects yet.</p>'}</div>`;$('#closeSaved').onclick=()=>panel.classList.add('hidden');$$('.load-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id,x=savedList().find(p=>p.id===id);if(x){state=normalizeUnits({...defaultState(),...x.snapshot});renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Project loaded.'}});$$('.delete-project',panel).forEach(b=>b.onclick=()=>{const id=b.closest('.saved-row').dataset.id;writeSaved(savedList().filter(p=>p.id!==id));renderSavedProjects();const status=$('#projectStatus');if(status)status.textContent='Saved project deleted.'})}
+  function saveProject(){
+    syncActiveOption();
+    const name=(state.projectName||state.customer.name||'').trim(),status=$('#projectStatus');
+    if(!name){status.textContent='Enter a project name before saving.';return}
+    if(loadedReadOnly){status.textContent='Loaded revision is protected. Use Revise in Saved Projects to create a new revision.';return}
+    state.projectName=name;
+    const list=savedList(),now=new Date().toISOString();
+    const rootId=state.projectId||uid();state.projectId=rootId;state.revision=num(state.revision);
+    let snapshot;try{snapshot=JSON.parse(JSON.stringify(state))}catch{status.textContent='Could not prepare project for saving.';return}
+    const existing=list.findIndex(x=>(x.rootId||x.id)===rootId && num(x.revision)===state.revision);
+    const record={id:existing>=0?list[existing].id:(state.revision===0?rootId:uid()),rootId,revision:state.revision,name,updatedAt:now,snapshot};
+    if(existing>=0)list[existing]=record;else list.unshift(record);
+    try{writeSaved(list);const check=savedList().find(x=>x.id===record.id);if(!check?.snapshot)throw Error('Save verification failed');status.textContent='Saved '+name+' · R'+state.revision+' on this device.';saveAutosave()}catch{status.textContent='Could not save project. Try fewer/lower-resolution images.'}
+  }
+  function renderSavedProjects(){
+    const panel=$('#savedProjectsPanel'),list=savedList();panel.classList.remove('hidden');
+    panel.innerHTML=`<div class="saved-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>Saved Projects & Revisions</strong><button id="closeSaved" class="secondary">Close</button></div>${list.length?list.map(x=>`<div class="saved-row" data-id="${attr(x.id)}"><div><b>${esc(x.name)} · R${num(x.revision)}</b><small>${new Date(x.updatedAt).toLocaleString('en-IN')}</small></div><div class="saved-actions"><button class="secondary load-project">View / Print</button><button class="primary revise-project">Revise</button><button class="danger delete-project">Delete</button></div></div>`).join(''):'<p class="muted">No saved projects yet.</p>'}</div>`;
+    $('#closeSaved').onclick=()=>panel.classList.add('hidden');
+    $$('.load-project',panel).forEach(b=>b.onclick=()=>{const x=savedList().find(p=>p.id===b.closest('.saved-row').dataset.id);if(!x)return;state=normalizeUnits({...defaultState(),...JSON.parse(JSON.stringify(x.snapshot))});state.projectId=x.rootId||x.id;state.revision=num(x.revision);loadedReadOnly=true;renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Viewing R'+state.revision+'. Use Revise to make changes without altering this revision.'});
+    $$('.revise-project',panel).forEach(b=>b.onclick=()=>{const x=savedList().find(p=>p.id===b.closest('.saved-row').dataset.id);if(!x)return;const root=x.rootId||x.id,latest=Math.max(...savedList().filter(p=>(p.rootId||p.id)===root).map(p=>num(p.revision)));state=normalizeUnits({...defaultState(),...JSON.parse(JSON.stringify(x.snapshot))});state.projectId=root;state.revision=latest+1;loadedReadOnly=false;renderAll();panel.classList.add('hidden');showView('workspace');$('#projectStatus').textContent='Editing R'+state.revision+' based on R'+num(x.revision)+'. Save to preserve the new revision.'});
+    $$('.delete-project',panel).forEach(b=>b.onclick=()=>{if(!confirm('Delete this saved revision?'))return;const id=b.closest('.saved-row').dataset.id;writeSaved(savedList().filter(p=>p.id!==id));renderSavedProjects();$('#projectStatus').textContent='Saved revision deleted.'});
+  }
 
-  loadAutosave(); renderAll(); renderLengthConverter(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+  const restoreJSON=(key,fallback)=>{try{return {...fallback,...JSON.parse(localStorage.getItem(key)||'{}')}}catch{return {...fallback}}};
+  let quick=restoreJSON('mwi-quick-calc-v1',{rows:[blankRow()],groups:[],cftRate:'',kolRate:''});
+  let logs=restoreJSON('mwi-hoppus-v1',{rows:[{length:'',girth:''}],sawRate:''});
+  const storeQuick=()=>localStorage.setItem('mwi-quick-calc-v1',JSON.stringify(quick));
+  const storeLogs=()=>localStorage.setItem('mwi-hoppus-v1',JSON.stringify(logs));
+  function drawQuick(){
+    $('#quickCftRate').value=quick.cftRate;$('#quickKolRate').value=quick.kolRate;
+    $('#quickRows').innerHTML=quick.rows.map((r,i)=>'<div class="quick-grid-row"><label class="quick-check"><input type="checkbox" data-i="'+i+'"> Row '+(i+1)+'</label><span></span>'+[['l','Length (ft)'],['w','Width (in)'],['t','Thickness (in)'],['q','Pieces']].map(([k,label])=>'<label>'+label+'<input type="number" min="0" step="any" class="input quickField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<label>Volume unit<select class="input quickField" data-i="'+i+'" data-key="mode"><option '+(r.mode==='CFT'?'selected':'')+'>CFT</option><option '+(r.mode==='KOL'?'selected':'')+'>KOL</option></select></label><strong class="quickVolume quick-result" data-i="'+i+'"></strong></div>').join('');
+    $('#quickGroups').innerHTML=quick.groups.map(g=>'<div style="padding:7px;border-left:6px solid '+g.color+'"><strong>'+g.color+' · '+g.mode+'</strong><label>Rate ₹/'+g.mode+'<input class="input quickGroupRate" type="number" min="0" step="any" data-id="'+g.id+'" value="'+attr(g.rate)+'"></label><span class="quickGroupTotal" data-id="'+g.id+'"></span> <button class="secondary quickUngroup" data-id="'+g.id+'">Ungroup</button></div>').join('');
+    calcQuick();
+  }
+  function calcQuick(){
+    let CFT=0,KOL=0,cost=0;
+    quick.rows.forEach((r,i)=>{const x=calcRow(r);if(x.mode==='CFT')CFT+=x.val;else KOL+=x.val;const g=quick.groups.find(g=>g.rows.includes(i)&&g.mode===x.mode);const rate=g?g.rate:(x.mode==='CFT'?quick.cftRate:quick.kolRate);cost+=x.val*num(rate);const el=$('.quickVolume[data-i="'+i+'"]');if(el)el.textContent=x.val.toFixed(3)+' '+x.mode+' · '+money(x.val*num(rate))});
+    quick.groups.forEach(g=>{const vol=g.rows.reduce((n,i)=>n+(quick.rows[i]?.mode===g.mode?calcRow(quick.rows[i]).val:0),0);const el=$('.quickGroupTotal[data-id="'+g.id+'"]');if(el)el.textContent=' · '+vol.toFixed(3)+' '+g.mode+' · '+money(vol*num(g.rate))});
+    $('#quickTotal').textContent='Total '+CFT.toFixed(3)+' CFT; '+KOL.toFixed(3)+' KOL | Cost '+money(cost);
+  }
+  function drawLogs(){
+    $('#hoppusRows').innerHTML=logs.rows.map((r,i)=>'<div style="display:grid;grid-template-columns:48px minmax(0,1fr) minmax(0,1fr) 72px 62px;gap:5px;align-items:end;padding:8px 2px;border-bottom:1px solid #ddd"><span>Log '+(i+1)+'</span>'+[['length','Length ft'],['girth','Girth in']].map(([k,label])=>'<label style="min-width:0;font-size:12px">'+label+'<input style="width:100%;min-width:0;box-sizing:border-box" type="number" min="0" step="any" class="input hoppusField" data-i="'+i+'" data-key="'+k+'" value="'+attr(r[k])+'"></label>').join('')+'<strong style="font-size:12px;white-space:nowrap" class="logVolume" data-i="'+i+'"></strong><button style="padding:6px 4px;font-size:11px" class="secondary hoppusRemove" data-i="'+i+'">Remove</button></div>').join('');
+    $('#hoppusSawRate').value=logs.sawRate;calcLogs();
+  }
+  function calcLogs(){
+    let total=0;logs.rows.forEach((r,i)=>{const volume=num(r.length)*num(r.girth)*num(r.girth)/2304;total+=volume;const el=$('.logVolume[data-i="'+i+'"]');if(el)el.textContent=volume.toFixed(2)+' CFT'});
+    $('#hoppusTotal').textContent='Total '+total.toFixed(2)+' CFT | Sawing charges '+money(total*num(logs.sawRate));
+  }
+  document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!e.target.classList.contains('hoppusField'))return;e.preventDefault();let i=+e.target.dataset.i;if(e.target.dataset.key==='length'){$('.hoppusField[data-i="'+i+'"][data-key="girth"]')?.focus();return}if(i===logs.rows.length-1){logs.rows.push({length:'',girth:''});drawLogs();storeLogs()}$('.hoppusField[data-i="'+(i+1)+'"][data-key="length"]')?.focus()});
+  function exportBackup(){
+    saveAutosave();storeQuick();storeLogs();const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('mwi-')){if(k==='mwi-ai-settings-v1'){try{const settings=JSON.parse(localStorage.getItem(k)||'{}');delete settings.apiKey;delete settings.key;storage[k]=JSON.stringify(settings)}catch{}}else storage[k]=localStorage.getItem(k)}}
+    const content=JSON.stringify({format:'moras-qe-backup',version:1,date:new Date().toISOString(),storage},null,2);
+    if(window.QENative?.exportBackup){QENative.exportBackup(content);return}
+    const blob=new Blob([content],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='moras-qe-full-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+  }
+  window.QEImportBackupData=content=>{try{const b=JSON.parse(content);if(b.format!=='moras-qe-backup'||b.version!==1||!b.storage||typeof b.storage!=='object')throw Error('Invalid file');const keys=Object.keys(b.storage);if(keys.some(k=>!k.startsWith('mwi-')||typeof b.storage[k]!=='string'))throw Error('Invalid data');if(!confirm('Replace existing saved data with backup?'))return;keys.forEach(k=>localStorage.setItem(k,b.storage[k]));alert('Restored. Reloading.');location.reload()}catch(e){alert('Restore failed: '+e.message)}};
+  document.addEventListener('change',async e=>{if(e.target.id==='backupFileInput'&&e.target.files[0])window.QEImportBackupData(await e.target.files[0].text())});
+
+  $('#settingsView').appendChild($('#settings'));$('#settings').classList.add('active-panel');
+  loadAutosave(); renderAll(); renderLengthConverter(); drawQuick(); drawLogs(); showView('home'); if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 })();
