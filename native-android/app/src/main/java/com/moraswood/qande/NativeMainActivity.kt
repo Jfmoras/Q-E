@@ -41,6 +41,7 @@ class NativeMainActivity : ComponentActivity() {
                 var customer by remember { mutableStateOf("") }
                 var amount by remember { mutableStateOf("") }
                 var notes by remember { mutableStateOf("") }
+                var projectSection by remember { mutableStateOf("Project Details") }
                 val refresh = {
                     scope.launch {
                         projects = database.dao().projects()
@@ -186,6 +187,20 @@ class NativeMainActivity : ComponentActivity() {
                                         TextButton(onClick = { selected = null }) { Text("← All projects") }
                                         Text(project.name, style = MaterialTheme.typography.headlineSmall)
                                         Text(project.customer)
+                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            listOf("Project Details", "Quotation", "Payments").forEach { section ->
+                                                TextButton(onClick = { projectSection = section }) { Text(section) }
+                                            }
+                                        }
+                                        if (projectSection == "Payments") {
+                                            ProjectPayments(project, database.dao())
+                                        } else if (projectSection == "Quotation") {
+                                            Text("Attach a PDF quotation to this project.")
+                                            Button(onClick = { pickFiles.launch(arrayOf("application/pdf")) }) { Text("Upload quotation PDF") }
+                                            attachments.filter { it.mimeType == "application/pdf" }.forEach { attachment ->
+                                                TextButton(onClick = { try { startActivity(storage.viewIntent(attachment)) } catch (e: Exception) { message = e.message ?: "Unable to open PDF" } }) { Text(attachment.displayName) }
+                                            }
+                                        } else {
                                         Text("Agreed: ₹${project.agreedValue}")
                                         Text("Notes: ${project.notes.ifBlank { "None" }}")
                                         Button(onClick = { pickFiles.launch(arrayOf("image/*", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "*/*")) }) {
@@ -201,6 +216,7 @@ class NativeMainActivity : ComponentActivity() {
                                                     }) { Text("View / Open") }
                                                 }
                                             }
+                                        }
                                         }
                                     }
                                 }
