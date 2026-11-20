@@ -123,10 +123,8 @@ class NativeMainActivity : ComponentActivity() {
                                 Text("Requirements pending. Native module will be added after specifications are confirmed.")
                             }
                             "Machines" -> MachineScreen(this@NativeMainActivity)
-                            "Estimation", "Quotation", "Saved Quotations", "Saved Calculations" -> Column {
-                                Text(tab, style = MaterialTheme.typography.headlineSmall)
-                                Text("Native implementation pending. No WebView fallback.")
-                            }
+                            "Estimation", "Quotation", "Saved Quotations" -> NativeQuotationScreen(this@NativeMainActivity, database.dao(), tab) { refresh() }
+                            "Saved Calculations" -> Column { Text("Saved Calculations"); Text("Native saved calculations pending.") }
                             "Hoppus" -> {
                                 var girth by remember { mutableStateOf("") }
                                 var logLength by remember { mutableStateOf("") }
