@@ -27,6 +27,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Bundle existing MWI WebView modules for feature parity
+        run: |
+          mkdir -p native-android/app/src/main/assets
+          cp -R app/src/main/assets/. native-android/app/src/main/assets/
       - name: Build native debug APK
         run: gradle -p native-android --no-daemon :app:assembleDebug
       - name: Upload native alpha APK
