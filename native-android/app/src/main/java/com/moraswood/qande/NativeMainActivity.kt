@@ -150,10 +150,7 @@ class NativeMainActivity : ComponentActivity() {
                                 OutlinedButton(onClick = { importLegacy.launch(arrayOf("application/json")) }) { Text("Import existing MWI JSON backup") }
                                 Text("Only project metadata is currently supported. Full quotation, payment, expense and attachment migration is required before replacing the old app.")
                             }
-                            "Notes" -> Column {
-                                Text("Saved Notes", style = MaterialTheme.typography.headlineSmall)
-                                Text("Native reusable notes are pending migration.")
-                            }
+                            "Notes" -> NativeNotesScreen(this@NativeMainActivity)
                             "Projects" -> {
                                 if (selected == null) {
                                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
