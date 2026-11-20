@@ -505,6 +505,7 @@
     if(b.id==='addSavedNote'){const sel=$('#savedNoteSelect');if(sel.value==='')return;const idx=Number(sel.value),list=savedNotes();if(Number.isInteger(idx)&&idx>=0&&list[idx]){if(state.quote.notes.length===1&&!state.quote.notes[0].trim())state.quote.notes[0]=list[idx];else state.quote.notes.push(list[idx]);renderNotes();renderPrintSheet();saveAutosave()}}
     if(b.id==='deleteSavedNote'){const sel=$('#savedNoteSelect');if(sel.value==='')return;const idx=Number(sel.value),list=savedNotes();if(Number.isInteger(idx)&&idx>=0&&list[idx]){list.splice(idx,1);writeSavedNotes(list);renderSavedNoteOptions();const st=$('#noteStatus');if(st)st.textContent='Saved note deleted.'}}
     if(b.id==='printQuotation'){renderPrintSheet();window.print()}
+    if(b.id==='exportToProjects'){syncActiveOption();const q=state.quoteOptions[state.activeQuoteOption],total=totalsForOption(q).grand;const payload={name:state.projectName||'Quotation '+new Date().toLocaleDateString('en-IN'),customer:state.customer.name||'Customer not specified',amount:total,notes:'Imported from Q&E quotation option: '+(q.name||'Option 1'),quotation:{items:q.items.map(it=>({description:it.description,unit:it.unit,qty:it.qty,unitPrice:it.unitPrice})),option:q.name,discountType:q.discountType,discountValue:q.discountValue,gstPercent:q.gstPercent}};try{localStorage.setItem('mwi-project-import-pending',JSON.stringify(payload));saveAutosave();window.location.href='/operations.html?import=quotation'}catch(error){alert('Could not export quotation: '+error.message)}}
     if(b.id==='saveProject'){saveProject()}
     if(b.id==='showProjects'){showView('home');renderSavedProjects();$('#savedProjectsPanel').scrollIntoView({behavior:'smooth',block:'start'})}
   });
@@ -543,7 +544,7 @@
     if(ec&&t.classList.contains('labour-mode')){state.costings[+ec.dataset.i].labourMode=t.value;renderEstimation();saveAutosave()}
     if(ec&&t.classList.contains('polish-mode')){state.costings[+ec.dataset.i].polishMode=t.value;renderEstimation();saveAutosave()}
     if(t.id==='discountType'){state.quote.discountType=t.value;renderQuoteTotals();renderPrintSheet();saveAutosave()}
-    if(t.classList.contains('q-images')){const i=+t.closest('.quote-item').dataset.i,files=[...t.files].slice(0,6);for(const f of files){if(state.quoteItems[i].images.length>=6)break;state.quoteItems[i].images.push(await resizeImage(f))}renderQuotation();saveAutosave()}
+    if(t.classList.contains('q-images')){const card=t.closest('.quote-item'),i=Number(card?.dataset.i),files=Array.from(t.files||[]).filter(f=>f.type.startsWith('image/')).slice(0,6);if(!Number.isInteger(i)||!state.quoteItems[i]){alert('Could not identify quotation item.');return}if(!files.length){alert('Select image files to attach.');return}let added=0;for(const f of files){if(state.quoteItems[i].images.length>=6)break;try{const src=await resizeImage(f);if(src&&src.startsWith('data:image/')){state.quoteItems[i].images.push(src);added++}}catch(err){console.error('Image import failed',err)}}if(added){renderQuotation();saveAutosave()}else alert('No images were added. Please try a JPG or PNG photo.');}
   });
 
   document.addEventListener('keydown',e=>{
