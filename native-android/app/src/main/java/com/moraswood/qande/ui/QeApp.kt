@@ -86,6 +86,7 @@ fun QeApp(vm: AppViewModel) {
     var opsTab by rememberSaveable { mutableStateOf(OpsTab.Projects) }
     val ovm: OperationsViewModel = viewModel()
     val avm: com.moraswood.qande.assets.AssetsViewModel = viewModel()
+    val svm: com.moraswood.qande.settings.SettingsViewModel = viewModel()
     val quick by vm.quick.collectAsState()
     val hoppus by vm.hoppus.collectAsState()
     val templates by vm.templates.collectAsState()
@@ -245,7 +246,7 @@ fun QeApp(vm: AppViewModel) {
             composable(Routes.HOPPUS) {
                 HoppusScreen(hoppus, remember(vm) { HoppusActions(vm::setHoppusField, vm::addHoppusLog, vm::removeHoppusLog, vm::setSawRate) })
             }
-            composable(Routes.SETTINGS) { SettingsScreen(templates, vm::deleteTemplate) }
+            composable(Routes.SETTINGS) { SettingsScreen(templates, vm::deleteTemplate, svm) }
             composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, ovm, avm) }
         }
     }
