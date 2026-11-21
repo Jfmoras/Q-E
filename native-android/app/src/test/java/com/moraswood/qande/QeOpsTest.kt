@@ -3,6 +3,7 @@ package com.moraswood.qande
 import com.moraswood.qande.data.QeJson
 import com.moraswood.qande.data.WorkspaceState
 import com.moraswood.qande.logic.OpsDb
+import com.moraswood.qande.logic.OpsMachine
 import com.moraswood.qande.logic.OpsMaterial
 import com.moraswood.qande.logic.OpsMovement
 import com.moraswood.qande.logic.OpsProject
@@ -31,7 +32,7 @@ class QeOpsTest {
     private val lenient = Json { ignoreUnknownKeys = true }
     private fun unescape(s: String) = s.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'")
 
-    private data class St(var db: OpsDb = OpsDb(), var message: String = "", var form: OpsProjectForm = OpsProjectForm(), var n: Int = 0)
+    private data class St(var db: OpsDb = OpsDb(), var message: String = "", var form: OpsProjectForm = OpsProjectForm(), var n: Int = 0, var month: String = "NOW")
 
     private fun apply(st: St, op: JsonArray, autosave: WorkspaceState?) {
         fun s(i: Int) = op[i].jsonPrimitive.content
@@ -40,17 +41,21 @@ class QeOpsTest {
         val out: QeOps.Outcome? = when (s(0)) {
             "create" -> {
                 st.form = OpsProjectForm(s(1), s(2), s(3), s(4), s(5))
-                QeOps.createProject(st.db, st.form, id, "t").let { if (it.db != null) QeOps.Outcome(it.db, QeOps.createdMessage(0)) else it }
+                QeOps.createProject(st.db, st.form, id, "NOW-t").let { if (it.db != null) QeOps.Outcome(it.db, QeOps.createdMessage(0)) else it }
             }
-            "entry" -> QeOps.addEntry(st.db, st.db.projects[i(1)].id, s(2), s(3), s(4), "t")
+            "entry" -> QeOps.addEntry(st.db, st.db.projects[i(1)].id, s(2), s(3), s(4), "NOW-t")
             "status" -> { val p = st.db.projects[i(1)]; QeOps.Outcome(st.db.copy(projects = st.db.projects.map { if (it.id == p.id) it.copy(status = s(2)) else it }), st.message) }
             "notes" -> { val p = st.db.projects[i(1)]; QeOps.Outcome(st.db.copy(projects = st.db.projects.map { if (it.id == p.id) it.copy(notes = s(2)) else it }), "Project notes saved.") }
             "material" -> QeOps.addMaterial(st.db, s(1), s(2), s(3), s(4), s(5), id)
-            "move" -> QeOps.recordMovement(st.db, if (i(1) < 0) "" else st.db.materials[i(1)].id, s(2), s(3), s(4), if (i(5) < 0) "" else st.db.projects[i(5)].id, id, "t")
+            "move" -> QeOps.recordMovement(st.db, if (i(1) < 0) "" else st.db.materials[i(1)].id, s(2), s(3), s(4), if (i(5) < 0) "" else st.db.projects[i(5)].id, id, "NOW-t")
             "import" -> {
                 if (autosave == null) QeOps.Outcome(null, "No autosaved quotation found.")
                 else { st.form = st.form.copy(customer = autosave.customer.name, name = autosave.projectName, value = QeOps.importQuoteValue(autosave)); QeOps.Outcome(null, QeOps.IMPORT_QUOTE_MESSAGE) }
             }
+            "machine" -> QeOps.addMachine(st.db, s(1), s(2), s(3))
+            "mstatus" -> QeOps.Outcome(QeOps.changeMachine(st.db, st.db.machines[i(1)].id, s(2), null, "NOW-t"), st.message)
+            "mworker" -> QeOps.Outcome(QeOps.changeMachine(st.db, st.db.machines[i(1)].id, null, s(2), "NOW-t"), st.message)
+            "report" -> { st.month = s(1).let { if (it == "now" || it.isEmpty()) "NOW" else it }; QeOps.Outcome(null, st.message) }
             else -> error(s(0))
         }
         out?.db?.let { st.db = it }
@@ -62,6 +67,14 @@ class QeOpsTest {
         val ps = lenient.decodeFromJsonElement(ListSerializer(OpsProject.serializer()), db["projects"]!!)
         val ms = lenient.decodeFromJsonElement(ListSerializer(OpsMaterial.serializer()), db["materials"]!!)
         val mv = lenient.decodeFromJsonElement(ListSerializer(OpsMovement.serializer()), db["movements"]!!)
+        val mc = lenient.decodeFromJsonElement(ListSerializer(OpsMachine.serializer()), db["machines"]!!)
+        assertEquals("$tag machines", mc, st.db.machines.map { m -> m.copy(history = m.history.map { it.copy(at = "") }) })
+        val machineList = st.db.machines.flatMap { m ->
+            listOf(QeOps.machineTitle(m), m.status, QeOps.machineDetail(m), "Status") + QeOps.MACHINE_STATUSES + listOf("Assigned worker", QeOps.machineLookup(m))
+        }.map { it.trim() }.filter { it.isNotEmpty() }
+        assertEquals("$tag machine list", e["machineList"]!!.jsonArray.map { unescape(it.jsonPrimitive.content) }, machineList)
+        val report = QeOps.reportLines(QeOps.report(st.db, st.month)).flatMap { listOf(it.first.trim(), it.second) } + QeOps.REPORT_NOTE
+        assertEquals("$tag report", e["reportBody"]!!.jsonArray.map { unescape(it.jsonPrimitive.content) }, report)
         fun OpsProject.norm() = copy(id = "", created = "", payments = payments.map { it.copy(at = "") }, revisions = revisions.map { it.copy(at = "") }, expenses = expenses.map { it.copy(at = "") })
         assertEquals("$tag projects", ps.map { it.norm() }, st.db.projects.map { it.norm() })
         assertEquals("$tag materials", ms.map { it.copy(id = "") }, st.db.materials.map { it.copy(id = "") })
@@ -81,7 +94,7 @@ class QeOpsTest {
             listOf(m.name, QeOps.stockText(st.db, m), QeOps.materialDetail(m)) + (if (QeOps.lowStock(st.db, m)) listOf("Low stock: reorder needed") else emptyList())
         }
         assertEquals("$tag material list", e["materialList"]!!.jsonArray.map { unescape(it.jsonPrimitive.content) }, materials)
-        val moves = QeOps.movementLines(st.db).map { it.substringAfter("t").let { rest -> rest } }
+        val moves = QeOps.movementLines(st.db).map { it.substringAfter("NOW-t").let { rest -> rest } }
         val expectedMoves = e["movementList"]!!.jsonArray.map { unescape(it.jsonPrimitive.content) }
         if (st.db.movements.isEmpty()) assertEquals("$tag no moves", listOf("No transactions."), expectedMoves.map { "No transactions." }.ifEmpty { listOf("No transactions.") })
         else assertEquals("$tag movement list", expectedMoves, moves)

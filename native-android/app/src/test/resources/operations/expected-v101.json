@@ -4,8 +4,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "",
    "form": {
     "customer": "",
@@ -23,8 +36,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Enter customer and project name.",
    "form": {
     "customer": "",
@@ -42,8 +68,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Amounts cannot be negative.",
    "form": {
     "customer": "Ravi",
@@ -61,7 +100,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -70,18 +109,31 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹25,000",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Project created with 0 attachment(s).",
    "form": {
     "customer": " Ravi Shetty ",
@@ -106,7 +158,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -115,16 +167,16 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -133,12 +185,25 @@
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹25,000",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Project created with 0 attachment(s).",
    "form": {
     "customer": "Anita",
@@ -168,7 +233,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -177,16 +242,16 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -195,12 +260,25 @@
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹25,000",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Enter a positive amount.",
    "form": {
     "customer": "Anita",
@@ -230,7 +308,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -239,21 +317,21 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -262,12 +340,25 @@
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.25",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Entry recorded.",
    "form": {
     "customer": "Anita",
@@ -298,7 +389,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -307,27 +398,27 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -336,12 +427,25 @@
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.25",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Entry recorded.",
    "form": {
     "customer": "Anita",
@@ -373,7 +477,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -382,33 +486,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -417,12 +521,25 @@
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.25",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Entry recorded.",
    "form": {
     "customer": "Anita",
@@ -455,7 +572,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -464,33 +581,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -499,18 +616,31 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Entry recorded.",
    "form": {
     "customer": "Anita",
@@ -544,7 +674,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -553,33 +683,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -588,18 +718,31 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Enter a positive amount.",
    "form": {
     "customer": "Anita",
@@ -633,7 +776,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -642,33 +785,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Main door + 2 windows",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -677,18 +820,31 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Enter a positive amount.",
    "form": {
     "customer": "Anita",
@@ -722,7 +878,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -731,33 +887,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -766,18 +922,31 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Project notes saved.",
    "form": {
     "customer": "Anita",
@@ -811,7 +980,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -820,33 +989,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -855,18 +1024,31 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Enter material name and unit.",
    "form": {
     "customer": "Anita",
@@ -900,7 +1082,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -909,33 +1091,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -944,18 +1126,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -963,8 +1145,21 @@
       "min": 20
      }
     ],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Material registered.",
    "form": {
     "customer": "Anita",
@@ -1003,7 +1198,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1012,33 +1207,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1047,18 +1242,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1066,7 +1261,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1074,8 +1269,21 @@
       "min": 2
      }
     ],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Material registered.",
    "form": {
     "customer": "Anita",
@@ -1118,7 +1326,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1127,33 +1335,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1162,18 +1370,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1181,7 +1389,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1189,8 +1397,21 @@
       "min": 2
      }
     ],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Select a material and enter a positive quantity.",
    "form": {
     "customer": "Anita",
@@ -1233,7 +1454,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1242,33 +1463,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1277,18 +1498,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1296,7 +1517,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1304,8 +1525,21 @@
       "min": 2
      }
     ],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Select a material and enter a positive quantity.",
    "form": {
     "customer": "Anita",
@@ -1348,7 +1582,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1357,33 +1591,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1392,18 +1626,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1411,7 +1645,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1421,17 +1655,30 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹625",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Transaction recorded and locked. Inventory updated.",
    "form": {
     "customer": "Anita",
@@ -1473,7 +1720,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1482,33 +1729,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1517,18 +1764,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1536,7 +1783,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1546,17 +1793,30 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹625",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Insufficient stock for this transaction.",
    "form": {
     "customer": "Anita",
@@ -1598,7 +1858,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1607,33 +1867,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1642,18 +1902,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1661,7 +1921,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1671,27 +1931,40 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      },
      {
-      "id": "mwq3dcp477ua8",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2u07gge",
+      "materialId": "mwq3xe2knjax2",
       "qty": 30.3,
       "type": "issue",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.272Z"
+      "at": "2026-11-21T07:49:22.182Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹625",
+    "Material issued (cost):",
+    "₹378.75",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Transaction recorded and locked. Inventory updated.",
    "form": {
     "customer": "Anita",
@@ -1735,7 +2008,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1744,33 +2017,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1779,18 +2052,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1798,7 +2071,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1808,27 +2081,40 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      },
      {
-      "id": "mwq3dcp477ua8",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2u07gge",
+      "materialId": "mwq3xe2knjax2",
       "qty": 30.3,
       "type": "issue",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.272Z"
+      "at": "2026-11-21T07:49:22.182Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹625",
+    "Material issued (cost):",
+    "₹378.75",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Select the project receiving the return.",
    "form": {
     "customer": "Anita",
@@ -1872,7 +2158,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -1881,33 +2167,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -1916,18 +2202,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -1935,7 +2221,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -1945,37 +2231,50 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      },
      {
-      "id": "mwq3dcp477ua8",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2u07gge",
+      "materialId": "mwq3xe2knjax2",
       "qty": 30.3,
       "type": "issue",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.272Z"
+      "at": "2026-11-21T07:49:22.182Z"
      },
      {
-      "id": "mwq3dcp7eakka",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2x022b2",
+      "materialId": "mwq3xe2knjax2",
       "qty": 10.1,
       "type": "return",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.275Z"
+      "at": "2026-11-21T07:49:22.185Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹625",
+    "Material issued (cost):",
+    "₹378.75",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Transaction recorded and locked. Inventory updated.",
    "form": {
     "customer": "Anita",
@@ -2019,7 +2318,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -2028,33 +2327,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -2063,18 +2362,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -2082,7 +2381,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -2092,47 +2391,60 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      },
      {
-      "id": "mwq3dcp477ua8",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2u07gge",
+      "materialId": "mwq3xe2knjax2",
       "qty": 30.3,
       "type": "issue",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.272Z"
+      "at": "2026-11-21T07:49:22.182Z"
      },
      {
-      "id": "mwq3dcp7eakka",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2x022b2",
+      "materialId": "mwq3xe2knjax2",
       "qty": 10.1,
       "type": "return",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.275Z"
+      "at": "2026-11-21T07:49:22.185Z"
      },
      {
-      "id": "mwq3dcp9zp572",
-      "materialId": "mwq3dcowtx3ew",
+      "id": "mwq3xe30peum7",
+      "materialId": "mwq3xe2m9d2c2",
       "qty": 3.333,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 389.99,
-      "at": "2026-11-21T07:33:47.277Z"
+      "at": "2026-11-21T07:49:22.188Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹1,924.84",
+    "Material issued (cost):",
+    "₹378.75",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Transaction recorded and locked. Inventory updated.",
    "form": {
     "customer": "Anita",
@@ -2176,7 +2488,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -2185,33 +2497,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -2220,18 +2532,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -2239,7 +2551,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -2249,57 +2561,70 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      },
      {
-      "id": "mwq3dcp477ua8",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2u07gge",
+      "materialId": "mwq3xe2knjax2",
       "qty": 30.3,
       "type": "issue",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.272Z"
+      "at": "2026-11-21T07:49:22.182Z"
      },
      {
-      "id": "mwq3dcp7eakka",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2x022b2",
+      "materialId": "mwq3xe2knjax2",
       "qty": 10.1,
       "type": "return",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.275Z"
+      "at": "2026-11-21T07:49:22.185Z"
      },
      {
-      "id": "mwq3dcp9zp572",
-      "materialId": "mwq3dcowtx3ew",
+      "id": "mwq3xe30peum7",
+      "materialId": "mwq3xe2m9d2c2",
       "qty": 3.333,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 389.99,
-      "at": "2026-11-21T07:33:47.277Z"
+      "at": "2026-11-21T07:49:22.188Z"
      },
      {
-      "id": "mwq3dcpb9uppo",
-      "materialId": "mwq3dcowtx3ew",
+      "id": "mwq3xe3138ws0",
+      "materialId": "mwq3xe2m9d2c2",
       "qty": 1.111,
       "type": "issue",
       "worker": "",
-      "projectId": "mwq3dcob6rilc",
+      "projectId": "mwq3xe24753n3",
       "rate": 389.99,
-      "at": "2026-11-21T07:33:47.279Z"
+      "at": "2026-11-21T07:49:22.189Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹1,924.84",
+    "Material issued (cost):",
+    "₹812.03",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Transaction recorded and locked. Inventory updated.",
    "form": {
     "customer": "Anita",
@@ -2344,7 +2669,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dco9i0l3f",
+      "id": "mwq3xe2251fqv",
       "name": "Teak doors",
       "customer": "Ravi Shetty",
       "original": 125000.5,
@@ -2353,33 +2678,33 @@
        {
         "amount": 25000,
         "note": "Opening balance imported",
-        "at": "2026-11-21T07:33:47.241Z"
+        "at": "2026-11-21T07:49:22.154Z"
        },
        {
         "amount": 15000.25,
         "note": "UPI ref 991",
-        "at": "2026-11-21T07:33:47.246Z"
+        "at": "2026-11-21T07:49:22.159Z"
        }
       ],
       "revisions": [
        {
         "amount": 7499.999,
         "note": "Extra shutter",
-        "at": "2026-11-21T07:33:47.248Z"
+        "at": "2026-11-21T07:49:22.161Z"
        }
       ],
       "expenses": [
        {
         "amount": 1200.005,
         "note": "Transport",
-        "at": "2026-11-21T07:33:47.250Z"
+        "at": "2026-11-21T07:49:22.163Z"
        }
       ],
       "notes": "Updated scope",
-      "created": "2026-11-21T07:33:47.241Z"
+      "created": "2026-11-21T07:49:22.154Z"
      },
      {
-      "id": "mwq3dcob6rilc",
+      "id": "mwq3xe24753n3",
       "name": "Wardrobe",
       "customer": "Anita",
       "original": 98765.433,
@@ -2388,18 +2713,18 @@
        {
         "amount": 0.125,
         "note": "tiny",
-        "at": "2026-11-21T07:33:47.252Z"
+        "at": "2026-11-21T07:49:22.165Z"
        }
       ],
       "revisions": [],
       "expenses": [],
       "notes": "",
-      "created": "2026-11-21T07:33:47.243Z"
+      "created": "2026-11-21T07:49:22.156Z"
      }
     ],
     "materials": [
      {
-      "id": "mwq3dcoujey7p",
+      "id": "mwq3xe2knjax2",
       "name": "120-grit disc",
       "unit": "pcs",
       "category": "Sanding Discs",
@@ -2407,7 +2732,7 @@
       "min": 20
      },
      {
-      "id": "mwq3dcowtx3ew",
+      "id": "mwq3xe2m9d2c2",
       "name": "Fevicol",
       "unit": "kg",
       "category": "Adhesives & Fillers",
@@ -2417,67 +2742,80 @@
     ],
     "movements": [
      {
-      "id": "mwq3dcp1zd341",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2q7if51",
+      "materialId": "mwq3xe2knjax2",
       "qty": 50,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.269Z"
+      "at": "2026-11-21T07:49:22.178Z"
      },
      {
-      "id": "mwq3dcp477ua8",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2u07gge",
+      "materialId": "mwq3xe2knjax2",
       "qty": 30.3,
       "type": "issue",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.272Z"
+      "at": "2026-11-21T07:49:22.182Z"
      },
      {
-      "id": "mwq3dcp7eakka",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe2x022b2",
+      "materialId": "mwq3xe2knjax2",
       "qty": 10.1,
       "type": "return",
       "worker": "Suresh",
-      "projectId": "mwq3dco9i0l3f",
+      "projectId": "mwq3xe2251fqv",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.275Z"
+      "at": "2026-11-21T07:49:22.185Z"
      },
      {
-      "id": "mwq3dcp9zp572",
-      "materialId": "mwq3dcowtx3ew",
+      "id": "mwq3xe30peum7",
+      "materialId": "mwq3xe2m9d2c2",
       "qty": 3.333,
       "type": "purchase",
       "worker": "",
       "projectId": "",
       "rate": 389.99,
-      "at": "2026-11-21T07:33:47.277Z"
+      "at": "2026-11-21T07:49:22.188Z"
      },
      {
-      "id": "mwq3dcpb9uppo",
-      "materialId": "mwq3dcowtx3ew",
+      "id": "mwq3xe3138ws0",
+      "materialId": "mwq3xe2m9d2c2",
       "qty": 1.111,
       "type": "issue",
       "worker": "",
-      "projectId": "mwq3dcob6rilc",
+      "projectId": "mwq3xe24753n3",
       "rate": 389.99,
-      "at": "2026-11-21T07:33:47.279Z"
+      "at": "2026-11-21T07:49:22.189Z"
      },
      {
-      "id": "mwq3dcpczf52r",
-      "materialId": "mwq3dcoujey7p",
+      "id": "mwq3xe33dv2so",
+      "materialId": "mwq3xe2knjax2",
       "qty": 12.6,
       "type": "issue",
       "worker": "",
-      "projectId": "mwq3dcob6rilc",
+      "projectId": "mwq3xe24753n3",
       "rate": 12.5,
-      "at": "2026-11-21T07:33:47.280Z"
+      "at": "2026-11-21T07:49:22.191Z"
      }
-    ]
+    ],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹40,000.38",
+    "Inventory purchases:",
+    "₹1,924.84",
+    "Material issued (cost):",
+    "₹969.53",
+    "Other recorded expenses:",
+    "₹1,200.01",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Transaction recorded and locked. Inventory updated.",
    "form": {
     "customer": "Anita",
@@ -2526,8 +2864,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Quotation imported. Add photos or documents if needed, then tap Create project & attach files.",
    "form": {
     "customer": "Customer not specified",
@@ -2545,8 +2896,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Imported quotation details into the form. Verify the amount and click Create project. Original quotation remains unchanged.",
    "form": {
     "customer": "Meera",
@@ -2564,7 +2928,7 @@
    "db": {
     "projects": [
      {
-      "id": "mwq3dcpgc2g78",
+      "id": "mwq3xe388x9gg",
       "name": "Quotation 21/11/2026",
       "customer": "Meera",
       "original": 118000.56,
@@ -2573,12 +2937,25 @@
       "revisions": [],
       "expenses": [],
       "notes": "notes",
-      "created": "2026-11-21T07:33:47.284Z"
+      "created": "2026-11-21T07:49:22.196Z"
      }
     ],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Project created with 0 attachment(s).",
    "form": {
     "customer": "Meera",
@@ -2604,8 +2981,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "",
    "form": {
     "customer": "",
@@ -2623,8 +3013,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "Imported quotation details into the form. Verify the amount and click Create project. Original quotation remains unchanged.",
    "form": {
     "customer": "Joseph",
@@ -2644,8 +3047,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "",
    "form": {
     "customer": "",
@@ -2663,8 +3079,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "No autosaved quotation found.",
    "form": {
     "customer": "",
@@ -2684,8 +3113,21 @@
    "db": {
     "projects": [],
     "materials": [],
-    "movements": []
+    "movements": [],
+    "machines": []
    },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
    "message": "",
    "form": {
     "customer": "",
@@ -2697,6 +3139,2363 @@
    "materialList": [],
    "movementList": [
     ""
+   ]
+  }
+ ],
+ [
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": []
+   },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": []
+   },
+   "machineList": [],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Enter machine name.",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "",
+      "status": "Available",
+      "history": []
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Available",
+    "Serial: GWS 600  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Machine registered: MWI-0001",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "",
+      "status": "Available",
+      "history": []
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "Suresh ",
+      "status": "Available",
+      "history": []
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Available",
+    "Serial: GWS 600  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Available",
+    "Serial:  · Assigned: Suresh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Machine registered: MWI-0002",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "Suresh ",
+      "status": "Available",
+      "history": []
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Available",
+    "Serial:  · Assigned: Suresh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Machine registered: MWI-0002",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "Suresh ",
+      "status": "Available",
+      "history": []
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Available",
+    "Serial:  · Assigned: Suresh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Machine registered: MWI-0002",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "Suresh ",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: Suresh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Machine registered: MWI-0002",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Machine registered: MWI-0002",
+   "form": {
+    "customer": "",
+    "name": "",
+    "value": "",
+    "notes": ""
+   },
+   "projectList": [],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       }
+      ],
+      "revisions": [],
+      "expenses": [],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹12,000.5",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Project created with 0 attachment(s).",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹50,000",
+    "₹12,000.5",
+    "₹37,999.5",
+    "₹0",
+    "₹50,000",
+    "Payment ₹12,000.5 · Opening balance imported"
+   ],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [],
+      "expenses": [],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Entry recorded.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹50,000",
+    "₹20,000",
+    "₹30,000",
+    "₹0",
+    "₹50,000",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI"
+   ],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Entry recorded.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹50,000",
+    "₹20,000",
+    "₹30,000",
+    "₹1,500.25",
+    "₹48,499.75",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Entry recorded.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,500.25",
+    "₹50,999.75",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mwq3xe3tgpymo",
+      "name": "Disc",
+      "unit": "pcs",
+      "category": "Sanding Discs",
+      "rate": 12.5,
+      "min": 2
+     }
+    ],
+    "movements": [],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Material registered.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,500.25",
+    "₹50,999.75",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [
+    "Disc",
+    "0 pcs remaining",
+    "Sanding Discs · ₹12.5/pcs · reorder at 2",
+    "Low stock: reorder needed"
+   ],
+   "movementList": [
+    ""
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mwq3xe3tgpymo",
+      "name": "Disc",
+      "unit": "pcs",
+      "category": "Sanding Discs",
+      "rate": 12.5,
+      "min": 2
+     }
+    ],
+    "movements": [
+     {
+      "id": "mwq3xe3vnny66",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 40,
+      "type": "purchase",
+      "worker": "",
+      "projectId": "",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.219Z"
+     }
+    ],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹500",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Transaction recorded and locked. Inventory updated.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,500.25",
+    "₹50,999.75",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [
+    "Disc",
+    "40 pcs remaining",
+    "Sanding Discs · ₹12.5/pcs · reorder at 2"
+   ],
+   "movementList": [
+    " · purchase · Disc · 40 · Owner · No project"
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mwq3xe3tgpymo",
+      "name": "Disc",
+      "unit": "pcs",
+      "category": "Sanding Discs",
+      "rate": 12.5,
+      "min": 2
+     }
+    ],
+    "movements": [
+     {
+      "id": "mwq3xe3vnny66",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 40,
+      "type": "purchase",
+      "worker": "",
+      "projectId": "",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.219Z"
+     },
+     {
+      "id": "mwq3xe3xfnmo0",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 10.5,
+      "type": "issue",
+      "worker": "Suresh",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.221Z"
+     }
+    ],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹500",
+    "Material issued (cost):",
+    "₹131.25",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Transaction recorded and locked. Inventory updated.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,631.5",
+    "₹50,868.5",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [
+    "Disc",
+    "29.5 pcs remaining",
+    "Sanding Discs · ₹12.5/pcs · reorder at 2"
+   ],
+   "movementList": [
+    " · issue · Disc · 10.5 · Suresh · Cot",
+    " · purchase · Disc · 40 · Owner · No project"
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mwq3xe3tgpymo",
+      "name": "Disc",
+      "unit": "pcs",
+      "category": "Sanding Discs",
+      "rate": 12.5,
+      "min": 2
+     }
+    ],
+    "movements": [
+     {
+      "id": "mwq3xe3vnny66",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 40,
+      "type": "purchase",
+      "worker": "",
+      "projectId": "",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.219Z"
+     },
+     {
+      "id": "mwq3xe3xfnmo0",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 10.5,
+      "type": "issue",
+      "worker": "Suresh",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.221Z"
+     },
+     {
+      "id": "mwq3xe3zyhm3c",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 2,
+      "type": "return",
+      "worker": "",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.223Z"
+     }
+    ],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹500",
+    "Material issued (cost):",
+    "₹131.25",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Transaction recorded and locked. Inventory updated.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,606.5",
+    "₹50,893.5",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [
+    "Disc",
+    "31.5 pcs remaining",
+    "Sanding Discs · ₹12.5/pcs · reorder at 2"
+   ],
+   "movementList": [
+    " · return · Disc · 2 · Owner · Cot",
+    " · issue · Disc · 10.5 · Suresh · Cot",
+    " · purchase · Disc · 40 · Owner · No project"
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mwq3xe3tgpymo",
+      "name": "Disc",
+      "unit": "pcs",
+      "category": "Sanding Discs",
+      "rate": 12.5,
+      "min": 2
+     }
+    ],
+    "movements": [
+     {
+      "id": "mwq3xe3vnny66",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 40,
+      "type": "purchase",
+      "worker": "",
+      "projectId": "",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.219Z"
+     },
+     {
+      "id": "mwq3xe3xfnmo0",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 10.5,
+      "type": "issue",
+      "worker": "Suresh",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.221Z"
+     },
+     {
+      "id": "mwq3xe3zyhm3c",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 2,
+      "type": "return",
+      "worker": "",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.223Z"
+     }
+    ],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹500",
+    "Material issued (cost):",
+    "₹131.25",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Transaction recorded and locked. Inventory updated.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,606.5",
+    "₹50,893.5",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [
+    "Disc",
+    "31.5 pcs remaining",
+    "Sanding Discs · ₹12.5/pcs · reorder at 2"
+   ],
+   "movementList": [
+    " · return · Disc · 2 · Owner · Cot",
+    " · issue · Disc · 10.5 · Suresh · Cot",
+    " · purchase · Disc · 40 · Owner · No project"
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mwq3xe3tgpymo",
+      "name": "Disc",
+      "unit": "pcs",
+      "category": "Sanding Discs",
+      "rate": 12.5,
+      "min": 2
+     }
+    ],
+    "movements": [
+     {
+      "id": "mwq3xe3vnny66",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 40,
+      "type": "purchase",
+      "worker": "",
+      "projectId": "",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.219Z"
+     },
+     {
+      "id": "mwq3xe3xfnmo0",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 10.5,
+      "type": "issue",
+      "worker": "Suresh",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.221Z"
+     },
+     {
+      "id": "mwq3xe3zyhm3c",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 2,
+      "type": "return",
+      "worker": "",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.223Z"
+     }
+    ],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹0",
+    "Inventory purchases:",
+    "₹0",
+    "Material issued (cost):",
+    "₹0",
+    "Other recorded expenses:",
+    "₹0",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Transaction recorded and locked. Inventory updated.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,606.5",
+    "₹50,893.5",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [
+    "Disc",
+    "31.5 pcs remaining",
+    "Sanding Discs · ₹12.5/pcs · reorder at 2"
+   ],
+   "movementList": [
+    " · return · Disc · 2 · Owner · Cot",
+    " · issue · Disc · 10.5 · Suresh · Cot",
+    " · purchase · Disc · 40 · Owner · No project"
+   ]
+  },
+  {
+   "db": {
+    "projects": [
+     {
+      "id": "mwq3xe3nm5k2y",
+      "name": "Cot",
+      "customer": "Ravi",
+      "original": 50000,
+      "status": "Saved",
+      "payments": [
+       {
+        "amount": 12000.5,
+        "note": "Opening balance imported",
+        "at": "2026-11-21T07:49:22.211Z"
+       },
+       {
+        "amount": 7999.5,
+        "note": "UPI",
+        "at": "2026-11-21T07:49:22.213Z"
+       }
+      ],
+      "revisions": [
+       {
+        "amount": 2500,
+        "note": "Extra",
+        "at": "2026-11-21T07:49:22.216Z"
+       }
+      ],
+      "expenses": [
+       {
+        "amount": 1500.25,
+        "note": "Transport",
+        "at": "2026-11-21T07:49:22.214Z"
+       }
+      ],
+      "notes": "",
+      "created": "2026-11-21T07:49:22.211Z"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mwq3xe3tgpymo",
+      "name": "Disc",
+      "unit": "pcs",
+      "category": "Sanding Discs",
+      "rate": 12.5,
+      "min": 2
+     }
+    ],
+    "movements": [
+     {
+      "id": "mwq3xe3vnny66",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 40,
+      "type": "purchase",
+      "worker": "",
+      "projectId": "",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.219Z"
+     },
+     {
+      "id": "mwq3xe3xfnmo0",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 10.5,
+      "type": "issue",
+      "worker": "Suresh",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.221Z"
+     },
+     {
+      "id": "mwq3xe3zyhm3c",
+      "materialId": "mwq3xe3tgpymo",
+      "qty": 2,
+      "type": "return",
+      "worker": "",
+      "projectId": "mwq3xe3nm5k2y",
+      "rate": 12.5,
+      "at": "2026-11-21T07:49:22.223Z"
+     }
+    ],
+    "machines": [
+     {
+      "id": "MWI-0001",
+      "name": "Grinder",
+      "serial": "GWS 600 ",
+      "worker": "Mahesh",
+      "status": "Assigned",
+      "history": [
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": ""
+       },
+       {
+        "at": "",
+        "status": "Assigned",
+        "worker": "Mahesh"
+       }
+      ]
+     },
+     {
+      "id": "MWI-0002",
+      "name": "Router",
+      "serial": "",
+      "worker": "",
+      "status": "Under Repair",
+      "history": [
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": "Suresh "
+       },
+       {
+        "at": "",
+        "status": "Under Repair",
+        "worker": ""
+       }
+      ]
+     }
+    ]
+   },
+   "machineList": [
+    "MWI-0001 · Grinder",
+    "Assigned",
+    "Serial: GWS 600  · Assigned: Mahesh",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0001",
+    "MWI-0002 · Router",
+    "Under Repair",
+    "Serial:  · Assigned: None",
+    "Status",
+    "Available",
+    "Assigned",
+    "In Use",
+    "Under Repair",
+    "Needs Maintenance",
+    "Missing",
+    "Retired",
+    "Assigned worker",
+    "Machine ID for manual lookup or future QR labels: MWI-0002"
+   ],
+   "reportBody": [
+    "Customer receipts:",
+    "₹20,000",
+    "Inventory purchases:",
+    "₹500",
+    "Material issued (cost):",
+    "₹131.25",
+    "Other recorded expenses:",
+    "₹1,500.25",
+    "Purchases and material consumption are separate measures, not additive project expenses."
+   ],
+   "message": "Transaction recorded and locked. Inventory updated.",
+   "form": {
+    "customer": "Ravi",
+    "name": "Cot",
+    "value": "50000",
+    "notes": ""
+   },
+   "projectList": [
+    "₹52,500",
+    "₹20,000",
+    "₹32,500",
+    "₹1,606.5",
+    "₹50,893.5",
+    "Payment ₹12,000.5 · Opening balance imported",
+    "Payment ₹7,999.5 · UPI",
+    "Revision ₹2,500 · Extra",
+    "Expense ₹1,500.25 · Transport"
+   ],
+   "materialList": [
+    "Disc",
+    "31.5 pcs remaining",
+    "Sanding Discs · ₹12.5/pcs · reorder at 2"
+   ],
+   "movementList": [
+    " · return · Disc · 2 · Owner · Cot",
+    " · issue · Disc · 10.5 · Suresh · Cot",
+    " · purchase · Disc · 40 · Owner · No project"
    ]
   }
  ]
