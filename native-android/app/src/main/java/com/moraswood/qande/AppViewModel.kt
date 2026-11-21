@@ -41,6 +41,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import com.moraswood.qande.photos.ItemPhotos
+import com.moraswood.qande.logic.QeDuplicate
 import com.moraswood.qande.templates.TemplateMatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -49,6 +50,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -89,6 +91,49 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     val savedProjects: StateFlow<List<SavedProjectEntity>> =
         db.savedProjects().observeAll().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /* ---------- Feature O: clients ---------- */
+    val clients: StateFlow<List<com.moraswood.qande.data.ClientEntity>> =
+        db.clients().observeClients().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val jobMeta: StateFlow<List<com.moraswood.qande.data.JobMetaEntity>> =
+        db.clients().observeJobs().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val clientSummaries: StateFlow<List<com.moraswood.qande.logic.QeClients.Summary>> =
+        combine(clients, savedProjects, jobMeta) { c, s, m -> com.moraswood.qande.logic.QeClients.summaries(c, s, m) }
+            .flowOn(kotlinx.coroutines.Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** Add or edit a client; returns an error message, or null when saved. */
+    fun saveClient(c: com.moraswood.qande.data.ClientEntity): String? {
+        val x = c.copy(name = c.name.trim(), phone = c.phone.trim(), address = c.address.trim(), notes = c.notes.trim())
+        com.moraswood.qande.logic.QeClients.validate(x)?.let { return it }
+        val row = if (x.id.isEmpty()) x.copy(id = "c" + uid(), createdAt = jsIsoNow()) else x
+        viewModelScope.launch { db.clients().putClient(row) }
+        // keep the open quotation in step with an edited linked client
+        if (_workspace.value.clientId == row.id) update { it.copy(customer = com.moraswood.qande.logic.QeClients.customerFor(row)) }
+        return null
+    }
+
+    fun deleteClient(id: String) {
+        viewModelScope.launch { db.clients().deleteClient(id) }
+        if (_workspace.value.clientId == id) update { it.copy(clientId = null) }
+    }
+
+    /** Quotation › Client picker: fills the customer block and links the job (saved on the next Save Project). */
+    fun pickClient(id: String?) {
+        if (id == null) { update { it.copy(clientId = null) }; return }
+        val c = clients.value.firstOrNull { it.id == id } ?: return
+        update { it.copy(clientId = c.id, customer = com.moraswood.qande.logic.QeClients.customerFor(c)) }
+    }
+
+    /** Quotation › "Save as client": creates a client from the customer block and links it. */
+    fun saveCustomerAsClient(): String {
+        val cu = _workspace.value.customer
+        if (cu.name.isBlank()) return "Enter the customer name first."
+        val c = com.moraswood.qande.data.ClientEntity("c" + uid(), cu.name.trim(), address = cu.location.trim(), createdAt = jsIsoNow())
+        viewModelScope.launch { db.clients().putClient(c) }
+        update { it.copy(clientId = c.id) }
+        return "Client saved and linked: ${c.name}."
+    }
 
     /* ---------- template library state ---------- */
     private val _logs = MutableStateFlow<List<JobComponentLogEntity>>(emptyList())
@@ -872,6 +917,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 update { it.copy(revision = rev, jobUuid = uuid) }
                 val snapshot = QeJson.encodeToString(WorkspaceState.serializer(), _workspace.value)
                 dao.insert(SavedProjectEntity(id, rootId, rev, name, now, snapshot, dao.minPosition() - 1, basedOn?.takeIf { it != rev }, uuid))
+                runCatching { db.clients().linkJob(uuid, _workspace.value.clientId) }
                 if (dao.all().none { it.id == id && it.snapshotJson.isNotEmpty() }) error("Save verification failed")
                 basedOnRevision = rev
                 _projectStatus.value = "Saved $name · R$rev on this device."
@@ -944,6 +990,32 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (!loadSnapshot(x, latest + 1, readOnly = false)) return false
         _projectStatus.value = "Editing R${latest + 1} based on R${x.revision}. Save to preserve the new revision."
         return true
+    }
+
+    /**
+     * Feature N: duplicate a saved revision as a brand-new job — "<name> (copy)", new id, new job UUID / QR, R0;
+     * item photos are copied to new files. Saved straight to Saved Projects; the current workspace is not touched.
+     */
+    fun duplicateSavedProject(id: String, onDone: (String) -> Unit = {}) {
+        val x = savedProjects.value.firstOrNull { it.id == id } ?: return
+        val snap = runCatching { QeJson.decodeFromString(WorkspaceState.serializer(), x.snapshotJson).normalizeUnits() }.getOrNull() ?: run {
+            onDone("Could not duplicate this project."); return
+        }
+        viewModelScope.launch {
+            try {
+                val app = getApplication<Application>()
+                val map = HashMap<String, String>()
+                for (name in QeDuplicate.photos(snap)) ItemPhotos.copyOf(app, name)?.let { copy -> map[name] = copy; ItemPhotos.register(app, db, copy) }
+                val newId = uid()
+                val copy = QeDuplicate.duplicate(snap.copy(projectName = snap.projectName.ifEmpty { x.name }), newId, java.util.UUID.randomUUID().toString(), map)
+                val dao = db.savedProjects()
+                val json = QeJson.encodeToString(WorkspaceState.serializer(), copy)
+                dao.insert(SavedProjectEntity(newId, newId, 0, copy.projectName, jsIsoNow(), json, dao.minPosition() - 1, null, copy.jobUuid.orEmpty()))
+                onDone("Duplicated as ${QeRevisions.label(copy.projectName, 0)} with a new QR code.")
+            } catch (e: Exception) {
+                onDone("Could not duplicate this project.")
+            }
+        }
     }
 
     /** `.delete-project` after `confirm('Delete this saved revision?')`. */

@@ -280,3 +280,26 @@
   88 in, with the unit select set to "in"; a spoken unit (ft, in, cm, mm, m) sets that field's unit. "quantity 4" / "qty 4" /
   "4 pieces" fill Pieces. Values only; rows are not added automatically.
 - ASSUMPTION: Pieces has no unit, so a spoken unit there is ignored; values beyond Pieces are dropped.
+
+## Feature N — duplicate job (notes)
+- Saved Projects › "Duplicate Rn" copies that revision's whole snapshot (calculator, estimation, costings, every quote
+  option, customer, quote, actuals, groups, categories, door/window structures, quotation images) into a NEW job:
+  "<name> (copy)", new project id, new job UUID (so a new QR), revision R0, no revision history. V10.1 has no job
+  duplicate; the closest it has is "Duplicate option" inside a quotation, which stays unchanged.
+- Item photos are copied to new files under item_photos/ (registered in item_photos), so deleting either job never
+  removes the other's photos. Quotation images are embedded data and are copied with the snapshot.
+- The copy is saved straight into Saved Projects (top of the list); the open workspace is not touched. Template-library
+  logs are not copied (they belong to the original job).
+- ASSUMPTION: actual costs (materials, labour hours) are copied too, as part of "the whole job".
+
+## Feature O — client database (notes)
+- Room v7 (MIGRATION_6_7): `clients` (id, name, phone, address, notes, createdAt) and `jobs` (jobUuid PK, clientId) —
+  mutable per-job metadata keyed by the Feature L job UUID, kept apart from the append-only revision rows. Both tables
+  are in the Full Backup (native schema 7). Older backups restore with no clients.
+- Home › "Clients": search, add / edit / delete (deleting a client unlinks its jobs; jobs stay saved), past jobs
+  (latest revision of each linked job, with "Open") and Total spend.
+- Quotation: a "Client" picker above the customer fields (screen only, not printed). Picking fills Customer name and
+  Customer location (= client address) and links the job; "Save as client" creates a client from the customer fields.
+  The link is written to `jobs` on Save Project, and travels in the snapshot (`clientId`) so duplicates keep it.
+- ASSUMPTION: "Total spend" = sum of the quotation grand totals (incl. GST, active option) of the latest revision of
+  each linked job; payments in Operations are not used. Phone needs at least 6 digits when given.

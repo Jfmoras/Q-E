@@ -58,6 +58,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val OPERATIONS = "operations"
     const val BUILDER = "builder"
+    const val CLIENTS = "clients"
 }
 
 private fun NavHostController.openView(route: String) = navigate(route) {
@@ -144,6 +145,7 @@ fun QeApp(vm: AppViewModel) {
                     onOpenLatest = { root -> if (vm.openLatestRevision(root)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
                     onPrintRevision = { id -> vm.savedSnapshot(id)?.let { QuotePrint.print(context, it) } },
                     onJobQr = { x -> qrJob = x },
+                    onDuplicate = { id -> vm.duplicateSavedProject(id) { msg -> scanAlert = msg } },
                     onScanQr = {
                         com.moraswood.qande.ui.screens.JobQrScanner.scan(context, { raw ->
                             val id = com.moraswood.qande.logic.QeQr.parse(raw)
@@ -154,6 +156,7 @@ fun QeApp(vm: AppViewModel) {
                     },
                     onHoppus = { nav.openView(Routes.HOPPUS) },
                     onBuilder = { nav.openView(Routes.BUILDER) },
+                    onClients = { nav.openView(Routes.CLIENTS) },
                     onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },
                     onCloseSaved = { savedPanelOpen = false },
@@ -234,6 +237,7 @@ fun QeApp(vm: AppViewModel) {
                             noteStatus = noteStatus,
                             aiStatus = aiStatus,
                             aiBusy = aiBusy,
+                            clients = vm.clients.collectAsState().value,
                             actions = remember(vm) {
                                 QuotationActions(
                                     onPrint = { QuotePrint.print(context, vm.workspace.value) },
@@ -244,6 +248,8 @@ fun QeApp(vm: AppViewModel) {
                                     },
                                     onCustomerName = vm::setCustomerName,
                                     onCustomerLocation = vm::setCustomerLocation,
+                                    onPickClient = vm::pickClient,
+                                    onSaveAsClient = vm::saveCustomerAsClient,
                                     onSelectOption = vm::selectQuoteOption,
                                     onOptionName = vm::setQuoteOptionName,
                                     onAddOption = vm::addQuoteOption,
@@ -297,6 +303,11 @@ fun QeApp(vm: AppViewModel) {
                 com.moraswood.qande.ui.screens.DoorWindowScreen(vm, onOpenCalculator = { nav.openView(Routes.WORKSPACE) }, onPrintCutList = {
                     com.moraswood.qande.print.CutListPrint.print(context, com.moraswood.qande.logic.QeCutList.build(vm.workspace.value, vm.dwDefaults.value, java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"))))
                 })
+            }
+            composable(Routes.CLIENTS) {
+                val summaries by vm.clientSummaries.collectAsState()
+                com.moraswood.qande.ui.screens.ClientsScreen(summaries, vm::saveClient, vm::deleteClient,
+                    onOpenJob = { root -> if (vm.openLatestRevision(root)) nav.openView(Routes.WORKSPACE) })
             }
             composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, ovm, avm) }
         }
