@@ -1,0 +1,2898 @@
+[
+ [
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Teak door",
+       "unit": "Nos",
+       "qty": "2",
+       "unitPrice": "18500",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "Frame",
+       "unit": "Set",
+       "qty": "1.5",
+       "unitPrice": "7333.33",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "7.5",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Teak door",
+     "unit": "Nos",
+     "qty": "2",
+     "unitPrice": "18500",
+     "images": [],
+     "aiOriginal": ""
+    },
+    {
+     "description": "Frame",
+     "unit": "Set",
+     "qty": "1.5",
+     "unitPrice": "7333.33",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "7.5",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 47999.994999999995,
+     "discount": 3599.9996249999995,
+     "taxable": 44399.995375,
+     "gst": 7991.9991675,
+     "grand": 52391.9945425,
+     "rs": [
+      "Rs. 48,000",
+      "Rs. 3,600",
+      "Rs. 7,992",
+      "Rs. 52,392"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 47999.994999999995,
+    "discount": 3599.9996249999995,
+    "taxable": 44399.995375,
+    "gst": 7991.9991675,
+    "grand": 52391.9945425,
+    "money": [
+     "₹48,000",
+     "₹3,600",
+     "₹7,992",
+     "₹52,392"
+    ],
+    "discountLabel": "Discount (7.5%)"
+   }
+  }
+ ],
+ [
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Cot",
+       "unit": "",
+       "qty": "3",
+       "unitPrice": "12999.99",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "999999",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Cot",
+     "unit": "",
+     "qty": "3",
+     "unitPrice": "12999.99",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "999999",
+    "gstPercent": "12"
+   },
+   "totals": [
+    {
+     "subtotal": 38999.97,
+     "discount": 38999.97,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 39,000",
+      "Rs. 39,000",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 38999.97,
+    "discount": 38999.97,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹39,000",
+     "₹39,000",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount"
+   }
+  }
+ ],
+ [
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "x",
+       "unit": "",
+       "qty": "abc",
+       "unitPrice": "",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "y",
+       "unit": "Rft",
+       "qty": "-2",
+       "unitPrice": "150",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "-50",
+     "gstPercent": ""
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "x",
+     "unit": "",
+     "qty": "abc",
+     "unitPrice": "",
+     "images": [],
+     "aiOriginal": ""
+    },
+    {
+     "description": "y",
+     "unit": "Rft",
+     "qty": "-2",
+     "unitPrice": "150",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "-50",
+    "gstPercent": ""
+   },
+   "totals": [
+    {
+     "subtotal": -300,
+     "discount": -300,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. -300",
+      "Rs. -300",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "0"
+    }
+   ],
+   "screen": {
+    "subtotal": -300,
+    "discount": -300,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "-₹300",
+     "-₹300",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount"
+   }
+  }
+ ],
+ [
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Table",
+       "unit": "Nos",
+       "qty": "1",
+       "unitPrice": "0.5",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "Chair",
+       "unit": "Nos",
+       "qty": "4",
+       "unitPrice": "2499.5",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "0",
+     "gstPercent": "2.5"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Table",
+     "unit": "Nos",
+     "qty": "1",
+     "unitPrice": "0.5",
+     "images": [],
+     "aiOriginal": ""
+    },
+    {
+     "description": "Chair",
+     "unit": "Nos",
+     "qty": "4",
+     "unitPrice": "2499.5",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "0",
+    "gstPercent": "2.5"
+   },
+   "totals": [
+    {
+     "subtotal": 9998.5,
+     "discount": 0,
+     "taxable": 9998.5,
+     "gst": 249.9625,
+     "grand": 10248.4625,
+     "rs": [
+      "Rs. 9,999",
+      "Rs. 0",
+      "Rs. 250",
+      "Rs. 10,248"
+     ],
+     "gstLabel": "2.5"
+    }
+   ],
+   "screen": {
+    "subtotal": 9998.5,
+    "discount": 0,
+    "taxable": 9998.5,
+    "gst": 249.9625,
+    "grand": 10248.4625,
+    "money": [
+     "₹9,999",
+     "₹0",
+     "₹250",
+     "₹10,248"
+    ],
+    "discountLabel": "Discount"
+   }
+  }
+ ],
+ [
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Wardrobe",
+     "unit": "Sq.ft",
+     "qty": "48.75",
+     "unitPrice": "1450",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "150",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 70687.5,
+    "discount": 70687.5,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹70,688",
+     "₹70,688",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (150%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Option 2",
+     "items": [
+      {
+       "description": "",
+       "unit": "",
+       "qty": "",
+       "unitPrice": "",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "",
+     "unit": "",
+     "qty": "",
+     "unitPrice": "",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 0,
+     "discount": 0,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 0,
+    "discount": 0,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹0",
+     "₹0",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "",
+       "unit": "",
+       "qty": "",
+       "unitPrice": "",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "",
+     "unit": "",
+     "qty": "",
+     "unitPrice": "",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 0,
+     "discount": 0,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 0,
+    "discount": 0,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹0",
+     "₹0",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "",
+       "unitPrice": "",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "",
+     "unitPrice": "",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 0,
+     "discount": 0,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 0,
+    "discount": 0,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹0",
+     "₹0",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 0,
+     "discount": 0,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 0,
+    "discount": 0,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹0",
+     "₹0",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 0,
+     "taxable": 47775,
+     "gst": 8599.5,
+     "grand": 56374.5,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 8,600",
+      "Rs. 56,375"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 0,
+    "taxable": 47775,
+    "gst": 8599.5,
+    "grand": 56374.5,
+    "money": [
+     "₹47,775",
+     "₹0",
+     "₹8,600",
+     "₹56,375"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 2,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 2,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "12"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "",
+       "unit": "",
+       "qty": "",
+       "unitPrice": "",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 2,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    },
+    {
+     "description": "",
+     "unit": "",
+     "qty": "",
+     "unitPrice": "",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "12"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "",
+       "unit": "",
+       "qty": "2",
+       "unitPrice": "",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 2,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    },
+    {
+     "description": "",
+     "unit": "",
+     "qty": "2",
+     "unitPrice": "",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "12"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "",
+       "unit": "",
+       "qty": "2",
+       "unitPrice": "350.25",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 2,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    },
+    {
+     "description": "",
+     "unit": "",
+     "qty": "2",
+     "unitPrice": "350.25",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "12"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 48475.5,
+     "discount": 48475.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 48,476",
+      "Rs. 48,476",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 48475.5,
+    "discount": 48475.5,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹48,476",
+     "₹48,476",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "",
+       "unit": "",
+       "qty": "2",
+       "unitPrice": "350.25",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Wardrobe",
+     "unit": "Sq.ft",
+     "qty": "48.75",
+     "unitPrice": "1450",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "150",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 70687.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 70,688",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 48475.5,
+     "discount": 48475.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 48,476",
+      "Rs. 48,476",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 70687.5,
+    "discount": 70687.5,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹70,688",
+     "₹70,688",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (150%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "150",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "",
+       "unit": "",
+       "qty": "2",
+       "unitPrice": "350.25",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Wardrobe",
+     "unit": "Sq.ft",
+     "qty": "48.75",
+     "unitPrice": "1450",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "150",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 150,
+     "taxable": 70537.5,
+     "gst": 12696.75,
+     "grand": 83234.25,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 150",
+      "Rs. 12,697",
+      "Rs. 83,234"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 48475.5,
+     "discount": 48475.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 48,476",
+      "Rs. 48,476",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 70687.5,
+    "discount": 150,
+    "taxable": 70537.5,
+    "gst": 12696.75,
+    "grand": 83234.25,
+    "money": [
+     "₹70,688",
+     "₹150",
+     "₹12,697",
+     "₹83,234"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "2500",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "",
+       "unit": "",
+       "qty": "2",
+       "unitPrice": "350.25",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Wardrobe",
+     "unit": "Sq.ft",
+     "qty": "48.75",
+     "unitPrice": "1450",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "2500",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 2500,
+     "taxable": 68187.5,
+     "gst": 12273.75,
+     "grand": 80461.25,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 2,500",
+      "Rs. 12,274",
+      "Rs. 80,461"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 48475.5,
+     "discount": 48475.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 48,476",
+      "Rs. 48,476",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 70687.5,
+    "discount": 2500,
+    "taxable": 68187.5,
+    "gst": 12273.75,
+    "grand": 80461.25,
+    "money": [
+     "₹70,688",
+     "₹2,500",
+     "₹12,274",
+     "₹80,461"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "2500",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood Copy",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      },
+      {
+       "description": "",
+       "unit": "",
+       "qty": "2",
+       "unitPrice": "350.25",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "12"
+    }
+   ],
+   "activeQuoteOption": 2,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    },
+    {
+     "description": "",
+     "unit": "",
+     "qty": "2",
+     "unitPrice": "350.25",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "12"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 2500,
+     "taxable": 68187.5,
+     "gst": 12273.75,
+     "grand": 80461.25,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 2,500",
+      "Rs. 12,274",
+      "Rs. 80,461"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 48475.5,
+     "discount": 48475.5,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 48,476",
+      "Rs. 48,476",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "12"
+    }
+   ],
+   "screen": {
+    "subtotal": 48475.5,
+    "discount": 48475.5,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹48,476",
+     "₹48,476",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Option 1",
+     "items": [
+      {
+       "description": "Wardrobe",
+       "unit": "Sq.ft",
+       "qty": "48.75",
+       "unitPrice": "1450",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "2500",
+     "gstPercent": "18"
+    },
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Wardrobe",
+     "unit": "Sq.ft",
+     "qty": "48.75",
+     "unitPrice": "1450",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "2500",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 70687.5,
+     "discount": 2500,
+     "taxable": 68187.5,
+     "gst": 12273.75,
+     "grand": 80461.25,
+     "rs": [
+      "Rs. 70,688",
+      "Rs. 2,500",
+      "Rs. 12,274",
+      "Rs. 80,461"
+     ],
+     "gstLabel": "18"
+    },
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 70687.5,
+    "discount": 2500,
+    "taxable": 68187.5,
+    "gst": 12273.75,
+    "grand": 80461.25,
+    "money": [
+     "₹70,688",
+     "₹2,500",
+     "₹12,274",
+     "₹80,461"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "Plywood",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "",
+     "items": [
+      {
+       "description": "Ply wardrobe",
+       "unit": "",
+       "qty": "48.75",
+       "unitPrice": "980",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "percent",
+     "discountValue": "1000",
+     "gstPercent": "18"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Ply wardrobe",
+     "unit": "",
+     "qty": "48.75",
+     "unitPrice": "980",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "percent",
+    "discountValue": "1000",
+    "gstPercent": "18"
+   },
+   "totals": [
+    {
+     "subtotal": 47775,
+     "discount": 47775,
+     "taxable": 0,
+     "gst": 0,
+     "grand": 0,
+     "rs": [
+      "Rs. 47,775",
+      "Rs. 47,775",
+      "Rs. 0",
+      "Rs. 0"
+     ],
+     "gstLabel": "18"
+    }
+   ],
+   "screen": {
+    "subtotal": 47775,
+    "discount": 47775,
+    "taxable": 0,
+    "gst": 0,
+    "grand": 0,
+    "money": [
+     "₹47,775",
+     "₹47,775",
+     "₹0",
+     "₹0"
+    ],
+    "discountLabel": "Discount (1000%)"
+   }
+  }
+ ],
+ [
+  {
+   "quoteOptions": [
+    {
+     "name": "A",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "10",
+     "gstPercent": "5"
+    },
+    {
+     "name": "B",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "gstPercent": "5",
+     "discountValue": "10"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "Old",
+     "unit": "",
+     "qty": "1",
+     "unitPrice": "100",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "10",
+    "gstPercent": "5"
+   },
+   "totals": [
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    },
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    }
+   ],
+   "screen": {
+    "subtotal": 100,
+    "discount": 10,
+    "taxable": 90,
+    "gst": 4.5,
+    "grand": 94.5,
+    "money": [
+     "₹100",
+     "₹10",
+     "₹5",
+     "₹95"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "A",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "10",
+     "gstPercent": "5"
+    },
+    {
+     "name": "B",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "gstPercent": "5",
+     "discountValue": "10"
+    }
+   ],
+   "activeQuoteOption": 1,
+   "quoteItems": [
+    {
+     "description": "Old",
+     "unit": "",
+     "qty": "1",
+     "unitPrice": "100",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "10",
+    "gstPercent": "5"
+   },
+   "totals": [
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    },
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    }
+   ],
+   "screen": {
+    "subtotal": 100,
+    "discount": 10,
+    "taxable": 90,
+    "gst": 4.5,
+    "grand": 94.5,
+    "money": [
+     "₹100",
+     "₹10",
+     "₹5",
+     "₹95"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "A",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "10",
+     "gstPercent": "5"
+    },
+    {
+     "name": "B",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "gstPercent": "5",
+     "discountValue": "10"
+    }
+   ],
+   "activeQuoteOption": 0,
+   "quoteItems": [
+    {
+     "description": "Old",
+     "unit": "",
+     "qty": "1",
+     "unitPrice": "100",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "10",
+    "gstPercent": "5"
+   },
+   "totals": [
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    },
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    }
+   ],
+   "screen": {
+    "subtotal": 100,
+    "discount": 10,
+    "taxable": 90,
+    "gst": 4.5,
+    "grand": 94.5,
+    "money": [
+     "₹100",
+     "₹10",
+     "₹5",
+     "₹95"
+    ],
+    "discountLabel": "Discount"
+   }
+  },
+  {
+   "quoteOptions": [
+    {
+     "name": "A",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "10",
+     "gstPercent": "5"
+    },
+    {
+     "name": "B",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "gstPercent": "5",
+     "discountValue": "10"
+    },
+    {
+     "name": "A Copy",
+     "items": [
+      {
+       "description": "Old",
+       "unit": "",
+       "qty": "1",
+       "unitPrice": "100",
+       "images": [],
+       "aiOriginal": ""
+      }
+     ],
+     "discountType": "amount",
+     "discountValue": "10",
+     "gstPercent": "5"
+    }
+   ],
+   "activeQuoteOption": 2,
+   "quoteItems": [
+    {
+     "description": "Old",
+     "unit": "",
+     "qty": "1",
+     "unitPrice": "100",
+     "images": [],
+     "aiOriginal": ""
+    }
+   ],
+   "quote": {
+    "discountType": "amount",
+    "discountValue": "10",
+    "gstPercent": "5"
+   },
+   "totals": [
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    },
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    },
+    {
+     "subtotal": 100,
+     "discount": 10,
+     "taxable": 90,
+     "gst": 4.5,
+     "grand": 94.5,
+     "rs": [
+      "Rs. 100",
+      "Rs. 10",
+      "Rs. 5",
+      "Rs. 95"
+     ],
+     "gstLabel": "5"
+    }
+   ],
+   "screen": {
+    "subtotal": 100,
+    "discount": 10,
+    "taxable": 90,
+    "gst": 4.5,
+    "grand": 94.5,
+    "money": [
+     "₹100",
+     "₹10",
+     "₹5",
+     "₹95"
+    ],
+    "discountLabel": "Discount"
+   }
+  }
+ ]
+]
