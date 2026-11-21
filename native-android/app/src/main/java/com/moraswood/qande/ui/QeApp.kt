@@ -195,9 +195,12 @@ fun QeApp(vm: AppViewModel) {
                                     onItemGroupField = vm::setItemGroupField,
                                     onToggleItemGroup = vm::toggleItemGroup,
                                     onRowFace = vm::setEstimationRowFace,
+                                    onMoveCategory = vm::moveEstimationCategory,
+                                    onCategoryDefault = vm::setCategoryDefault,
                                 )
                             },
                             groups = workspace.itemGroups.orEmpty(),
+                            categoryDefaults = workspace.categoryDefaults,
                         )
                     },
                     quotation = {
@@ -225,6 +228,7 @@ fun QeApp(vm: AppViewModel) {
                                     onOptionSpecies = vm::setQuoteOptionSpecies,
                                     onPrintComparison = vm::setPrintComparison,
                                     onPrintArea = vm::setPrintArea,
+                                    onGroupByCategory = vm::setQuoteGroupByCategory,
                                     canRemoveOption = vm::canRemoveQuoteOption,
                                     onRemoveOption = vm::removeQuoteOption,
                                     onField = vm::setQuoteField,
@@ -266,7 +270,9 @@ fun QeApp(vm: AppViewModel) {
                 SettingsScreen(templates, vm::deleteTemplate, svm, dwDefaults, vm::setDwDefaults)
             }
             composable(Routes.BUILDER) {
-                com.moraswood.qande.ui.screens.DoorWindowScreen(vm, onOpenCalculator = { nav.openView(Routes.WORKSPACE) })
+                com.moraswood.qande.ui.screens.DoorWindowScreen(vm, onOpenCalculator = { nav.openView(Routes.WORKSPACE) }, onPrintCutList = {
+                    com.moraswood.qande.print.CutListPrint.print(context, com.moraswood.qande.logic.QeCutList.build(vm.workspace.value, vm.dwDefaults.value, java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"))))
+                })
             }
             composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, ovm, avm) }
         }

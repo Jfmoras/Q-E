@@ -195,3 +195,63 @@
 - Quantity multiplies every piece. CFT = cut ft × W × T ÷ 144 × qty (V10.1 calcRow; "Add to calculator" rows reproduce it
   exactly, lengths in inches). Added items carry category Doors & Windows (Feature J).
 - Zero/negative lengths give a warning line instead of a piece; nothing crashes on blank input.
+
+## Feature K — bilingual cut list (notes)
+- Detail sheet: Door & Window Builder › "Print cut list" → A4 through PrintManager (PdfDocument, same as the quotation).
+  Header: job (project name, else customer), date, total pieces, total CFT; per-entry summary lines; sections Frame Support,
+  Planks, Architrave, Window Supports, each with header row, rows (piece + source structure, finished length after wastage =
+  cut length, width, thickness, qty, species, CFT) and a section total. Rows never split across pages (whole row moves, the
+  header is repeated); a section title stays with its header and first row.
+- Every label is "English / ಕನ್ನಡ" with no toggle (StaticLayout wraps to two lines when needed). Kannada is ONLY on the cut
+  list; the app UI and quotations stay English. "Juttu / ಜುಟ್ಟು" is kept as the trade word; Architrave = ವೊಟ್ಟುಪಟ್ಟಿ
+  (vottupatti); never ಉಥುಪಟ್ಟಿ / uthupatti / vuthupatti (tested). Frame = ಚೌಕಟ್ಟು.
+- Species field added to each builder structure.
+- Kannada terms for a fluent speaker to check:
+  - Cut List — ಕತ್ತರಿಸುವ ಪಟ್ಟಿ
+  - Job — ಕೆಲಸ
+  - Date — ದಿನಾಂಕ
+  - Total pieces — ಒಟ್ಟು ತುಂಡುಗಳು
+  - Total CFT — ಒಟ್ಟು CFT
+  - Entries — ನಮೂದುಗಳು
+  - Section total — ವಿಭಾಗದ ಒಟ್ಟು
+  - pieces — ತುಂಡುಗಳು
+  - identical sets — ಒಂದೇ ರೀತಿಯ ಸೆಟ್‌ಗಳು
+  - Qty — ಸಂಖ್ಯೆ
+  - No door or window structures in this project. — ಈ ಕೆಲಸದಲ್ಲಿ ಬಾಗಿಲು ಅಥವಾ ಕಿಟಕಿ ಇಲ್ಲ.
+  - Piece — ತುಂಡು
+  - Finished length (after wastage) — ಅಂತಿಮ ಉದ್ದ (ವ್ಯರ್ಥ ಸೇರಿ)
+  - Width — ಅಗಲ
+  - Thickness — ದಪ್ಪ
+  - Qty — ಸಂಖ್ಯೆ
+  - Species — ಮರದ ಜಾತಿ
+  - Frame Support — ಚೌಕಟ್ಟು ಬೆಂಬಲ
+  - Planks — ಹಲಗೆಗಳು
+  - Architrave — ವೊಟ್ಟುಪಟ್ಟಿ
+  - Window Supports — ಕಿಟಕಿ ಬೆಂಬಲ
+  - Long (side) — ಉದ್ದ ತುಂಡು (ಬದಿ)
+  - Short (top/bottom) — ಸಣ್ಣ ತುಂಡು (ಮೇಲೆ/ಕೆಳಗೆ)
+  - Centre support — ಮಧ್ಯ ಬೆಂಬಲ
+  - Plank — ಹಲಗೆ
+  - Plank (trimmed) — ಹಲಗೆ (ಕತ್ತರಿಸಿದ)
+  - Architrave header — ವೊಟ್ಟುಪಟ್ಟಿ ಮೇಲ್ಭಾಗ
+  - Architrave jamb — ವೊಟ್ಟುಪಟ್ಟಿ ಬದಿ
+  - Architrave bottom — ವೊಟ್ಟುಪಟ್ಟಿ ಕೆಳಭಾಗ
+  - Main door — ಮುಖ್ಯ ಬಾಗಿಲು
+  - Bedroom door — ಮಲಗುವ ಕೋಣೆಯ ಬಾಗಿಲು
+  - Other door — ಇತರ ಬಾಗಿಲು
+  - Window — ಕಿಟಕಿ
+  - Screw — ಸ್ಕ್ರೂ
+  - Juttu — ಜುಟ್ಟು (transliteration, not a translation)
+
+## Feature J — estimation categories (notes)
+- Estimation has tabs "Furniture (n) · ₹" | "Doors & Windows (n) · ₹". `CalcItem.category` null = Furniture (all V10.1 data,
+  so no migration is needed: existing items read as Furniture); builder "Add to calculator" items carry "dw" through
+  Send to Estimation. "Move to Doors & Windows / Move to Furniture" on every card (the item leaves its item group).
+- Each category has default rates (Rate/CFT, Rate/KOL, Labour rate/sq.ft, Polish rate/sq.ft) in
+  `WorkspaceState.categoryDefaults`; precedence item → item group → category. Consumables/other/selling stay per item
+  (lumpsums are per item or per group) — ASSUMPTION.
+- Category subtotal (cost · selling · profit) under each tab; the grand total and Send to Quotation cover both.
+- Item groups live inside one category ("Items in a group must be in the same category.").
+- Quotation lines keep their category (editable "Category" select); "Group lines by category on print" (default off) prints
+  Furniture then Doors & Windows under heading rows, numbering continuous.
+- A Furniture-only job with no category defaults takes exactly the V10.1 path (QeGroups.plainV101; tested).
