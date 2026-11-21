@@ -14,7 +14,7 @@ class DuplicateJobTest {
         projectName = "Rao Villa", projectId = "abc1234", revision = 3, jobUuid = "11111111-1111-4111-8111-111111111111",
         items = listOf(CalcItem.blank().copy(name = "Door", photo = "item-a.jpg"), CalcItem.blank().copy(name = "Cot")),
         estimationItems = listOf(CalcItem.blank().copy(name = "Door", photo = "item-a.jpg")),
-        customer = Customer(name = "Mr Rao"),
+        customer = Customer(name = "Mr Rao"), deliveryDate = "2026-12-01",
     )
 
     @Test fun copyGetsNewIdentityAndR0() {
@@ -23,6 +23,7 @@ class DuplicateJobTest {
         assertEquals("new0001", c.projectId)
         assertEquals(0, c.revision)
         assertEquals("22222222-2222-4222-8222-222222222222", c.jobUuid)
+        assertEquals(null, c.deliveryDate)
         assertEquals(listOf("item-b.jpg", ""), c.items.map { it.photo })
         assertEquals(listOf("item-b.jpg"), c.estimationItems.map { it.photo })
         // everything else is identical, and the original is untouched

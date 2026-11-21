@@ -59,6 +59,7 @@ object Routes {
     const val OPERATIONS = "operations"
     const val BUILDER = "builder"
     const val CLIENTS = "clients"
+    const val CALENDAR = "calendar"
 }
 
 private fun NavHostController.openView(route: String) = navigate(route) {
@@ -157,6 +158,7 @@ fun QeApp(vm: AppViewModel) {
                     onHoppus = { nav.openView(Routes.HOPPUS) },
                     onBuilder = { nav.openView(Routes.BUILDER) },
                     onClients = { nav.openView(Routes.CLIENTS) },
+                    onCalendar = { nav.openView(Routes.CALENDAR) },
                     onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },
                     onCloseSaved = { savedPanelOpen = false },
@@ -304,6 +306,13 @@ fun QeApp(vm: AppViewModel) {
                 com.moraswood.qande.ui.screens.DoorWindowScreen(vm, onOpenCalculator = { nav.openView(Routes.WORKSPACE) }, onPrintCutList = {
                     com.moraswood.qande.print.CutListPrint.print(context, com.moraswood.qande.logic.QeCutList.build(vm.workspace.value, vm.dwDefaults.value, java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"))))
                 })
+            }
+            composable(Routes.CALENDAR) {
+                val entries by vm.calendarEntries.collectAsState()
+                androidx.compose.runtime.LaunchedEffect(Unit) { vm.refreshToday() }
+                com.moraswood.qande.ui.screens.CalendarScreen(entries, java.time.LocalDate.now(),
+                    onOpen = { root -> if (vm.openLatestRevision(root)) nav.openView(Routes.WORKSPACE) },
+                    onCompleted = vm::setCompleted)
             }
             composable(Routes.CLIENTS) {
                 val summaries by vm.clientSummaries.collectAsState()
