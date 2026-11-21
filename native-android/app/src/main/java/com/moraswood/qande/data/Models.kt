@@ -155,6 +155,8 @@ data class QuoteItem(
     val wood: WoodLink? = null,
     /** Feature G (native): item area (sq.ft, 2 decimals) carried from Estimation; printed when "Show area" is on. */
     val area: String? = null,
+    /** Feature J (native): estimation category of the line ("dw"; null = Furniture). */
+    val category: String? = null,
 ) {
     companion object { fun blank() = QuoteItem() }
 }
@@ -210,6 +212,10 @@ data class WorkspaceState(
     val actual: Actual = Actual(),
     /** Feature D (native): print other options as a comparison appendix (null/false = active option only). */
     val printComparison: Boolean? = null,
+    /** Feature J (native): per-category default rates ("furniture" / "dw"); null = none (V10.1). */
+    val categoryDefaults: Map<String, CategoryDefaults>? = null,
+    /** Feature J (native): group quotation lines under category headings on the print. */
+    val quoteGroupByCategory: Boolean? = null,
     /** Feature I (native): door/window builder structures of this job, and the job's wastage-per-cut override (inches). */
     val doorWindows: List<DwStructure>? = null,
     val dwWastage: String? = null,
@@ -294,6 +300,10 @@ data class DwStructure(
     val architrave: Boolean = false, val archW: String = "", val archT: String = "", val archBottom: Boolean = false,
     val planking: Boolean = false, val plankSide: String = "5", val plankWidth: String = "6", val plankWidthCustom: String = "", val plankT: String = "",
 )
+
+/** Feature J — a category's default rates; an item's (or its group's) own rate wins when filled. */
+@Serializable
+data class CategoryDefaults(val cftRate: String = "", val kolRate: String = "", val labourRate: String = "", val polishRate: String = "")
 
 /** Feature I — builder defaults (Settings): Juttu extension per end and wastage per cut, inches. */
 @Serializable

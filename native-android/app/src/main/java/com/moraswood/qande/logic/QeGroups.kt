@@ -26,19 +26,28 @@ object QeGroups {
     fun groupOf(s: WorkspaceState, i: Int): ItemGroup? = groups(s).firstOrNull { i in it.items }
 
     /** Costing with the group's default rates filled into blank item rates. */
-    fun effective(c: Costing?, g: ItemGroup?): Costing {
-        val x = c ?: Costing.blank()
-        if (g == null) return x
-        return x.copy(cftRate = x.cftRate.ifBlank { g.cftRate }, kolRate = x.kolRate.ifBlank { g.kolRate })
+    fun effective(c: Costing?, g: ItemGroup?, cat: com.moraswood.qande.data.CategoryDefaults? = null): Costing {
+        var x = c ?: Costing.blank()
+        if (g != null) x = x.copy(cftRate = x.cftRate.ifBlank { g.cftRate }, kolRate = x.kolRate.ifBlank { g.kolRate })
+        if (cat != null) x = x.copy(
+            cftRate = x.cftRate.ifBlank { cat.cftRate }, kolRate = x.kolRate.ifBlank { cat.kolRate },
+            labourRate = x.labourRate.ifBlank { cat.labourRate }, polishRate = x.polishRate.ifBlank { cat.polishRate },
+        )
+        return x
     }
 
-    fun effectiveCosting(s: WorkspaceState, i: Int): Costing = effective(s.costings.getOrNull(i), groupOf(s, i))
+    /** Item → its group → its category (Feature J) defaults. */
+    fun effectiveCosting(s: WorkspaceState, i: Int): Costing =
+        effective(s.costings.getOrNull(i), groupOf(s, i), QeCategories.defaultsFor(s, i))
+
+    /** True when nothing native changes the V10.1 costing (no groups, no category defaults). */
+    fun plainV101(s: WorkspaceState): Boolean = groups(s).isEmpty() && s.categoryDefaults.isNullOrEmpty()
 
     fun itemResult(s: WorkspaceState, i: Int): QeEstimate.Result = QeEstimate.costingResult(s.estimationItems[i], effectiveCosting(s, i))
 
     /** renderEstimation() side effect, group-aware: the automatic selling price follows the effective (group-default) cost. */
     fun syncCostings(s: WorkspaceState): WorkspaceState {
-        if (groups(s).isEmpty()) return QeEstimate.syncCostings(s)
+        if (plainV101(s)) return QeEstimate.syncCostings(s)
         if (s.estimationItems.isEmpty()) return s
         val costings = s.costings.toMutableList()
         s.estimationItems.forEachIndexed { i, item ->
@@ -71,7 +80,7 @@ object QeGroups {
 
     /** Grand total; with no groups it is `QeEstimate.estimateGrand` exactly. */
     fun grand(s: WorkspaceState): Sub {
-        if (groups(s).isEmpty()) return QeEstimate.estimateGrand(s).let { Sub(it.cost, it.selling, it.profit) }
+        if (plainV101(s)) return QeEstimate.estimateGrand(s).let { Sub(it.cost, it.selling, it.profit) }
         val u = ungroupedSub(s)
         return groups(s).map { groupTotals(s, it) }.fold(u) { a, t -> Sub(a.cost + t.cost, a.selling + t.selling, a.profit + t.profit) }
     }
