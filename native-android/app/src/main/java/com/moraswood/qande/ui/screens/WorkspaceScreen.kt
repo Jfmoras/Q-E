@@ -51,6 +51,7 @@ fun WorkspaceScreen(
     projectStatus: String,
     onSaveProject: () -> Unit,
     onShowProjects: () -> Unit,
+    calculator: @Composable () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         WorkspaceTabs(tab, onTab)
@@ -59,10 +60,7 @@ fun WorkspaceScreen(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 22.dp, bottom = 48.dp),
         ) {
             when (tab) {
-                WorkspaceTab.Calculator -> {
-                    PageHeading("Timber Calculator", "Choose a unit for each measurement. The app converts Length to feet and Width/Thickness to inches automatically for CFT/KOL. Press Enter to move L → W → T → Pieces → next row.")
-                    PortPendingCard("Calculator")
-                }
+                WorkspaceTab.Calculator -> calculator()
                 WorkspaceTab.Estimation -> {
                     PageHeading("Estimation & Rate Builder", "Price every item separately. CFT/KOL rates, labour, polish and selling price can all differ item by item.")
                     PortPendingCard("Estimation")
