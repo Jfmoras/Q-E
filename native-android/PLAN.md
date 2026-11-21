@@ -303,3 +303,17 @@
   The link is written to `jobs` on Save Project, and travels in the snapshot (`clientId`) so duplicates keep it.
 - ASSUMPTION: "Total spend" = sum of the quotation grand totals (incl. GST, active option) of the latest revision of
   each linked job; payments in Operations are not used. Phone needs at least 6 digits when given.
+
+## Feature J — estimation categories (notes)
+- Estimation has Furniture | Doors & Windows tabs (item count + selling subtotal on each tab). Items without a category (every
+  V10.1 item and every calculator item) are Furniture; "Add to calculator" from the builder tags Doors & Windows and the tag
+  survives Send to Estimation. "Move to …" on each card moves an item (it leaves its item group).
+- Each category has default rates (Rate/CFT, Rate/KOL, labour rate/sq.ft, polish rate/sq.ft) used when the item — and its
+  group — leaves the rate blank. Consumables, other and selling price stay per item (V10.1) — ASSUMPTION: category-level
+  defaults for those were not needed because lumpsums already live on items/groups.
+- Category subtotal (cost / selling / profit) under each tab; the grand total covers both and Send to Quotation sends all.
+- Item groups (F) live within one category ("Items in a group must be in the same category.").
+- A Furniture-only job without category defaults goes through the exact V10.1 path (QeGroups.plainV101; tested).
+- Migration: none needed — the category is an optional JSON field (null = Furniture) in the workspace / saved snapshots.
+- Quotation lines keep their category (editable select); "Group lines by category on print" (default off) prints
+  Furniture then Doors & Windows under heading rows; numbering continues across headings.

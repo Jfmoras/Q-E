@@ -250,6 +250,7 @@ fun QeApp(vm: AppViewModel) {
                                     onCustomerLocation = vm::setCustomerLocation,
                                     onPickClient = vm::pickClient,
                                     onSaveAsClient = vm::saveCustomerAsClient,
+                                    onDeliveryDate = vm::setDeliveryDate,
                                     onSelectOption = vm::selectQuoteOption,
                                     onOptionName = vm::setQuoteOptionName,
                                     onAddOption = vm::addQuoteOption,
