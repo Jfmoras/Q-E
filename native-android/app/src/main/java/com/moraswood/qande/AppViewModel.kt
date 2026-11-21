@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.moraswood.qande.data.CalcItem
 import com.moraswood.qande.data.Costing
 import com.moraswood.qande.data.HoppusLog
+import com.moraswood.qande.data.DwDefaults
+import com.moraswood.qande.data.DwStructure
 import com.moraswood.qande.data.HoppusState
 import com.moraswood.qande.data.JobComponentLogEntity
 import com.moraswood.qande.data.KeyValueEntity
@@ -30,6 +32,7 @@ import com.moraswood.qande.logic.QeQuote
 import com.moraswood.qande.logic.QeSpecies
 import com.moraswood.qande.logic.QeRevisions
 import com.moraswood.qande.logic.QeArea
+import com.moraswood.qande.logic.QeDoorWindow
 import com.moraswood.qande.logic.QeGroups
 import com.moraswood.qande.ai.AiService
 import com.moraswood.qande.photos.QuoteImages
@@ -50,6 +53,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.ListSerializer
 import java.time.Instant
 import java.util.UUID
 
@@ -119,6 +123,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     private var logJob: Job? = null
 
+    private val _dwTemplates = MutableStateFlow<List<DwStructure>>(emptyList())
+    /** Feature I: saved custom structures (kv `mwi-native-dw-templates-v1`). */
+    val dwTemplates: StateFlow<List<DwStructure>> = _dwTemplates.asStateFlow()
+    private val _dwDefaults = MutableStateFlow(DwDefaults())
+    /** Feature I: Settings defaults (Juttu extension per end, wastage per cut). */
+    val dwDefaults: StateFlow<DwDefaults> = _dwDefaults.asStateFlow()
+
     init {
         viewModelScope.launch {
             val kv = db.keyValues()
@@ -127,6 +138,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             }
             restore(StorageKeys.QUICK_CALC, QuickCalc.serializer())?.let { _quick.value = it }
             restore(StorageKeys.HOPPUS, HoppusState.serializer())?.let { _hoppus.value = it }
+            restore(StorageKeys.DW_TEMPLATES, ListSerializer(DwStructure.serializer()))?.let { _dwTemplates.value = it }
+            restore(StorageKeys.DW_DEFAULTS, DwDefaults.serializer())?.let { _dwDefaults.value = it }
             _sessionKey.value = kv.get(SESSION_KEY) ?: newSessionKey()
             _logs.value = runCatching { db.templates().allLogs() }.getOrDefault(emptyList())
         }
@@ -185,7 +198,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun sendToEstimation() {
         update { s ->
             val x = s.items.mapIndexed { i, it ->
-                CalcItem(name = it.name.trim().ifEmpty { "Item ${i + 1}" }, rows = it.rows.filter { r -> r.hasData() }, tag = it.tag, photo = it.photo)
+                CalcItem(name = it.name.trim().ifEmpty { "Item ${i + 1}" }, rows = it.rows.filter { r -> r.hasData() }, tag = it.tag, photo = it.photo, category = it.category)
             }.filter { it.rows.isNotEmpty() }
             s.copy(estimationItems = x, costings = x.map { Costing.blank() }, tab = "estimation", itemGroups = null)
         }
@@ -513,6 +526,57 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         return null
+    }
+
+    /* ---------- Feature I: door / window builder ---------- */
+
+    private fun updateStructures(change: (List<DwStructure>) -> List<DwStructure>) =
+        update { s -> s.copy(doorWindows = change(s.doorWindows.orEmpty()).ifEmpty { null }) }
+
+    fun addStructure(kind: String) = updateStructures { it + DwStructure(id = uid(), kind = kind) }
+    fun updateStructure(id: String, change: (DwStructure) -> DwStructure) = updateStructures { l -> l.map { if (it.id == id) change(it) else it } }
+    fun removeStructure(id: String) = updateStructures { l -> l.filter { it.id != id } }
+    fun duplicateStructure(id: String) = updateStructures { l ->
+        l.flatMap { if (it.id == id) listOf(it, it.copy(id = uid(), name = (it.name.ifBlank { QeDoorWindow.kindLabel(it.kind) }) + " (copy)")) else listOf(it) }
+    }
+    fun setDwWastage(v: String) = update { it.copy(dwWastage = v.ifBlank { null }) }
+
+    private fun persistKv(key: String, json: String) { viewModelScope.launch { runCatching { db.keyValues().put(KeyValueEntity(key, json)) } } }
+
+    fun setDwDefaults(d: DwDefaults) {
+        _dwDefaults.value = d
+        persistKv(StorageKeys.DW_DEFAULTS, QeJson.encodeToString(DwDefaults.serializer(), d))
+    }
+
+    /** Save a structure as a reusable template (by name; same name replaces). */
+    fun saveDwTemplate(id: String, name: String): String {
+        val st = _workspace.value.doorWindows.orEmpty().firstOrNull { it.id == id } ?: return ""
+        val n = name.trim().ifEmpty { st.name.ifBlank { QeDoorWindow.kindLabel(st.kind) } }
+        val t = st.copy(id = "", name = n)
+        _dwTemplates.value = _dwTemplates.value.filter { it.name != n } + t
+        persistKv(StorageKeys.DW_TEMPLATES, QeJson.encodeToString(ListSerializer(DwStructure.serializer()), _dwTemplates.value))
+        return "Template saved: $n"
+    }
+    fun useDwTemplate(i: Int) { _dwTemplates.value.getOrNull(i)?.let { t -> updateStructures { it + t.copy(id = uid()) } } }
+    fun deleteDwTemplate(i: Int) {
+        _dwTemplates.value = _dwTemplates.value.filterIndexed { j, _ -> j != i }
+        persistKv(StorageKeys.DW_TEMPLATES, QeJson.encodeToString(ListSerializer(DwStructure.serializer()), _dwTemplates.value))
+    }
+
+    /** "Add to calculator": one editable CFT item per structure, appended after the calculator items (blank only item replaced). */
+    fun addStructuresToCalculator(ids: List<String>): Int {
+        val s = _workspace.value
+        val items = s.doorWindows.orEmpty().filter { it.id in ids }.mapNotNull { st ->
+            val r = QeDoorWindow.compute(st, s.dwWastage, _dwDefaults.value)
+            if (r.pieces.isEmpty()) null else QeDoorWindow.toCalcItem(st, r).copy(category = com.moraswood.qande.logic.QeCategories.DW)
+        }
+        if (items.isEmpty()) return 0
+        updateItems { cur ->
+            val onlyBlank = cur.size == 1 && cur[0].name.isBlank() && cur[0].rows.none { it.hasData() }
+            (if (onlyBlank) emptyList() else cur) + items
+        }
+        setTab("calculator")
+        return items.size
     }
 
     /* ---------- Hoppus ---------- */
