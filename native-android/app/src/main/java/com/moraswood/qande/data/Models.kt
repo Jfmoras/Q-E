@@ -202,9 +202,25 @@ data class WorkspaceState(
     val actual: Actual = Actual(),
     /** Feature D (native): print other options as a comparison appendix (null/false = active option only). */
     val printComparison: Boolean? = null,
+    /** Feature F (native): estimation item groups (null = ungrouped job, exactly V10.1). */
+    val itemGroups: List<ItemGroup>? = null,
 ) {
     companion object { fun default() = WorkspaceState() }
 }
+
+/**
+ * Feature F: a group of estimation items (by index). cftRate / kolRate are the default Rate/CFT and Rate/KOL for member
+ * items whose own rate is blank; labour / polish / consumables / other are group-level lumpsums; selling is the group's
+ * selling price (blank = automatic: members' selling + group lumpsums at cost).
+ */
+@Serializable
+data class ItemGroup(
+    val id: LStr = "", val name: LStr = "", val items: List<LInt> = emptyList(),
+    val cftRate: LStr = "", val kolRate: LStr = "",
+    val labour: LStr = "", val polish: LStr = "", val consumables: LStr = "", val other: LStr = "",
+    val selling: LStr = "",
+    val collapsed: Boolean? = null,
+)
 
 /** Saved project revision record in `mwi-projects-v1`. */
 @Serializable

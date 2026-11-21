@@ -29,6 +29,7 @@ import com.moraswood.qande.logic.QeMath.hasData
 import com.moraswood.qande.logic.QeQuote
 import com.moraswood.qande.logic.QeSpecies
 import com.moraswood.qande.logic.QeRevisions
+import com.moraswood.qande.logic.QeGroups
 import com.moraswood.qande.ai.AiService
 import com.moraswood.qande.photos.QuoteImages
 import kotlinx.serialization.json.JsonArray
@@ -185,7 +186,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             val x = s.items.mapIndexed { i, it ->
                 CalcItem(name = it.name.trim().ifEmpty { "Item ${i + 1}" }, rows = it.rows.filter { r -> r.hasData() }, tag = it.tag, photo = it.photo)
             }.filter { it.rows.isNotEmpty() }
-            s.copy(estimationItems = x, costings = x.map { Costing.blank() }, tab = "estimation")
+            s.copy(estimationItems = x, costings = x.map { Costing.blank() }, tab = "estimation", itemGroups = null)
         }
         _estStatus.value = emptyMap()
         scheduleLog()
@@ -245,18 +246,31 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun removeTimberGroup(i: Int, id: String) = updateCosting(i) { c -> c.copy(rateGroups = c.rateGroups.filter { it.id != id }) }
 
     /** `#newEstimateItem` */
+    /* ---------- Feature F: item groups ---------- */
+    /** Returns the alert text or null. */
+    fun groupItems(selected: List<Int>): String? {
+        var err: String? = null
+        updateEstimation { s -> QeGroups.group(s, selected) ?: s.also { err = "Select one or more items to group." } }
+        return err
+    }
+    fun ungroupItems(id: String) = updateEstimation { QeGroups.ungroup(it, id) }
+    fun setItemGroupField(id: String, key: String, v: String) = updateEstimation { s -> QeGroups.update(s, id) { QeGroups.setField(it, key, v) } }
+    fun toggleItemGroup(id: String) = updateEstimation { s -> QeGroups.update(s, id) { it.copy(collapsed = if (it.collapsed == true) null else true) } }
+
     fun newEstimationItem() = updateEstimation { s -> s.copy(estimationItems = s.estimationItems + CalcItem(name = "", rows = emptyList()), costings = s.costings + Costing.blank()) }
 
     /** `#sendToQuotation`; returns the index of the first item without a selling price, or -1 on success. */
     fun sendToQuotation(): Int {
         val s = _workspace.value
-        val missing = s.estimationItems.indices.firstOrNull { QeMath.num(s.costings.getOrNull(it)?.sellingPrice) <= 0 } ?: -1
+        val prices = QeGroups.quotePrices(s) // Feature F: grouped items carry their share of the group price
+        val missing = s.estimationItems.indices.firstOrNull { QeMath.num(prices.getOrNull(it)) <= 0 } ?: -1
         if (missing >= 0) {
             _estStatus.value = _estStatus.value + (missing to SELLING_MISSING)
             return missing
         }
         update { st ->
-            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = st.costings[i].sellingPrice, wood = QeSpecies.link(it, st.costings[i])) }
+            val p = QeGroups.quotePrices(st)
+            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = p[i], wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i))) }
             st.copy(quoteItems = q.ifEmpty { listOf(QuoteItem.blank()) }, tab = "quotation")
         }
         return -1
@@ -266,14 +280,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun sendOneToQuotation(i: Int): Boolean {
         val s = _workspace.value
         val it = s.estimationItems.getOrNull(i) ?: return true
-        val price = s.costings.getOrNull(i)?.sellingPrice.orEmpty()
+        val price = QeGroups.quotePrices(s).getOrNull(i).orEmpty()
         if (QeMath.num(price) <= 0) {
             _estStatus.value = _estStatus.value + (i to SELLING_MISSING)
             return false
         }
         _estStatus.value = _estStatus.value - i
         update { st ->
-            val q = QuoteItem(description = it.name, unitPrice = price, wood = QeSpecies.link(it, st.costings.getOrNull(i)))
+            val q = QuoteItem(description = it.name, unitPrice = price, wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)))
             val only = st.quoteItems
             val onlyBlank = only.size == 1 && only[0].description.isEmpty() && only[0].unit.isEmpty() && only[0].qty.isEmpty() && only[0].unitPrice.isEmpty() && only[0].images.isEmpty()
             st.copy(quoteItems = if (onlyBlank) listOf(q) else st.quoteItems + q, tab = "quotation")
@@ -846,7 +860,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private fun update(change: (WorkspaceState) -> WorkspaceState) {
         // renderEstimation() side effect: missing costings are created and auto selling prices refreshed.
         // renderQuotation()/renderPrintSheet() side effects: ensureQuoteOptions() + syncActiveOption().
-        _workspace.value = QeQuote.syncActiveOption(QeEstimate.syncCostings(change(_workspace.value)))
+        _workspace.value = QeQuote.syncActiveOption(QeGroups.syncCostings(change(_workspace.value)))
         saveAutosave()
     }
 
