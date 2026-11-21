@@ -37,7 +37,7 @@ fun NativeCalculatorScreen(context:Context, showSaved:Boolean=false) {
     @Composable fun unitSelector(label:String,current:String,change:(String)->Unit) {
         var expanded by remember { mutableStateOf(false) }
         Row {
-            Text(label,Modifier.weight(1f))
+            Text(label,Modifier.weight(1f),style=MaterialTheme.typography.labelSmall)
             Box {
                 TextButton(onClick={expanded=true}) { Text(current) }
                 DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}) {
@@ -67,13 +67,22 @@ fun NativeCalculatorScreen(context:Context, showSaved:Boolean=false) {
                 }
             }
         } else {
-            OutlinedTextField(l,{l=it},label={Text("Length")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
-            unitSelector("Length unit",lu,{lu=it})
-            OutlinedTextField(w,{w=it},label={Text("Width")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
-            unitSelector("Width unit",wu,{wu=it})
-            OutlinedTextField(t,{t=it},label={Text("Thickness")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
-            unitSelector("Thickness unit",tu,{tu=it})
-            OutlinedTextField(qty,{qty=it},label={Text("Quantity")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=64.dp))
+            Text("Timber size", style=MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()) {
+                Column(Modifier.weight(1f)) {
+                    OutlinedTextField(l,{l=it},label={Text("Length")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth())
+                    unitSelector("Unit",lu,{lu=it})
+                }
+                Column(Modifier.weight(1f)) {
+                    OutlinedTextField(w,{w=it},label={Text("Width")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth())
+                    unitSelector("Unit",wu,{wu=it})
+                }
+                Column(Modifier.weight(1f)) {
+                    OutlinedTextField(t,{t=it},label={Text("Thick.")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),modifier=Modifier.fillMaxWidth())
+                    unitSelector("Unit",tu,{tu=it})
+                }
+            }
+            OutlinedTextField(qty,{qty=it},label={Text("Quantity")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),modifier=Modifier.fillMaxWidth())
             Row {
                 listOf("Auto","CFT","KOL").forEach { option -> TextButton(onClick={mode=option}) { Text(if(mode==option)"✓ $option" else option) } }
             }
