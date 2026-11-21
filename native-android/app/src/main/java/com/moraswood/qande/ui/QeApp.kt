@@ -187,8 +187,13 @@ fun QeApp(vm: AppViewModel) {
                                     onPhoto = vm::setEstimationPhoto,
                                     onUseTemplate = vm::applyTemplate,
                                     onDismissTemplate = vm::dismissTemplate,
+                                    onGroupItems = vm::groupItems,
+                                    onUngroupItems = vm::ungroupItems,
+                                    onItemGroupField = vm::setItemGroupField,
+                                    onToggleItemGroup = vm::toggleItemGroup,
                                 )
                             },
+                            groups = workspace.itemGroups.orEmpty(),
                         )
                     },
                     quotation = {

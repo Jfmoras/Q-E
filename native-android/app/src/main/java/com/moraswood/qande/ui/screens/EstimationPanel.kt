@@ -2,6 +2,7 @@ package com.moraswood.qande.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,7 @@ import com.moraswood.qande.TemplateBanner
 import com.moraswood.qande.data.CalcItem
 import com.moraswood.qande.data.Costing
 import com.moraswood.qande.logic.QeEstimate
+import com.moraswood.qande.logic.QeGroups
 import com.moraswood.qande.logic.QeFormat
 import com.moraswood.qande.logic.QeMath
 import com.moraswood.qande.ui.components.ItemPhotoBox
@@ -74,6 +76,11 @@ class EstimationActions(
     val onPhoto: (Int, String) -> Unit,
     val onUseTemplate: (TemplateBanner) -> Unit,
     val onDismissTemplate: (TemplateBanner) -> Unit,
+    // Feature F: item groups
+    val onGroupItems: (List<Int>) -> String? = { null },
+    val onUngroupItems: (String) -> Unit = {},
+    val onItemGroupField: (String, String, String) -> Unit = { _, _, _ -> },
+    val onToggleItemGroup: (String) -> Unit = {},
 )
 
 fun cssHex(hex: String, fallback: Color = Color(0xFF3B82F6)): Color =
@@ -87,6 +94,7 @@ fun EstimationPanel(
     status: Map<Int, String>,
     banner: TemplateBanner?,
     actions: EstimationActions,
+    groups: List<com.moraswood.qande.data.ItemGroup> = emptyList(),
 ) {
     PageHeading("Estimation & Rate Builder", "Price every item separately. CFT/KOL rates, labour, polish and selling price can all differ item by item.")
     var alert by remember { mutableStateOf<String?>(null) }
@@ -106,16 +114,100 @@ fun EstimationPanel(
             modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth().clip(shape).background(QeColors.Card).border(1.dp, QeColors.Line, shape).padding(16.dp),
         )
     }
-    items.forEachIndexed { i, item ->
-        EstimateCard(i, item, costings.getOrNull(i) ?: Costing.blank(), status[i], actions, sf(i), onAlert = { alert = it }) {
+    val ws = com.moraswood.qande.data.WorkspaceState(estimationItems = items, costings = costings, itemGroups = groups.ifEmpty { null })
+    val selected = remember { androidx.compose.runtime.mutableStateListOf<Int>() }
+    LaunchedEffect(items.size) { selected.removeAll { it >= items.size } }
+    val card = @Composable { i: Int ->
+        val item = items[i]
+        val g = QeGroups.groupOf(ws, i)
+        EstimateCard(
+            i, item, costings.getOrNull(i) ?: Costing.blank(), status[i], actions, sf(i), onAlert = { alert = it },
+            eff = QeGroups.effectiveCosting(ws, i), group = g, selected = i in selected,
+            onSelect = { on -> if (on) selected.add(i) else selected.remove(i) },
+        ) {
             if (!actions.onSendOne(i)) focusMissing = i
         }
     }
+    if (selected.isNotEmpty()) ItemGroupBar(selected.size) {
+        val msg = actions.onGroupItems(selected.toList())
+        if (msg != null) alert = msg else selected.clear()
+    }
+    if (groups.isEmpty()) {
+        items.indices.forEach { card(it) }
+    } else {
+        groups.forEach { g -> ItemGroupSection(g, QeGroups.groupTotals(ws, g), actions) { g.items.filter { it in items.indices }.forEach { card(it) } } }
+        val ungrouped = items.indices.filter { QeGroups.groupOf(ws, it) == null }
+        if (ungrouped.isNotEmpty()) {
+            val u = QeGroups.ungroupedSub(ws)
+            Text("Ungrouped items", color = QeColors.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            Text(subLine(u.cost, u.selling, u.profit), color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 10.dp))
+            ungrouped.forEach { card(it) }
+        }
+    }
     QeSecondaryButton("+ New Estimation Item", onClick = actions.onNewItem)
-    val g = QeEstimate.estimateGrand(com.moraswood.qande.data.WorkspaceState(estimationItems = items, costings = costings))
+    val g = QeGroups.grand(ws)
     GrandBar("Estimated Selling Price", QeFormat.money(g.selling), "Send to Quotation →") {
         val missing = actions.onSendToQuotation()
         if (missing >= 0) focusMissing = missing
+    }
+    if (groups.isNotEmpty()) Text("Grand total · " + subLine(g.cost, g.selling, g.profit), color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
+}
+
+private fun subLine(cost: Double, selling: Double, profit: Double) =
+    "Cost ${QeFormat.money(cost)} · Selling ${QeFormat.money(selling)} · Profit ${QeFormat.money(profit)}"
+
+/** Feature F: shown while estimation items are selected. */
+@Composable
+private fun ItemGroupBar(count: Int, onGroup: () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    Row(
+        Modifier.padding(bottom = 14.dp).fillMaxWidth().clip(shape).background(QeColors.GrandBg).border(1.dp, QeColors.GrandBorder, shape).padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("$count item${if (count == 1) "" else "s"} selected", color = QeColors.GrandText, modifier = Modifier.weight(1f))
+        QePrimaryButton("Group selected items", onClick = onGroup)
+    }
+}
+
+/** Feature F: collapsible item group with its defaults, lumpsums and subtotals. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ItemGroupSection(g: com.moraswood.qande.data.ItemGroup, t: QeGroups.GroupTotals, actions: EstimationActions, members: @Composable () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    val open = g.collapsed != true
+    fun f(key: String) = { v: String -> actions.onItemGroupField(g.id, key, v) }
+    Column(Modifier.padding(bottom = 18.dp).fillMaxWidth().clip(shape).background(QeColors.Soft).border(2.dp, QeColors.GrandBorder, shape).padding(14.dp)) {
+        Row(Modifier.fillMaxWidth().clickable { actions.onToggleItemGroup(g.id) }, verticalAlignment = Alignment.CenterVertically) {
+            Text(if (open) "▾" else "▸", color = QeColors.Accent, fontSize = 20.sp, modifier = Modifier.padding(end = 8.dp))
+            Column(Modifier.weight(1f)) {
+                Text("${g.name.ifEmpty { "Group" }} · ${g.items.size} item${if (g.items.size == 1) "" else "s"}", color = QeColors.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(subLine(t.cost, t.selling, t.profit), color = QeColors.Muted, fontSize = 13.sp)
+            }
+        }
+        if (open) {
+            QeFieldLabel("Group name", Modifier.padding(top = 10.dp)) { QeTextField(g.name, f("name"), Modifier.fillMaxWidth()) }
+            Text("Default rates for items in this group (an item's own rate wins when filled).", color = QeColors.Muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                EstField("Group Rate / CFT", g.cftRate, Modifier.weight(1f), f("cftRate"))
+                EstField("Group Rate / KOL", g.kolRate, Modifier.weight(1f), f("kolRate"))
+            }
+            Text("Group lumpsums (added once for the whole group).", color = QeColors.Muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                EstField("Labour", g.labour, Modifier.weight(1f), f("labour"))
+                EstField("Polish", g.polish, Modifier.weight(1f), f("polish"))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                EstField("Consumables", g.consumables, Modifier.weight(1f), f("consumables"))
+                EstField("Other costs", g.other, Modifier.weight(1f), f("other"))
+            }
+            QeFieldLabel("Group selling price") {
+                Text("Blank = items' selling prices + group lumpsums. Shared onto the quotation lines by item cost.", color = QeColors.Muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 5.dp))
+                QeNumberField(g.selling, f("selling"), Modifier.fillMaxWidth(), placeholder = QeEstimate.jsRoundString(t.itemsSelling + t.extras))
+            }
+            CalcLine(line("Items cost: " to false, QeFormat.money(t.itemsCost) to true, " · Group lumpsums: " to false, QeFormat.money(t.extras) to true))
+            QeSecondaryButton("Ungroup", Modifier.padding(top = 8.dp, bottom = 10.dp)) { actions.onUngroupItems(g.id) }
+            members()
+        }
     }
 }
 
@@ -162,9 +254,11 @@ private val ColW: List<Dp> = listOf(110.dp, 110.dp, 110.dp, 80.dp, 70.dp, 130.dp
 @Composable
 private fun EstimateCard(
     i: Int, item: CalcItem, c: Costing, status: String?, actions: EstimationActions, sellingFocus: FocusRequester,
-    onAlert: (String) -> Unit, onSendOne: () -> Unit,
+    onAlert: (String) -> Unit,
+    eff: Costing = c, group: com.moraswood.qande.data.ItemGroup? = null, selected: Boolean = false, onSelect: (Boolean) -> Unit = {},
+    onSendOne: () -> Unit,
 ) {
-    val r = QeEstimate.costingResult(item, c)
+    val r = QeEstimate.costingResult(item, eff)
     val shape = RoundedCornerShape(16.dp)
     // Checkbox state is DOM-only in V10.1 and cleared by every renderEstimation().
     var renderCount by remember { mutableStateOf(0) }
@@ -172,6 +266,11 @@ private fun EstimateCard(
     fun field(key: String) = { v: String -> actions.onField(i, key, v) }
 
     Column(Modifier.padding(bottom = 18.dp).fillMaxWidth().clip(shape).background(QeColors.Card).border(1.dp, QeColors.Line, shape).padding(16.dp)) {
+        // Feature F: select for an item group
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
+            QeCheckbox(selected, onSelect)
+            Text(if (group != null) "Select (in ${group.name.ifEmpty { "group" }})" else "Select for item group", color = QeColors.Muted, fontSize = 12.sp)
+        }
         // .estimate-top
         FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             QeFieldLabel("Item", Modifier.width(260.dp)) { QeTextField(item.name, { actions.onName(i, it) }, modifier = Modifier.fillMaxWidth()) }
@@ -190,7 +289,7 @@ private fun EstimateCard(
                     val z = QeMath.calcRow(x)
                     val lu = x.lUnit.ifEmpty { "ft" }; val wu = x.wUnit.ifEmpty { "in" }; val tu = x.tUnit.ifEmpty { "in" }
                     val group = QeEstimate.rateGroupForRow(c, j)
-                    val effective = QeEstimate.effectiveTimberRate(c, x, j)
+                    val effective = QeEstimate.effectiveTimberRate(eff, x, j)
                     Box(Modifier.width(ColW.fold(0.dp) { a, b -> a + b }).height(1.dp).background(QeColors.CellLine))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         MeasureCell(ColW[0], QeEstimate.originalMeasure(x.l, lu), if (lu != "ft") "${QeFormat.fmtMeasure(z.lFt)} ft" else null)
@@ -242,6 +341,8 @@ private fun EstimateCard(
         SubCard("Wood cost") {
             EstField("Rate / CFT", c.cftRate, onChange = field("cftRate"))
             EstField("Rate / KOL", c.kolRate, onChange = field("kolRate"))
+            if (group != null && (c.cftRate.isBlank() && group.cftRate.isNotBlank() || c.kolRate.isBlank() && group.kolRate.isNotBlank()))
+                Text("Blank rates use ${group.name.ifEmpty { "group" }} defaults: CFT ${group.cftRate.ifBlank { "-" }} · KOL ${group.kolRate.ifBlank { "-" }}", color = QeColors.Muted, fontSize = 12.sp)
             CalcLine(line("Grouped cost: " to false, QeFormat.money(r.groupedWood) to true))
             CalcLine(line("Ungrouped cost: " to false, QeFormat.money(r.ungroupedWood) to true))
             CalcLine(line("Total wood cost: ${QeFormat.money(r.wood)}" to true))
