@@ -143,9 +143,9 @@ interface OperationsDao {
         OpsMachineHistoryEntity::class, OpsAuditEntity::class,
         JobComponentLogEntity::class, TemplateEntity::class, TemplateRowEntity::class, ItemPhotoEntity::class,
         AssetEntity::class, AssetIssueEntity::class, AssetReturnEntity::class, AssetCorrectionEntity::class, AssetDecisionEntity::class,
-        YieldEntryEntity::class, ClientEntity::class, JobMetaEntity::class,
+        YieldEntryEntity::class, ClientEntity::class, JobMetaEntity::class, SignatureEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class QeDatabase : RoomDatabase() {
@@ -158,12 +158,13 @@ abstract class QeDatabase : RoomDatabase() {
     abstract fun assets(): AssetDao
     abstract fun yields(): YieldDao
     abstract fun clients(): ClientDao
+    abstract fun signatures(): SignatureDao
 
     companion object {
         @Volatile private var instance: QeDatabase? = null
         fun get(context: Context): QeDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, QeDatabase::class.java, "mwi-qe.db")
-                .addMigrations(QeMigrations.MIGRATION_1_2, QeMigrations.MIGRATION_2_3, QeMigrations.MIGRATION_3_4, QeMigrations.MIGRATION_4_5, QeMigrations.MIGRATION_5_6, QeMigrations.MIGRATION_6_7, QeMigrations.MIGRATION_7_8)
+                .addMigrations(QeMigrations.MIGRATION_1_2, QeMigrations.MIGRATION_2_3, QeMigrations.MIGRATION_3_4, QeMigrations.MIGRATION_4_5, QeMigrations.MIGRATION_5_6, QeMigrations.MIGRATION_6_7, QeMigrations.MIGRATION_7_8, QeMigrations.MIGRATION_8_9)
                 .addCallback(object : RoomDatabase.Callback() {
                     // Fresh installs get the append-only triggers too (IF NOT EXISTS: also self-heals).
                     override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) { (QeMigrations.JOB_UUID_BACKFILL + QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS).forEach(db::execSQL) }

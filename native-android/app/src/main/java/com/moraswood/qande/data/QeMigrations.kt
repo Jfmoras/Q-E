@@ -117,7 +117,16 @@ object QeMigrations {
     }
 
     /** Plain SQL per step from version 3 on (used by the migration test that replays them on the exported schemas). */
-    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL, 7 to MIGRATION_7_8_SQL)
+    /** Feature Q: write-once client signatures (base64 PNG). Copied from schemas/9.json createSql. */
+    val MIGRATION_8_9_SQL: List<String> get() = listOf(
+        "CREATE TABLE IF NOT EXISTS `signatures` (`id` TEXT NOT NULL, `png` TEXT NOT NULL, `signer` TEXT NOT NULL, `signedAt` TEXT NOT NULL, `jobUuid` TEXT NOT NULL, PRIMARY KEY(`id`))",
+    )
+
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_8_9_SQL.forEach(db::execSQL) }
+    }
+
+    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL, 7 to MIGRATION_7_8_SQL, 8 to MIGRATION_8_9_SQL)
 
     val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {
