@@ -64,12 +64,16 @@ fun HomeScreen(
     onContinue: () -> Unit,
     onOpenLatest: (String) -> Unit = {},
     onPrintRevision: (String) -> Unit = {},
+    onJobQr: ((SavedProjectEntity) -> Unit)? = null,
+    onDuplicate: ((String) -> Unit)? = null,
+    onScanQr: (() -> Unit)? = null,
 ) {
     val actions = buildList {
         add(HomeAction("Log Calculator", "Hoppus log volume, sawing charges and the Yield Tracker.", onHoppus))
         add(HomeAction("New Project", "Start a calculator, estimate and quotation.", onNewProject))
         add(HomeAction("Door & Window Builder", "Frames, planking and architrave for the current project → CFT rows and a cut list.", onBuilder))
         add(HomeAction("Saved Projects", "Open or remove a project saved on this device.", onSavedProjects))
+        if (onScanQr != null) add(HomeAction("Scan job QR", "Open a saved job by scanning its QR label.", onScanQr))
         add(HomeAction("Projects · Expenses · Inventory · Machines", "Manage project payments, material stock, machine status and monthly reports.", onOperations))
         add(HomeAction("Notes", "Manage notes to reuse in quotations.", onNotes))
         add(HomeAction("CFT / KOL Calculator", "Independent timber sizes, color groups and prices.", onQuickCalc))
@@ -90,7 +94,7 @@ fun HomeScreen(
                 }
             }
         }
-        if (savedPanelOpen) SavedProjectsPanel(savedProjects, onCloseSaved, onViewProject, onReviseProject, onDeleteProject, onOpenLatest, onPrintRevision)
+        if (savedPanelOpen) SavedProjectsPanel(savedProjects, onCloseSaved, onViewProject, onReviseProject, onDeleteProject, onOpenLatest, onPrintRevision, onJobQr, onDuplicate)
     }
 }
 
@@ -126,6 +130,7 @@ private fun SavedProjectsPanel(
     list: List<SavedProjectEntity>, onClose: () -> Unit,
     onView: (String) -> Unit, onRevise: (String) -> Unit, onDelete: (String) -> Unit,
     onOpenLatest: (String) -> Unit, onPrint: (String) -> Unit,
+    onJobQr: ((SavedProjectEntity) -> Unit)? = null, onDuplicate: ((String) -> Unit)? = null,
 ) {
     var confirmDelete by remember { mutableStateOf<String?>(null) }
     QeConfirm(if (confirmDelete != null) "Delete this saved revision?" else null) { ok ->
@@ -175,6 +180,8 @@ private fun SavedProjectsPanel(
                         QeSecondaryButton("View / Print R${x.revision}", onClick = { onView(x.id) })
                         QeSecondaryButton("Print R${x.revision}", onClick = { onPrint(x.id) })
                         QeSecondaryButton("Revise from R${x.revision}", onClick = { onRevise(x.id) })
+                        if (onJobQr != null && job.latest.jobUuid.isNotBlank()) QeSecondaryButton("QR label", onClick = { onJobQr(job.latest) })
+                        if (onDuplicate != null) QeSecondaryButton("Duplicate R${x.revision}", onClick = { onDuplicate(x.id) })
                         QeDangerButton("Delete R${x.revision}") { confirmDelete = x.id }
                     }
                 }

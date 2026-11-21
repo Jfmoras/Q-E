@@ -255,3 +255,16 @@
 - Quotation lines keep their category (editable "Category" select); "Group lines by category on print" (default off) prints
   Furniture then Doors & Windows under heading rows, numbering continuous.
 - A Furniture-only job with no category defaults takes exactly the V10.1 path (QeGroups.plainV101; tested).
+
+## Feature L — job QR codes (notes)
+- `saved_projects.jobUuid` (MIGRATION_5_6, DB v6): one UUID v4 per job, shared by all its revisions; existing rows are
+  backfilled in SQL (the read-only revision trigger is dropped and re-created around it). The same idempotent backfill runs on
+  every open, so restoring an older Full Backup also gets UUIDs. `WorkspaceState.jobUuid` carries it with the workspace.
+- Payload `qe://job/<uuid>` (ZXing core 3.5.3, error correction M). Saved Projects › "QR label" shows the code and prints a
+  60 mm label (QR, "Name · Rn", id) on A4 through PrintManager.
+- Scan: Home › "Scan job QR" uses `play-services-code-scanner` 16.1.0 (Google's scanner UI; the app requests NO camera
+  permission — merged manifest checked). The phone camera app also works: MainActivity handles `qe://job/<uuid>`
+  (VIEW intent filter, launchMode singleTop) and opens the job's latest revision.
+- minSdk 26 / AGP 8.7.3 compatible; R8 is off (isMinifyEnabled = false), so no keep rules needed. APK size: +1.06 MB
+  (7.92 → 8.98 MB unsigned local build). Scanner needs Google Play services on the phone (graceful message otherwise).
+- Scope ASSUMPTION: QR codes are for saved quotations/projects (Saved Projects); Operations › Projects & Payments rows have no QR.

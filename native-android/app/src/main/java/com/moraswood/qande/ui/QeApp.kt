@@ -97,6 +97,16 @@ fun QeApp(vm: AppViewModel) {
     val estimationBanner by vm.estimationBanner.collectAsState()
     val estimationStatus by vm.estimationStatus.collectAsState()
     var confirmNewProject by rememberSaveable { mutableStateOf(false) }
+    // Feature L: QR dialog, scan messages, qe://job links
+    var qrJob by remember { mutableStateOf<com.moraswood.qande.data.SavedProjectEntity?>(null) }
+    var scanAlert by remember { mutableStateOf<String?>(null) }
+    val pendingLink by vm.pendingJobLink.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(pendingLink, savedProjects) {
+        val id = pendingLink ?: return@LaunchedEffect
+        if (savedProjects.isEmpty()) return@LaunchedEffect
+        vm.setPendingJobLink(null)
+        if (vm.openJobByUuid(id)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } else scanAlert = "No saved job matches this QR code."
+    }
 
     // app.js startNewProject(): confirm only when there is work to lose.
     fun startNewProject() {
@@ -119,6 +129,11 @@ fun QeApp(vm: AppViewModel) {
 
         NavHost(nav, startDestination = Routes.HOME, modifier = Modifier.fillMaxSize()) {
             composable(Routes.HOME) {
+                qrJob?.let { x ->
+                    val title = com.moraswood.qande.logic.QeRevisions.label(x.name, x.revision)
+                    com.moraswood.qande.ui.screens.JobQrDialog(title, x.jobUuid, onPrint = { com.moraswood.qande.print.QrLabelPrint.print(context, title, x.jobUuid) }) { qrJob = null }
+                }
+                com.moraswood.qande.ui.components.QeAlert(scanAlert) { scanAlert = null }
                 HomeScreen(
                     showContinue = vm.hasProjectWork(),
                     savedPanelOpen = savedPanelOpen,
@@ -128,6 +143,15 @@ fun QeApp(vm: AppViewModel) {
                     onDeleteProject = vm::deleteSavedProject,
                     onOpenLatest = { root -> if (vm.openLatestRevision(root)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
                     onPrintRevision = { id -> vm.savedSnapshot(id)?.let { QuotePrint.print(context, it) } },
+                    onJobQr = { x -> qrJob = x },
+                    onScanQr = {
+                        com.moraswood.qande.ui.screens.JobQrScanner.scan(context, { raw ->
+                            val id = com.moraswood.qande.logic.QeQr.parse(raw)
+                            if (id == null) scanAlert = "This QR code is not a Moras Wood job label."
+                            else if (vm.openJobByUuid(id)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) }
+                            else scanAlert = "No saved job matches this QR code."
+                        }, { scanAlert = it })
+                    },
                     onHoppus = { nav.openView(Routes.HOPPUS) },
                     onBuilder = { nav.openView(Routes.BUILDER) },
                     onNewProject = { startNewProject() },
