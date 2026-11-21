@@ -25,6 +25,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Feature C: daily on-device overdue check (unique periodic work, KEEP).
         com.moraswood.qande.assets.OverdueAlerts.schedule(applicationContext)
+        handleLink(intent)
         setContent { QeTheme { QeApp(vm) } }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        handleLink(intent)
+    }
+
+    /** Feature L: qe://job/<uuid> (a QR scanned with the phone camera) opens that job. */
+    private fun handleLink(intent: android.content.Intent?) {
+        com.moraswood.qande.logic.QeQr.parse(intent?.data?.toString())?.let { vm.setPendingJobLink(it) }
     }
 }

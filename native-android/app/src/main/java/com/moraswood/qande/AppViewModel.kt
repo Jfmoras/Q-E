@@ -865,9 +865,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 val list = dao.all()
                 val rev = QeRevisions.nextRevision(list, rootId, s.revision)
                 val id = if (rev == 0 && list.none { it.id == rootId }) rootId else uid()
-                update { it.copy(revision = rev) }
+                // Feature L: one UUID per job, kept across revisions.
+                val uuid = _workspace.value.jobUuid?.takeIf { it.isNotBlank() }
+                    ?: list.firstOrNull { QeRevisions.root(it) == rootId && it.jobUuid.isNotBlank() }?.jobUuid
+                    ?: java.util.UUID.randomUUID().toString()
+                update { it.copy(revision = rev, jobUuid = uuid) }
                 val snapshot = QeJson.encodeToString(WorkspaceState.serializer(), _workspace.value)
-                dao.insert(SavedProjectEntity(id, rootId, rev, name, now, snapshot, dao.minPosition() - 1, basedOn?.takeIf { it != rev }))
+                dao.insert(SavedProjectEntity(id, rootId, rev, name, now, snapshot, dao.minPosition() - 1, basedOn?.takeIf { it != rev }, uuid))
                 if (dao.all().none { it.id == id && it.snapshotJson.isNotEmpty() }) error("Save verification failed")
                 basedOnRevision = rev
                 _projectStatus.value = "Saved $name · R$rev on this device."
@@ -884,7 +888,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val snap = runCatching { QeJson.decodeFromString(WorkspaceState.serializer(), x.snapshotJson).normalizeUnits() }.getOrNull() ?: return false
         logJob?.let { it.cancel(); flushLogs(_workspace.value) }
         _dismissed.value = emptySet(); _templateStatus.value = emptyMap(); _estStatus.value = emptyMap(); _aiStatus.value = emptyMap()
-        update { snap.copy(projectId = x.rootId.ifEmpty { x.id }, revision = revision) }
+        update { snap.copy(projectId = x.rootId.ifEmpty { x.id }, revision = revision, jobUuid = snap.jobUuid ?: x.jobUuid.ifBlank { null }) }
         // A loaded project logs under its own id; unsaved work after this starts a fresh session.
         viewModelScope.launch { _sessionKey.value = newSessionKey() }
         loadedReadOnly = readOnly
@@ -900,6 +904,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         _projectStatus.value = "Editing ${QeRevisions.label(x.name, x.revision)} (latest). Saving creates R${x.revision + 1}."
         return true
     }
+
+    /** Feature L: open the latest revision of the job with this UUID (from a scanned QR / qe:// link). */
+    fun openJobByUuid(uuid: String): Boolean {
+        val x = savedProjects.value.firstOrNull { it.jobUuid.equals(uuid, ignoreCase = true) } ?: run {
+            _projectStatus.value = "No saved job matches this QR code."
+            return false
+        }
+        return openLatestRevision(QeRevisions.root(x))
+    }
+
+    private val _pendingJobLink = MutableStateFlow<String?>(null)
+    /** Feature L: a qe://job/<uuid> link the activity received, waiting for the saved list to load. */
+    val pendingJobLink: StateFlow<String?> = _pendingJobLink.asStateFlow()
+    fun setPendingJobLink(uuid: String?) { _pendingJobLink.value = uuid }
 
     /** Snapshot of a saved revision for printing without loading it. */
     fun savedSnapshot(id: String): WorkspaceState? = savedProjects.value.firstOrNull { it.id == id }?.let { x ->

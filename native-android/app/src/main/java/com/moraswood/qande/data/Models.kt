@@ -212,6 +212,8 @@ data class WorkspaceState(
     val actual: Actual = Actual(),
     /** Feature D (native): print other options as a comparison appendix (null/false = active option only). */
     val printComparison: Boolean? = null,
+    /** Feature L (native): job UUID (QR `qe://job/<uuid>`), set on first save and shared by its revisions. */
+    val jobUuid: String? = null,
     /** Feature J (native): per-category default rates ("furniture" / "dw"); null = none (V10.1). */
     val categoryDefaults: Map<String, CategoryDefaults>? = null,
     /** Feature J (native): group quotation lines under category headings on the print. */
