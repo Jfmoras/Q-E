@@ -159,3 +159,17 @@
 - Send to Quotation / Send one carry the area (2 dp, omitted when n/a) to `QuoteItem.area` (editable "Area (sq.ft, optional)");
   "Show area (sq.ft) on print" (WorkspaceState.printArea, default off) prints "Area: X sq.ft" under the description.
 - New optional JSON fields only (Row.areaFace, Costing.areaOverride, QuoteItem.area, WorkspaceState.printArea): no Room change.
+
+## Feature H — Log Calculator / Yield Tracker (notes)
+- Home entry "Hoppus Log Volume" renamed "Log Calculator"; screen has tabs Hoppus (V10.1 sheet unchanged) | Yield Tracker.
+- Hoppus "Save & send to Yield Tracker": raw volume (default = Hoppus total, editable), unit CFT/m³ (1 m³ = 35.3147 CFT),
+  species, job type (free text + suggestions: built-ins and earlier job types), date (YYYY-MM-DD, default today), log details
+  (pre-filled "Log n: L ft × G in girth = V CFT"). Saved at once; opened in the editor so output can be added later.
+- Output: direct CFT, or finished sizes L ft × W in × T in × pieces (V10.1 calcRow forced to CFT). Waste: offcuts, breakage,
+  other (CFT); "unaccounted" = input − output − recorded waste (shown, can be negative if over-recorded).
+- Yield % = output ÷ input × 100, loss % = 100 − yield; input 0 → n/a. Averages per species / job type are volume-weighted
+  (Σ out ÷ Σ in) with the simple mean shown too (ASSUMPTION: weighted is the headline figure).
+- Trend: Compose Canvas line of yield % by date when 2+ entries have a yield.
+- Room: `yield_entries` (MIGRATION_4_5, new table only; DB v5). Included in Full Backup (schema 5).
+- Tests: QeYieldTest (ratios, rows, aggregates, Hoppus hand-off); MigrationReplayTest replays every step ≥ v3 on the
+  exported schema and compares with the next exported schema.

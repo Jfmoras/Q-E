@@ -65,7 +65,7 @@ fun HomeScreen(
     onPrintRevision: (String) -> Unit = {},
 ) {
     val actions = buildList {
-        add(HomeAction("Hoppus Log Volume", "Quarter-girth log measurement and sawing charges.", onHoppus))
+        add(HomeAction("Log Calculator", "Hoppus log volume, sawing charges and the Yield Tracker.", onHoppus))
         add(HomeAction("New Project", "Start a calculator, estimate and quotation.", onNewProject))
         add(HomeAction("Saved Projects", "Open or remove a project saved on this device.", onSavedProjects))
         add(HomeAction("Projects · Expenses · Inventory · Machines", "Manage project payments, material stock, machine status and monthly reports.", onOperations))

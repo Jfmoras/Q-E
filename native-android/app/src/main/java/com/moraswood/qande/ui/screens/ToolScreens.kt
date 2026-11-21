@@ -53,7 +53,7 @@ import com.moraswood.qande.ui.components.QeSelect
 import com.moraswood.qande.ui.theme.QeColors
 
 @Composable
-private fun ToolPage(maxWidth: Int = 1120, content: @Composable () -> Unit) {
+internal fun ToolPage(maxWidth: Int = 1120, content: @Composable () -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -168,7 +168,8 @@ class HoppusActions(
 
 /** `#hoppusView` — drawLogs / calcLogs, Enter flow Length → Girth → next log. */
 @Composable
-fun HoppusScreen(logs: HoppusState, actions: HoppusActions) = ToolPage {
+fun HoppusScreen(logs: HoppusState, actions: HoppusActions, top: @Composable () -> Unit = {}, onSendToYield: (() -> Unit)? = null) = ToolPage {
+    top()
     PageHeading("Hoppus Log Volume Calculator", "Quarter-girth method: girth² × length ÷ 2304, with girth in inches and length in feet.")
     val requesters = remember { HashMap<String, FocusRequester>() }
     fun fr(i: Int, k: String) = requesters.getOrPut("$i:$k") { FocusRequester() }
@@ -204,6 +205,8 @@ fun HoppusScreen(logs: HoppusState, actions: HoppusActions) = ToolPage {
         QeSecondaryButton("Add log", Modifier.padding(vertical = 10.dp)) { actions.onAdd() }
         QeFieldLabel("Sawing rate ₹/CFT") { QeNumberField(logs.sawRate, actions.onSawRate, Modifier.fillMaxWidth()) }
         Text("Total ${QeFormat.toFixed(total, 2)} CFT | Sawing charges ${QeFormat.money(total * QeMath.num(logs.sawRate))}", color = QeColors.Text, modifier = Modifier.padding(vertical = 14.dp))
+        // Feature H: hand the measured logs to the Yield Tracker
+        if (onSendToYield != null) QePrimaryButton("Save & send to Yield Tracker", onClick = onSendToYield)
     }
 }
 
