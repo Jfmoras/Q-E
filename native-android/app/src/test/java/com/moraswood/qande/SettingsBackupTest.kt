@@ -56,7 +56,7 @@ class SettingsBackupTest {
                 st.execute(e["createSql"]!!.jsonPrimitive.content.replace("\${TABLE_NAME}", t))
                 (e["indices"]?.jsonArray ?: emptyList()).forEach { st.execute(it.jsonObject["createSql"]!!.jsonPrimitive.content.replace("\${TABLE_NAME}", t)) }
             }
-            (QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS).forEach(st::execute)
+            (QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS + QeMigrations.COMMENT_TRIGGERS).forEach(st::execute)
         }
         return JdbcPort(c)
     }
@@ -127,6 +127,13 @@ class SettingsBackupTest {
         assertEquals(1L, db.query("SELECT COUNT(*) AS n FROM templates").single()["n"])
     }
 
+    @Test fun backupCoversEveryRoomTable() {
+        val schema = Json.parseToJsonElement(File("schemas/com.moraswood.qande.data.QeDatabase/${QeBackup.SCHEMA}.json").readText()).jsonObject["database"]!!.jsonObject
+        val tables = schema["entities"]!!.jsonArray.map { it.jsonObject["tableName"]!!.jsonPrimitive.content }.toSet()
+        assertEquals(tables, QeBackup.TABLES.toSet())
+        assertEquals(QeBackup.TABLES.size, QeBackup.TABLES.toSet().size)
+    }
+
     @Test fun nativeBackupRoundTripsEveryTableAndFiles() {
         val src = freshDb()
         QeBackup.restore(src, v101)
@@ -139,7 +146,18 @@ class SettingsBackupTest {
         src.exec("INSERT INTO asset_returns(issueId, returnedOn, `condition`, createdAt) VALUES (1,'2026-11-22','ok','t')")
         src.exec("INSERT INTO asset_corrections(targetType, targetId, worker, issuedOn, dueBack, clearDueBack, notes, returnedOn, `condition`, voidEntry, reason, requestedAt) VALUES ('issue',1,'Raju',NULL,NULL,0,NULL,NULL,NULL,0,'typo','t')")
         src.exec("INSERT INTO asset_correction_decisions(correctionId, decision, decidedAt) VALUES (1,'approved','t')")
+        // every other table (clients, jobs/calendar, signatures, yield, Projects & Payments, ...): one generic row each
+        for (t in QeBackup.TABLES) if (src.query("SELECT COUNT(*) AS n FROM `$t`").single()["n"] == 0L) {
+            val cols = src.query("PRAGMA table_info(`$t`)")
+            val names = cols.joinToString(", ") { "`" + it["name"] + "`" }
+            val values = cols.map { c ->
+                val n = c["name"] as String; val type = (c["type"] as String).uppercase()
+                when { n == "projectId" -> "P1"; type.contains("INT") -> 1L; type.contains("REAL") -> 2.5; else -> "$t-$n" }
+            }
+            src.exec("INSERT INTO `$t` ($names) VALUES (${values.joinToString(", ") { "?" }})", values)
+        }
         val before = QeBackup.dumpTables(src)
+        QeBackup.TABLES.forEach { assertTrue("backup must cover $it", before.getValue(it).isNotEmpty()) }
         val photo = byteArrayOf(1, 2, 3, -1, 0, 127)
         val w = StringWriter()
         QeBackup.write(w, "d", QeBackup.storage(before, QeBackup.AiExport("https://api.openai.com/v1", "gpt-4o-mini", "openai")),
@@ -154,6 +172,7 @@ class SettingsBackupTest {
         assertEquals(photo.toList(), java.util.Base64.getDecoder().decode(r.files.getValue("item_photos/item-1.jpg")).toList())
         assertEquals(70000, java.util.Base64.getDecoder().decode(r.files.getValue("project-attachments/x y.pdf")).size)
         try { dst.exec("DELETE FROM asset_issues"); fail("append-only triggers must be back after restore") } catch (e: SQLException) { assertTrue(e.message!!.contains("append-only")) }
+        try { dst.exec("UPDATE pp_comments SET text = 'x'"); fail("comments must stay append-only after restore") } catch (e: SQLException) { assertTrue(e.message!!.contains("append-only")) }
         dst.exec("INSERT INTO assets(name, category, purchaseDate, cost, serial, photoFile, createdAt) VALUES ('Saw','tool','',0,'',NULL,'t')")
         assertEquals(2L, dst.query("SELECT MAX(id) AS m FROM assets").single()["m"])
     }

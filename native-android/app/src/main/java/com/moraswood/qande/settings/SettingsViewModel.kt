@@ -129,21 +129,42 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
             .map { f -> QeBackup.BackupFile("$dir/${f.name}") { f.inputStream() } }
     }
 
-    /** `#backupExport` → CreateDocument("moras-qe-full-backup.json") → write. */
+    private fun writeBackup(w: java.io.Writer) {
+        val tables = QeBackup.dumpTables(RoomSqlPort(db))
+        val storage = QeBackup.storage(tables, QeBackup.AiExport(ai.endpoint(), ai.model(), ai.provider()))
+        QeBackup.write(w, Instant.now().toString(), storage, backupFiles())
+    }
+
+    /** "Backup" → CreateDocument("moras-qe-full-backup.json") → one portable file (all tables + base64 photos/PDFs/files; no API key). */
     fun exportTo(uri: Uri) {
         viewModelScope.launch {
             _busy.value = true
             try {
                 withContext(Dispatchers.IO) {
-                    val tables = QeBackup.dumpTables(RoomSqlPort(db))
-                    val storage = QeBackup.storage(tables, QeBackup.AiExport(ai.endpoint(), ai.model(), ai.provider()))
-                    ctx.contentResolver.openOutputStream(uri, "wt")?.bufferedWriter(Charsets.UTF_8)?.use { w ->
-                        QeBackup.write(w, Instant.now().toString(), storage, backupFiles())
-                    } ?: error("Could not open the file.")
+                    ctx.contentResolver.openOutputStream(uri, "wt")?.bufferedWriter(Charsets.UTF_8)?.use(::writeBackup) ?: error("Could not open the file.")
                 }
                 Toast.makeText(ctx, "Backup exported.", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(ctx, "Backup export failed: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally { _busy.value = false }
+        }
+    }
+
+    /** "Share backup" → the same file written to app cache, then ACTION_SEND through the FileProvider. */
+    fun share() {
+        viewModelScope.launch {
+            _busy.value = true
+            try {
+                val file = withContext(Dispatchers.IO) {
+                    val dir = File(ctx.cacheDir, "backup").apply { mkdirs(); listFiles()?.forEach { it.delete() } }
+                    File(dir, QeBackup.FILE_NAME).also { f -> f.bufferedWriter(Charsets.UTF_8).use(::writeBackup) }
+                }
+                val uri = androidx.core.content.FileProvider.getUriForFile(ctx, ctx.packageName + ".files", file)
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("application/json")
+                    .putExtra(android.content.Intent.EXTRA_STREAM, uri).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                ctx.startActivity(android.content.Intent.createChooser(send, "Share backup").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION))
+            } catch (e: Exception) {
+                Toast.makeText(ctx, "Backup share failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally { _busy.value = false }
         }
     }

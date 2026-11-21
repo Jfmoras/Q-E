@@ -50,7 +50,7 @@ object QeBackup {
     const val LEGACY_PLAIN_KEY = "mwi-openai-api-key-v1"
     const val CONFIRM = "Replace existing saved data with backup?"
     const val RESTORED = "Restored. Reloading."
-    const val SCHEMA = 9
+    const val SCHEMA = 10
     val FILE_DIRS = setOf("item_photos", "project-attachments")
 
     /** Parents before children (insert order); deletes run in reverse. */
@@ -61,12 +61,14 @@ object QeBackup {
         "job_component_log", "templates", "template_rows", "item_photos",
         "assets", "asset_issues", "asset_returns", "asset_corrections", "asset_correction_decisions",
         "yield_entries", "clients", "jobs", "signatures",
+        "pp_projects", "pp_items", "pp_hardware", "pp_comments",
     )
     private val ORDER_BY = mapOf(
         "saved_projects" to "position", "saved_notes" to "position", "ops_projects" to "position", "ops_materials" to "position",
         "ops_movements" to "position", "ops_machines" to "position", "kv_store" to "`key`", "item_photos" to "fileName",
         "ops_attachments" to "id",
         "clients" to "id", "jobs" to "jobUuid", "signatures" to "id",
+        "pp_projects" to "projectId", "pp_items" to "id", "pp_hardware" to "id", "pp_comments" to "id",
     )
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -256,10 +258,10 @@ object QeBackup {
         if (nativeDb != null) {
             val obj = json.parseToJsonElement(nativeDb) as JsonObject
             val tables = obj["tables"] as? JsonObject ?: throw IllegalArgumentException("Invalid data")
-            QeMigrations.ASSET_TRIGGER_DROPS.forEach { port.exec(it) }
+            (QeMigrations.ASSET_TRIGGER_DROPS + QeMigrations.COMMENT_TRIGGER_DROPS).forEach { port.exec(it) }
             TABLES.reversed().forEach { port.exec("DELETE FROM `$it`") }
             for (t in TABLES) insertRows(port, t, (tables[t] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject })
-            QeMigrations.ASSET_TRIGGERS.forEach { port.exec(it) }
+            (QeMigrations.ASSET_TRIGGERS + QeMigrations.COMMENT_TRIGGERS).forEach { port.exec(it) }
             val inDump = rowsOf(tables, "kv_store").map { str(it, "key") }.toSet()
             storage.filterKeys { it !in derived && it !in inDump }.forEach { (k, v) -> port.exec("INSERT OR REPLACE INTO kv_store(`key`, json) VALUES (?, ?)", listOf(k, v)) }
         } else {
