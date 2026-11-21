@@ -249,7 +249,7 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
         opt.items.forEachIndexed { i, x ->
             val texts = listOf(
                 layout("${i + 1}", cell, mm(colW[0]) - padX * 2, Layout.Alignment.ALIGN_CENTER),
-                layout(preLine(x.description.ifEmpty { "-" }) + (x.species?.takeIf { it.isNotBlank() && it != opt.species }?.let { "\nSpecies: $it" } ?: ""), bold, mm(colW[1]) - padX * 2),
+                layout(preLine(x.description.ifEmpty { "-" }) + (x.species?.takeIf { it.isNotBlank() && it != opt.species }?.let { "\nSpecies: $it" } ?: "") + (if (state0.printArea == true) x.area?.takeIf { it.isNotBlank() }?.let { "\nArea: $it sq.ft" } ?: "" else ""), bold, mm(colW[1]) - padX * 2),
                 layout(collapse(QeQuote.unitsText(x)), cell, mm(colW[2]) - padX * 2, Layout.Alignment.ALIGN_OPPOSITE),
                 layout(QeFormat.rs(num(x.unitPrice)), cell, mm(colW[3]) - padX * 2, Layout.Alignment.ALIGN_OPPOSITE),
                 layout(QeFormat.rs(num(x.qty) * num(x.unitPrice)), cell, mm(colW[4]) - padX * 2, Layout.Alignment.ALIGN_OPPOSITE),

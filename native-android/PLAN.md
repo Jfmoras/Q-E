@@ -145,3 +145,17 @@
 - Group labour / polish / consumables / other are group-level lumpsums. Decision: kept at group level in the estimate and **distributed proportionally by item cost onto the quotation lines** at Send to Quotation: line = item selling + (group selling − Σ item selling) × item cost / Σ item cost (equal shares if every cost is 0), rounded to rupees with the difference on the largest-cost line, so the lines add up exactly to the group price. Group selling price blank = Σ item selling + group lumpsums (lumpsums at cost); filled = the group's price. "Send this item" sends the same share.
 - Storage: groups live inside the workspace JSON (`itemGroups`, absent = ungrouped), so autosave, every revision snapshot (Feature E) and Full Backup carry them; existing jobs read as ungrouped with no conversion step, so no Room schema change was needed. Send to Estimation (which rebuilds the estimation list) clears the groups. The Feature D CFT/KOL link uses the group-default rates.
 - Tests: ItemGroupsTest (ungrouped = V10.1 functions exactly; defaults vs item rates and row groups; totals, lumpsums, override; distribution sums/proportions/equal shares; group/move/rename/ungroup; JSON).
+
+## Feature G — automatic square feet (notes)
+- V10.1 (documented): labour per sq.ft = toFeet(labourLength) × toFeet(labourWidth) × num(labourQty) × rate, from the Labour
+  card's own L/W; polish per sq.ft = (polishAreaOverride, else itemSurface = all six faces of every row × pieces) × rate.
+- Item area = Σ rows toFeet(L) × toInches(W)/12 × pieces (V10.1 unit helpers). A row ticked "Vertical" uses L × thickness.
+  Shown read-only (estimate header, Labour card, per-row "Area (sq.ft)" column) with "Override item area (optional)".
+- Decision: per sq.ft labour uses the item area ONLY when the labour Length AND Width are both blank (× labour Quantity when
+  filled, else × 1). Any job with labour L/W filled keeps the exact V10.1 formula (tested); a V10.1 job with one of L/W blank
+  still gives V10.1's 0. Lumpsum unchanged. Polish unchanged (V10.1 surface + override) — not switched to the L×W area, to
+  keep V10.1 math. ASSUMPTION to confirm.
+- Zero/missing width → row area 0; an item without any usable row shows "n/a" (never a crash; non-finite → 0).
+- Send to Quotation / Send one carry the area (2 dp, omitted when n/a) to `QuoteItem.area` (editable "Area (sq.ft, optional)");
+  "Show area (sq.ft) on print" (WorkspaceState.printArea, default off) prints "Area: X sq.ft" under the description.
+- New optional JSON fields only (Row.areaFace, Costing.areaOverride, QuoteItem.area, WorkspaceState.printArea): no Room change.
