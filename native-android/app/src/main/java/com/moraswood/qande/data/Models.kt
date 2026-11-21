@@ -143,15 +143,33 @@ data class Costing(
 data class QuoteItem(
     val description: LStr = "", val unit: LStr = "", val qty: LStr = "", val unitPrice: LStr = "",
     val images: List<LStr> = emptyList(), val aiOriginal: LStr = "",
+    /** Feature D (native): optional wood species of this line; omitted from JSON when unset. */
+    val species: String? = null,
+    /** Feature D (native): CFT/KOL link captured at Send to Quotation, used to re-price the line for another species. */
+    val wood: WoodLink? = null,
 ) {
     companion object { fun blank() = QuoteItem() }
 }
+
+/**
+ * Feature D: the estimation timber behind a quotation line, captured at Send to Quotation.
+ * cft / kol = volumes of the item's CFT rows / KOL rows; woodCft / woodKol = their wood cost at capture (or after the last
+ * species re-price); cftRate / kolRate = the base Rate/CFT and Rate/KOL in force for that cost.
+ */
+@Serializable
+data class WoodLink(
+    val cft: LDouble = 0.0, val kol: LDouble = 0.0,
+    val woodCft: LDouble = 0.0, val woodKol: LDouble = 0.0,
+    val cftRate: LStr = "", val kolRate: LStr = "",
+)
 
 /** Quotation option: `{name,items,discountType,discountValue,gstPercent}`. */
 @Serializable
 data class QuoteOption(
     val name: LStr = "", val items: List<QuoteItem> = emptyList(),
     val discountType: LStr = "", val discountValue: LStr = "", val gstPercent: LStr = "",
+    /** Feature D (native): wood species this option is priced in (omitted when unset). */
+    val species: String? = null,
 )
 
 @Serializable
@@ -182,6 +200,8 @@ data class WorkspaceState(
     val customer: Customer = Customer(),
     val quote: Quote = Quote(),
     val actual: Actual = Actual(),
+    /** Feature D (native): print other options as a comparison appendix (null/false = active option only). */
+    val printComparison: Boolean? = null,
 ) {
     companion object { fun default() = WorkspaceState() }
 }

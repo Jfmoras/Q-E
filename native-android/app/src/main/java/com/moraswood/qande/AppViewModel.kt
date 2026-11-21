@@ -27,6 +27,7 @@ import com.moraswood.qande.logic.QeEstimate
 import com.moraswood.qande.logic.QeMath
 import com.moraswood.qande.logic.QeMath.hasData
 import com.moraswood.qande.logic.QeQuote
+import com.moraswood.qande.logic.QeSpecies
 import com.moraswood.qande.ai.AiService
 import com.moraswood.qande.photos.QuoteImages
 import kotlinx.serialization.json.JsonArray
@@ -254,7 +255,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             return missing
         }
         update { st ->
-            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = st.costings[i].sellingPrice) }
+            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = st.costings[i].sellingPrice, wood = QeSpecies.link(it, st.costings[i])) }
             st.copy(quoteItems = q.ifEmpty { listOf(QuoteItem.blank()) }, tab = "quotation")
         }
         return -1
@@ -271,7 +272,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         _estStatus.value = _estStatus.value - i
         update { st ->
-            val q = QuoteItem(description = it.name, unitPrice = price)
+            val q = QuoteItem(description = it.name, unitPrice = price, wood = QeSpecies.link(it, st.costings.getOrNull(i)))
             val only = st.quoteItems
             val onlyBlank = only.size == 1 && only[0].description.isEmpty() && only[0].unit.isEmpty() && only[0].qty.isEmpty() && only[0].unitPrice.isEmpty() && only[0].images.isEmpty()
             st.copy(quoteItems = if (onlyBlank) listOf(q) else st.quoteItems + q, tab = "quotation")
@@ -526,7 +527,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setCustomerName(v: String) = update { it.copy(customer = it.customer.copy(name = v)) }
     fun setCustomerLocation(v: String) = update { it.copy(customer = it.customer.copy(location = v)) }
     fun setQuoteField(i: Int, key: String, v: String) = updateQuoteItem(i) {
-        when (key) { "description" -> it.copy(description = v); "unit" -> it.copy(unit = v); "qty" -> it.copy(qty = v); "unitPrice" -> it.copy(unitPrice = v); else -> it }
+        when (key) { "description" -> it.copy(description = v); "unit" -> it.copy(unit = v); "qty" -> it.copy(qty = v); "unitPrice" -> it.copy(unitPrice = v); "species" -> it.copy(species = v.ifEmpty { null }); else -> it }
     }
     fun addQuoteItem() = rerenderQuote { it.copy(quoteItems = it.quoteItems + QuoteItem.blank()) }
     fun removeQuoteItem(i: Int) = rerenderQuote { s ->
@@ -542,6 +543,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** `#removeQuoteOption`: returns the alert text when only one option is left, otherwise null (caller confirms first). */
     fun canRemoveQuoteOption(): String? = if (QeQuote.syncActiveOption(_workspace.value).quoteOptions.size <= 1) "At least one quotation option is required." else null
     fun removeQuoteOption() = rerenderQuote(QeQuote::removeOption)
+    /** Feature D: duplicate the whole active option as a wood-species option; returns the status line. */
+    fun duplicateAsSpecies(species: String, cftRate: String, kolRate: String): String {
+        var msg = ""
+        rerenderQuote { s -> QeSpecies.duplicateAsSpecies(s, species, cftRate, kolRate).also { msg = QeSpecies.duplicateMessage(it, species) }.state }
+        return msg
+    }
+    fun setQuoteOptionSpecies(v: String) = update { s0 ->
+        val s = QeQuote.ensureQuoteOptions(s0)
+        s.copy(quoteOptions = s.quoteOptions.mapIndexed { i, o -> if (i == s.activeQuoteOption) o.copy(species = v.ifEmpty { null }) else o })
+    }
+    fun setPrintComparison(on: Boolean) = update { it.copy(printComparison = if (on) true else null) }
+
     fun setQuoteOptionName(v: String) = update { s0 ->
         val s = QeQuote.ensureQuoteOptions(s0)
         s.copy(quoteOptions = s.quoteOptions.mapIndexed { i, o -> if (i == s.activeQuoteOption) o.copy(name = v) else o })
