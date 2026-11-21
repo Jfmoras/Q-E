@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.QandE" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/qe_bg</item>
+        <item name="android:statusBarColor">@color/qe_header</item>
+        <item name="android:navigationBarColor">@color/qe_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
