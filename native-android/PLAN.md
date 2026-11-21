@@ -173,3 +173,25 @@
 - Room: `yield_entries` (MIGRATION_4_5, new table only; DB v5). Included in Full Backup (schema 5).
 - Tests: QeYieldTest (ratios, rows, aggregates, Hoppus hand-off); MigrationReplayTest replays every step ≥ v3 on the
   exported schema and compares with the next exported schema.
+
+## Feature I — Door & Window Builder (notes)
+- Home › "Door & Window Builder" edits the current project (stored in the workspace JSON `doorWindows`, so it is saved with
+  every revision; job wastage override `dwWastage`). Templates and Settings defaults live in kv
+  (`mwi-native-dw-templates-v1`, `mwi-native-dw-defaults-v1`) and are part of the Full Backup.
+- Pieces: main door 2 long + 2 short; bedroom door 2 long + 1 short; other door 2 + 2; window 2 + 2 + 1 or 2 centre supports.
+  Counts are overridable on every kind (blank = default). Wood 5x3 / 11x2 / 4.5x2.5 (face width × thickness, in) or custom.
+- JUTTU (default): long = height + 2 × ext; short = width − 2 × dim + 2 × ext. SCREW: short = width; long = height − 2 × dim.
+  ext = structure "Juttu extension per end", else Settings default 3 in (PLACEHOLDER — confirm). dim = "Subtracted dimension",
+  default = member thickness (ASSUMPTION — confirm). Jason's text contradicts itself on which piece runs through; the
+  explicit rule above is implemented.
+- Window centre support(s) = height − 2 × dim, no Juttu extension (ASSUMPTION).
+- Wastage per cut 0 / ¼ / ½ in: structure → job → Settings (default 0); added to every cut before CFT; the finished length is
+  shown next to the cut length.
+- Architrave (default off): header = opening width + 2 × architrave width (1), jambs = opening height + architrave width (2);
+  window: same 3 pieces + optional bottom piece = header length (ASSUMPTION — confirm the bottom piece and its length).
+- Planking (doors only): side supports 4/5 in (default 5); middle = width − 2 × side; count = ceil(middle ÷ plank width);
+  the last plank is trimmed to the remainder and shown as its own row; plank length = height − min(shorts, 2) × dim (inner
+  height between the shorts, both styles — ASSUMPTION); thickness defaults to the frame thickness.
+- Quantity multiplies every piece. CFT = cut ft × W × T ÷ 144 × qty (V10.1 calcRow; "Add to calculator" rows reproduce it
+  exactly, lengths in inches). Added items carry category Doors & Windows (Feature J).
+- Zero/negative lengths give a warning line instead of a piece; nothing crashes on blank input.

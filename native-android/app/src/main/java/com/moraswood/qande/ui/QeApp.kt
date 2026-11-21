@@ -57,6 +57,7 @@ object Routes {
     const val HOPPUS = "hoppus"
     const val SETTINGS = "settings"
     const val OPERATIONS = "operations"
+    const val BUILDER = "builder"
 }
 
 private fun NavHostController.openView(route: String) = navigate(route) {
@@ -128,6 +129,7 @@ fun QeApp(vm: AppViewModel) {
                     onOpenLatest = { root -> if (vm.openLatestRevision(root)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
                     onPrintRevision = { id -> vm.savedSnapshot(id)?.let { QuotePrint.print(context, it) } },
                     onHoppus = { nav.openView(Routes.HOPPUS) },
+                    onBuilder = { nav.openView(Routes.BUILDER) },
                     onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },
                     onCloseSaved = { savedPanelOpen = false },
@@ -259,7 +261,13 @@ fun QeApp(vm: AppViewModel) {
             composable(Routes.HOPPUS) {
                 LogCalculatorScreen(hoppus, remember(vm) { HoppusActions(vm::setHoppusField, vm::addHoppusLog, vm::removeHoppusLog, vm::setSawRate) }, yvm)
             }
-            composable(Routes.SETTINGS) { SettingsScreen(templates, vm::deleteTemplate, svm) }
+            composable(Routes.SETTINGS) {
+                val dwDefaults by vm.dwDefaults.collectAsState()
+                SettingsScreen(templates, vm::deleteTemplate, svm, dwDefaults, vm::setDwDefaults)
+            }
+            composable(Routes.BUILDER) {
+                com.moraswood.qande.ui.screens.DoorWindowScreen(vm, onOpenCalculator = { nav.openView(Routes.WORKSPACE) })
+            }
             composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, ovm, avm) }
         }
     }

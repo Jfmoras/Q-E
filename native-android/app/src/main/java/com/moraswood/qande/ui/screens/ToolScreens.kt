@@ -257,9 +257,13 @@ fun NotesScreen(vm: com.moraswood.qande.AppViewModel) = ToolPage(780) {
 
 /** `#settingsView` — the native Templates card is added at the end (least intrusive place). */
 @Composable
-fun SettingsScreen(templates: List<TemplateWithRows>, onDeleteTemplate: (Long) -> Unit, svm: com.moraswood.qande.settings.SettingsViewModel) = ToolPage(780) {
+fun SettingsScreen(
+    templates: List<TemplateWithRows>, onDeleteTemplate: (Long) -> Unit, svm: com.moraswood.qande.settings.SettingsViewModel,
+    dwDefaults: com.moraswood.qande.data.DwDefaults = com.moraswood.qande.data.DwDefaults(), onDwDefaults: (com.moraswood.qande.data.DwDefaults) -> Unit = {},
+) = ToolPage(780) {
     PageHeading("Settings", "Configure an AI-compatible API and convert length measurements.")
     SettingsCards(svm)
+    BuilderDefaultsCard(dwDefaults, onDwDefaults)
     TemplatesCard(templates, onDeleteTemplate)
 }
 
