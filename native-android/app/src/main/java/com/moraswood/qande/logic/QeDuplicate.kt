@@ -23,6 +23,7 @@ object QeDuplicate {
             projectId = newProjectId,
             revision = 0,
             jobUuid = newJobUuid,
+            deliveryDate = null, // a copy is a new job: not scheduled yet (Feature P)
             items = s.items.map { it.copy(photo = p(it.photo)) },
             estimationItems = s.estimationItems.map { it.copy(photo = p(it.photo)) },
         )
