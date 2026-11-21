@@ -53,6 +53,7 @@ object Routes {
     const val NOTES = "notes"
     const val LENGTH = "length"
     const val TIMBER = "timber"
+    const val PROJECTS = "projects"
     const val HOPPUS = "hoppus"
     const val SETTINGS = "settings"
     const val OPERATIONS = "operations"
@@ -90,6 +91,8 @@ fun QeApp(vm: AppViewModel) {
     val avm: com.moraswood.qande.assets.AssetsViewModel = viewModel()
     val svm: com.moraswood.qande.settings.SettingsViewModel = viewModel()
     val yvm: com.moraswood.qande.yieldtracker.YieldViewModel = viewModel()
+    val pvm: com.moraswood.qande.projects.ProjectsViewModel = viewModel()
+    var openProjectId by rememberSaveable { mutableStateOf<String?>(null) }
     val hoppus by vm.hoppus.collectAsState()
     val templates by vm.templates.collectAsState()
     val banner by vm.templateBanner.collectAsState()
@@ -164,7 +167,7 @@ fun QeApp(vm: AppViewModel) {
                     onNotes = { nav.openView(Routes.NOTES) },
                     onLengthConverter = { nav.openView(Routes.LENGTH) },
                     onTimberCalculator = { nav.openView(Routes.TIMBER) },
-                    onProjectsPayments = { opsTab = OpsTab.Projects; ovm.resetPage(); avm.resetPage(); nav.openView(Routes.OPERATIONS) },
+                    onProjectsPayments = { openProjectId = null; ovm.closeViewer(); pvm.msg(""); nav.openView(Routes.PROJECTS) },
                     onSettings = { nav.openView(Routes.SETTINGS) },
                     onContinue = { nav.openView(Routes.WORKSPACE) },
                 )
@@ -254,6 +257,7 @@ fun QeApp(vm: AppViewModel) {
                                     onPickClient = vm::pickClient,
                                     onSaveAsClient = vm::saveCustomerAsClient,
                                     onDeliveryDate = vm::setDeliveryDate,
+                                    onConfirmProject = { err -> pvm.confirmFromQuotation(vm.workspace.value, vm.savedProjects.value, err) { id -> openProjectId = id; nav.openView(Routes.PROJECTS) } },
                                     onSaveSignature = vm::saveSignature,
                                     onClearSignature = vm::clearSignature,
                                     onSelectOption = vm::selectQuoteOption,
@@ -292,6 +296,17 @@ fun QeApp(vm: AppViewModel) {
                 )
             }
             composable(Routes.NOTES) { NotesScreen(vm) }
+            composable(Routes.PROJECTS) {
+                val saved by vm.savedProjects.collectAsState()
+                com.moraswood.qande.ui.screens.ProjectsDashboardScreen(pvm, ovm, saved, remember(vm) {
+                    com.moraswood.qande.ui.screens.ProjectsCallbacks(
+                        onHome = { nav.goHome() },
+                        onOpenLatest = { root -> if (vm.openLatestRevision(root)) { vm.setTab("quotation"); nav.openView(Routes.WORKSPACE) } },
+                        onViewRevision = { id -> if (vm.viewSavedProject(id)) { vm.setTab("quotation"); nav.openView(Routes.WORKSPACE) } },
+                        onPrintRevision = { id -> vm.savedSnapshot(id)?.let { st -> vm.withSignature(st) { sig -> QuotePrint.print(context, st, sig) } } },
+                    )
+                }, openProjectId)
+            }
             composable(Routes.TIMBER) { com.moraswood.qande.ui.screens.TimberCalculatorScreen() }
             composable(Routes.LENGTH) { com.moraswood.qande.ui.screens.LengthConverterScreen() }
             composable(Routes.HOPPUS) {

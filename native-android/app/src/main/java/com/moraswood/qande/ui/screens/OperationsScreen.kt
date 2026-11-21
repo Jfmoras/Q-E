@@ -210,7 +210,7 @@ fun OperationsScreen(tab: OpsTab, onTab: (OpsTab) -> Unit, ovm: OperationsViewMo
 
 /** `#attachmentViewer`: native image preview, PdfRenderer pages, or the "unavailable" note. */
 @Composable
-private fun AttachmentViewer(a: OpsAttachmentEntity, ovm: OperationsViewModel) {
+internal fun AttachmentViewer(a: OpsAttachmentEntity, ovm: OperationsViewModel) {
     val context = LocalContext.current
     val screenH = LocalConfiguration.current.screenHeightDp.dp
     OpsCard {

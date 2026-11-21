@@ -103,6 +103,8 @@ data class QuotationActions(
     val onSaveAsClient: () -> String = { "" },
     /** Feature P: delivery date (ISO yyyy-MM-dd, null clears). */
     val onDeliveryDate: (String?) -> Unit = {},
+    /** Projects & Payments: turn the saved quotation into a project (null = done, else a message). */
+    val onConfirmProject: ((String) -> Unit) -> Unit = {},
     /** Feature Q: client signature pad (base64 PNG, signer) / clear. */
     val onSaveSignature: (String, String) -> Unit = { _, _ -> },
     val onClearSignature: () -> Unit = {},
@@ -144,6 +146,7 @@ fun QuotationPanel(
     Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End) {
         QePrimaryButton("Print quotation", onClick = actions.onPrint)
         QeSecondaryButton("Export to Projects", onClick = { scope.launch { actions.onExport()?.let { alert = it } } })
+        QeSecondaryButton("Confirm as Project", onClick = { actions.onConfirmProject { alert = it } })
     }
     // Feature D: print the official (active) option; other options only as an opt-in appendix.
     Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
