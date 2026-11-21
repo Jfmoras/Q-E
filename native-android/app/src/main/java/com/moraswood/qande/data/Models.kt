@@ -214,6 +214,8 @@ data class WorkspaceState(
     val printComparison: Boolean? = null,
     /** Feature L (native): job UUID (QR `qe://job/<uuid>`), set on first save and shared by its revisions. */
     val jobUuid: String? = null,
+    /** Feature O (native): linked client id (clients table); null = none. */
+    val clientId: String? = null,
     /** Feature J (native): per-category default rates ("furniture" / "dw"); null = none (V10.1). */
     val categoryDefaults: Map<String, CategoryDefaults>? = null,
     /** Feature J (native): group quotation lines under category headings on the print. */

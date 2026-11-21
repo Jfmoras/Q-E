@@ -50,7 +50,7 @@ object QeBackup {
     const val LEGACY_PLAIN_KEY = "mwi-openai-api-key-v1"
     const val CONFIRM = "Replace existing saved data with backup?"
     const val RESTORED = "Restored. Reloading."
-    const val SCHEMA = 6
+    const val SCHEMA = 7
     val FILE_DIRS = setOf("item_photos", "project-attachments")
 
     /** Parents before children (insert order); deletes run in reverse. */
@@ -60,12 +60,13 @@ object QeBackup {
         "ops_machines", "ops_machine_history", "ops_audit",
         "job_component_log", "templates", "template_rows", "item_photos",
         "assets", "asset_issues", "asset_returns", "asset_corrections", "asset_correction_decisions",
-        "yield_entries",
+        "yield_entries", "clients", "jobs",
     )
     private val ORDER_BY = mapOf(
         "saved_projects" to "position", "saved_notes" to "position", "ops_projects" to "position", "ops_materials" to "position",
         "ops_movements" to "position", "ops_machines" to "position", "kv_store" to "`key`", "item_photos" to "fileName",
         "ops_attachments" to "id",
+        "clients" to "id", "jobs" to "jobUuid",
     )
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
