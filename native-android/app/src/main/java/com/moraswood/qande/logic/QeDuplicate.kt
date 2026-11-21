@@ -24,6 +24,7 @@ object QeDuplicate {
             revision = 0,
             jobUuid = newJobUuid,
             deliveryDate = null, // a copy is a new job: not scheduled yet (Feature P)
+            signatureId = null, // ...and not signed by the client yet (Feature Q)
             items = s.items.map { it.copy(photo = p(it.photo)) },
             estimationItems = s.estimationItems.map { it.copy(photo = p(it.photo)) },
         )

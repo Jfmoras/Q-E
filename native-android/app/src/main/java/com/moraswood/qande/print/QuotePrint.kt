@@ -35,14 +35,14 @@ import java.io.FileOutputStream
  */
 object QuotePrint {
     /** V10.1 `printWebPage`: job "Moras Wood Q&E Quotation", document "Moras Wood Quotation". */
-    fun print(context: Context, state: WorkspaceState) {
+    fun print(context: Context, state: WorkspaceState, signature: com.moraswood.qande.data.SignatureEntity? = null) {
         val manager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
         val attrs = PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4)
             .setMinMargins(PrintAttributes.Margins.NO_MARGINS).build()
-        manager.print("Moras Wood Q&E Quotation", Adapter(context.applicationContext, state), attrs)
+        manager.print("Moras Wood Q&E Quotation", Adapter(context.applicationContext, state, signature), attrs)
     }
 
-    private class Adapter(private val context: Context, private val state: WorkspaceState) : PrintDocumentAdapter() {
+    private class Adapter(private val context: Context, private val state: WorkspaceState, private val signature: com.moraswood.qande.data.SignatureEntity?) : PrintDocumentAdapter() {
         override fun onLayout(old: PrintAttributes?, new: PrintAttributes, cancel: CancellationSignal, cb: LayoutResultCallback, extras: Bundle?) {
             if (cancel.isCanceled) { cb.onLayoutCancelled(); return }
             val info = PrintDocumentInfo.Builder("Moras Wood Quotation.pdf")
@@ -52,7 +52,7 @@ object QuotePrint {
 
         override fun onWrite(pages: Array<out PageRange>, destination: ParcelFileDescriptor, cancel: CancellationSignal, cb: WriteResultCallback) {
             try {
-                val doc = QuoteSheet(context, state).render()
+                val doc = QuoteSheet(context, state, signature).render()
                 try {
                     if (cancel.isCanceled) { cb.onWriteCancelled(); return }
                     FileOutputStream(destination.fileDescriptor).use { doc.writeTo(it) }
@@ -66,7 +66,7 @@ object QuotePrint {
 }
 
 /** Lays out and draws the V10.1 print sheet. Units are PDF points; [mm] converts CSS millimetres. */
-class QuoteSheet(private val context: Context, private val state0: WorkspaceState) {
+class QuoteSheet(private val context: Context, private val state0: WorkspaceState, private val signature: com.moraswood.qande.data.SignatureEntity? = null) {
     private fun mm(v: Float) = v * 72f / 25.4f
     private val pageW = 595; private val pageH = 842
     private val left = (pageW - mm(190f)) / 2f
@@ -136,6 +136,7 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
             option(oi, opt)
         }
         notes(state.quote.notes.filter { it.isNotBlank() })
+        signatureBlock()
         footer()
         page?.let { doc.finishPage(it) }
         return doc
@@ -354,9 +355,34 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
         y += h
     }
 
+    /** Feature Q: right-aligned client signature (image, rule, "Client signature", signer · date); kept on one page. */
+    private val sigBitmap: Bitmap? by lazy {
+        signature?.png?.takeIf { it.isNotBlank() }?.let { runCatching { val b = android.util.Base64.decode(it, android.util.Base64.DEFAULT); BitmapFactory.decodeByteArray(b, 0, b.size) }.getOrNull() }
+    }
+
+    private fun signatureBlock() {
+        val b = sigBitmap ?: return
+        val w = mm(70f); val ih = mm(22f)
+        val label = layout("Client signature", tp(8.2f, true), w, Layout.Alignment.ALIGN_CENTER)
+        val cap = com.moraswood.qande.logic.QeSignature.caption(signature?.signer.orEmpty(), signature?.signedAt.orEmpty())
+        val capL = if (cap.isNotEmpty()) layout(cap, tp(8f), w, Layout.Alignment.ALIGN_CENTER) else null
+        val h = ih + mm(1.5f) + label.height + (capL?.height ?: 0)
+        y += mm(6f)
+        ensure(h)
+        val x = left + contentW - w
+        val s = minOf(w / b.width, ih / b.height)
+        val dw = b.width * s; val dh = b.height * s
+        canvas.drawBitmap(b, null, RectF(x + (w - dw) / 2, y + (ih - dh), x + (w + dw) / 2, y + ih), Paint(Paint.FILTER_BITMAP_FLAG))
+        canvas.drawLine(x, y + ih + mm(0.5f), x + w, y + ih + mm(0.5f), stroke(ink, mm(0.25f)))
+        draw(label, x, y + ih + mm(1.5f))
+        capL?.let { draw(it, x, y + ih + mm(1.5f) + label.height) }
+        y += h
+    }
+
     private fun footer() {
         val s = layout("MORAS WOOD INDUSTRIES", tp(8.5f, true), contentW / 2)
-        val r = layout("Digital copy - no signature required.", tp(8f), contentW / 2, Layout.Alignment.ALIGN_OPPOSITE)
+        // V10.1 text when unsigned; a signed copy must not claim "no signature required" (Feature Q assumption).
+        val r = layout(if (sigBitmap != null) "Signed by client." else "Digital copy - no signature required.", tp(8f), contentW / 2, Layout.Alignment.ALIGN_OPPOSITE)
         val h = maxOf(s.height, r.height).toFloat()
         y += mm(4.5f)
         ensure(h)

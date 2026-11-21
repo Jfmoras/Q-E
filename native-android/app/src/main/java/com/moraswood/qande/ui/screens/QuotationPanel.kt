@@ -103,6 +103,9 @@ data class QuotationActions(
     val onSaveAsClient: () -> String = { "" },
     /** Feature P: delivery date (ISO yyyy-MM-dd, null clears). */
     val onDeliveryDate: (String?) -> Unit = {},
+    /** Feature Q: client signature pad (base64 PNG, signer) / clear. */
+    val onSaveSignature: (String, String) -> Unit = { _, _ -> },
+    val onClearSignature: () -> Unit = {},
     /** Feature G: show each line's area on the print. */
     val onPrintArea: (Boolean) -> Unit = {},
     /** Feature J: group quotation lines by category on print. */
@@ -122,6 +125,7 @@ fun QuotationPanel(
     aiBusy: Set<Int>,
     actions: QuotationActions,
     clients: List<com.moraswood.qande.data.ClientEntity> = emptyList(),
+    signature: com.moraswood.qande.data.SignatureEntity? = null,
 ) {
     val scope = rememberCoroutineScope()
     var alert by remember { mutableStateOf<String?>(null) }
@@ -187,6 +191,7 @@ fun QuotationPanel(
             }
             if (clientStatus.isNotEmpty()) Text(clientStatus, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
             DeliveryDateRow(state.deliveryDate, actions.onDeliveryDate)
+            SignatureRow(signature, state.customer.name, actions.onSaveSignature, actions.onClearSignature)
             // .customer-grid
             if (wide) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QeTextField(state.customer.name, actions.onCustomerName, Modifier.weight(1f), placeholder = "Customer name")
