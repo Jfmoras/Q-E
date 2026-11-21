@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -73,7 +74,9 @@ enum class OpsTab(val id: String, val label: String, val heading: String, val mi
     Projects("projects", "Projects", "Projects & Payments", "Projects/payments"),
     Inventory("inventory", "Expenses & Inventory", "Expenses & Inventory", "Projects/payments"),
     Machines("machines", "Machines & Tools", "Machines & Tools", "Machines"),
-    Reports("reports", "Monthly Reports", "Monthly Summary", "Machines");
+    Reports("reports", "Monthly Reports", "Monthly Summary", "Machines"),
+    /** Native addition (Feature C): asset registry with append-only issue / return history. */
+    Assets("assets", "Assets", "Assets", "Machines");
 }
 
 private val OpsLine = Color(0xFF465154)
@@ -98,18 +101,18 @@ fun OperationsTopBar(onHome: () -> Unit) {
 
 /** `.card` (operations.html dark override): #292f32, 1px #465154, radius 16, padding 15, margin 12 0. */
 @Composable
-private fun OpsCard(modifier: Modifier = Modifier, padding: Dp = 15.dp, content: @Composable ColumnScope.() -> Unit) {
+internal fun OpsCard(modifier: Modifier = Modifier, padding: Dp = 15.dp, content: @Composable ColumnScope.() -> Unit) {
     val shape = RoundedCornerShape(16.dp)
     Column(modifier.padding(vertical = 12.dp).fillMaxWidth().clip(shape).background(QeColors.Card).border(1.dp, OpsLine, shape).padding(padding), content = content)
 }
 
-@Composable private fun H2(text: String) = Text(text, color = QeColors.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp, modifier = Modifier.padding(top = 10.dp, bottom = 8.dp))
-@Composable private fun H3(text: String) = Text(text, color = QeColors.Text, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp, bottom = 10.dp))
-@Composable private fun Small(text: String, modifier: Modifier = Modifier) = Text(text, color = QeColors.OpsMuted, fontSize = 13.sp, modifier = modifier)
+@Composable internal fun H2(text: String) = Text(text, color = QeColors.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp, modifier = Modifier.padding(top = 10.dp, bottom = 8.dp))
+@Composable internal fun H3(text: String) = Text(text, color = QeColors.Text, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp, bottom = 10.dp))
+@Composable internal fun Small(text: String, modifier: Modifier = Modifier) = Text(text, color = QeColors.OpsMuted, fontSize = 13.sp, modifier = modifier)
 
 /** `<label>Label<input></label>`: 13px label, input with margin 4px 0 10px. */
 @Composable
-private fun OpsLabel(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun OpsLabel(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier) {
         Text(label, color = QeColors.Text, fontSize = 13.sp)
         Box(Modifier.padding(top = 4.dp, bottom = 10.dp)) { content() }
@@ -118,7 +121,7 @@ private fun OpsLabel(label: String, modifier: Modifier = Modifier, content: @Com
 
 /** `.grid`: repeat(auto-fit, minmax(160px, 1fr)), gap 10. */
 @Composable
-private fun OpsGrid(cells: List<@Composable (Modifier) -> Unit>) {
+internal fun OpsGrid(cells: List<@Composable (Modifier) -> Unit>) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val cols = maxOf(1, ((maxWidth.value + 10) / 170).toInt()).coerceAtMost(cells.size)
         Column {
@@ -134,7 +137,7 @@ private fun OpsGrid(cells: List<@Composable (Modifier) -> Unit>) {
 
 /** `<details><summary>`: tap to toggle, default ▸ / ▾ marker. */
 @Composable
-private fun Details(summary: String, content: @Composable ColumnScope.() -> Unit) {
+internal fun Details(summary: String, content: @Composable ColumnScope.() -> Unit) {
     var open by rememberSaveable(summary) { mutableStateOf(false) }
     Column(Modifier.padding(vertical = 8.dp)) {
         Text((if (open) "▾ " else "▸ ") + summary, color = QeColors.Text, modifier = Modifier.clickable { open = !open }.padding(vertical = 4.dp))
@@ -157,11 +160,25 @@ private fun ChangeOnBlurTextArea(value: String, placeholder: String, minLines: I
     )
 }
 
+/** Single-line `<input>` whose `change` (blur) event commits the value. */
+@Composable
+internal fun ChangeOnBlurField(value: String, modifier: Modifier = Modifier, onCommit: (String) -> Unit) {
+    var text by remember(value) { mutableStateOf(value) }
+    var focused by remember { mutableStateOf(false) }
+    QeTextField(
+        text, { text = it },
+        modifier.onFocusChanged {
+            if (focused && !it.isFocused && text != value) onCommit(text)
+            focused = it.isFocused
+        },
+    )
+}
+
 /* ---------- screen ---------- */
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun OperationsScreen(tab: OpsTab, onTab: (OpsTab) -> Unit, ovm: OperationsViewModel) {
+fun OperationsScreen(tab: OpsTab, onTab: (OpsTab) -> Unit, ovm: OperationsViewModel, avm: com.moraswood.qande.assets.AssetsViewModel) {
     val message by ovm.message.collectAsState()
     val viewer by ovm.viewer.collectAsState()
     val scroll = rememberScrollState()
@@ -172,17 +189,16 @@ fun OperationsScreen(tab: OpsTab, onTab: (OpsTab) -> Unit, ovm: OperationsViewMo
     ) {
         Column(Modifier.widthIn(max = 900.dp).fillMaxWidth()) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                OpsTab.entries.forEach { t -> QeSecondaryButton(t.label, onClick = { onTab(t); ovm.onTab() }) }
+                OpsTab.entries.forEach { t -> QeSecondaryButton(t.label, onClick = { onTab(t); ovm.onTab(); avm.msg("") }) }
             }
             Text(message, color = QeColors.Text, modifier = Modifier.padding(vertical = 12.dp))
             viewer?.let { AttachmentViewer(it, ovm) }
             when (tab) {
                 OpsTab.Projects -> ProjectsSection(ovm)
                 OpsTab.Inventory -> InventorySection(ovm)
-                else -> {
-                    H2(tab.heading)
-                    PortPendingCard(tab.milestone)
-                }
+                OpsTab.Machines -> MachinesSection(ovm)
+                OpsTab.Reports -> ReportsSection(ovm)
+                OpsTab.Assets -> AssetsSection(avm)
             }
             Text(
                 "Local-first operations preview. Data is saved on this device and included in Q&E's existing full JSON backup. Worker accounts, cloud sync, push notifications, camera QR scanning, printable QR stickers and cloud-synced document attachments require later development. Project attachments are stored separately on this device and are NOT included in the JSON backup. Export important files separately before clearing app data or uninstalling.",
@@ -422,5 +438,62 @@ private fun InventorySection(ovm: OperationsViewModel) {
         val lines = QeOps.movementLines(db)
         if (lines.isEmpty()) Text("No transactions.", color = QeColors.Text)
         lines.forEach { Text(it, color = QeColors.Text, modifier = Modifier.padding(vertical = 6.dp)) }
+    }
+}
+
+/** `#machines`: Register machine + machine cards (status select, assigned worker committed on change). */
+@Composable
+private fun MachinesSection(ovm: OperationsViewModel) {
+    val db by ovm.ops.collectAsState()
+    H2("Machines & Tools")
+    var name by rememberSaveable { mutableStateOf("") }
+    var serial by rememberSaveable { mutableStateOf("") }
+    var worker by rememberSaveable { mutableStateOf("") }
+    OpsCard {
+        H3("Register machine")
+        OpsGrid(listOf(
+            { m -> OpsLabel("Name", m) { QeTextField(name, { name = it }, Modifier.fillMaxWidth(), placeholder = "Grinder") } },
+            { m -> OpsLabel("Serial / model", m) { QeTextField(serial, { serial = it }, Modifier.fillMaxWidth()) } },
+            { m -> OpsLabel("Assigned employee", m) { QeTextField(worker, { worker = it }, Modifier.fillMaxWidth()) } },
+        ))
+        Row { QePrimaryButton("Register", onClick = { ovm.addMachine(name, serial, worker) }) }
+    }
+    db.machines.forEach { m ->
+        OpsCard {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(QeOps.machineTitle(m), color = QeColors.Text, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp))
+                Text(m.status, color = QeColors.PillText, fontSize = 12.sp,
+                    modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(QeColors.Pill).padding(horizontal = 8.dp, vertical = 3.dp))
+            }
+            Small(QeOps.machineDetail(m), Modifier.padding(top = 4.dp, bottom = 8.dp))
+            OpsLabel("Status") { QeSelect(m.status, QeOps.MACHINE_STATUSES.map { it to it }, { ovm.changeMachine(m.id, it, null) }, Modifier.fillMaxWidth()) }
+            OpsLabel("Assigned worker") { ChangeOnBlurField(m.worker, Modifier.fillMaxWidth()) { ovm.changeMachine(m.id, null, it) } }
+            Small(QeOps.machineLookup(m))
+        }
+    }
+}
+
+/** `#reports`: Monthly Summary for `#reportMonth` (type=month → YYYY-MM field with previous / next month). */
+@Composable
+private fun ReportsSection(ovm: OperationsViewModel) {
+    val db by ovm.ops.collectAsState()
+    val month by ovm.reportMonth.collectAsState()
+    H2("Monthly Summary")
+    OpsCard {
+        OpsLabel("Month") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                fun shift(d: Long) = runCatching { java.time.YearMonth.parse(month).plusMonths(d).toString() }.getOrDefault(month)
+                QeSecondaryButton("‹", onClick = { ovm.setReportMonth(shift(-1)) })
+                QeTextField(month, { ovm.setReportMonth(it) }, Modifier.width(140.dp), placeholder = "YYYY-MM")
+                QeSecondaryButton("›", onClick = { ovm.setReportMonth(shift(1)) })
+            }
+        }
+        QeOps.reportLines(ovm.reportFor(db, month)).forEach { (label, value) ->
+            Text(androidx.compose.ui.text.buildAnnotatedString {
+                append(label)
+                pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)); append(value); pop()
+            }, color = QeColors.Text, modifier = Modifier.padding(vertical = 6.dp))
+        }
+        Small(QeOps.REPORT_NOTE)
     }
 }

@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.moraswood.qande.data.KeyValueEntity
 import com.moraswood.qande.data.OpsAttachmentEntity
 import com.moraswood.qande.data.OpsAuditEntity
@@ -17,7 +18,11 @@ import com.moraswood.qande.data.StorageKeys
 import com.moraswood.qande.data.WorkspaceState
 import com.moraswood.qande.logic.OpsDb
 import com.moraswood.qande.logic.OpsEntry
+import com.moraswood.qande.logic.OpsMachine
+import com.moraswood.qande.logic.OpsMachineEvent
 import com.moraswood.qande.logic.OpsMaterial
+import com.moraswood.qande.data.OpsMachineEntity
+import com.moraswood.qande.data.OpsMachineHistoryEntity
 import com.moraswood.qande.logic.OpsMovement
 import com.moraswood.qande.logic.OpsProject
 import com.moraswood.qande.logic.OpsProjectForm
@@ -49,13 +54,19 @@ class OperationsViewModel(app: Application) : AndroidViewModel(app) {
     private val ctx get() = getApplication<Application>()
 
     /** `db` (projects/materials/movements) rebuilt from Room. */
-    val ops: StateFlow<OpsDb> = combine(dao.observeProjects(), dao.observeEntries(), dao.observeMaterials(), dao.observeMovements()) { ps, es, ms, mv ->
+    private val machinesFlow = combine(dao.observeMachines(), dao.observeMachineHistory()) { ms, hs ->
+        val byMachine = hs.groupBy { it.machineId }
+        ms.map { m -> OpsMachine(m.id, m.name, m.serial, m.worker, m.status, byMachine[m.id].orEmpty().map { OpsMachineEvent(it.at, it.status, it.worker) }) }
+    }
+
+    val ops: StateFlow<OpsDb> = combine(dao.observeProjects(), dao.observeEntries(), dao.observeMaterials(), dao.observeMovements(), machinesFlow) { ps, es, ms, mv, mc ->
         val byProject = es.groupBy { it.projectId }
         fun list(id: String, kind: String) = byProject[id].orEmpty().filter { it.kind == kind }.map { OpsEntry(it.amount, it.note, it.at) }
         OpsDb(
             projects = ps.map { p -> OpsProject(p.id, p.name, p.customer, p.original, p.status, list(p.id, "payment"), list(p.id, "revision"), list(p.id, "expense"), p.notes, p.created) },
             materials = ms.map { OpsMaterial(it.id, it.name, it.unit, it.category, it.rate, it.min) },
             movements = mv.map { OpsMovement(it.id, it.materialId, it.qty, it.type, it.worker, it.projectId, it.rate, it.at) },
+            machines = mc,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, OpsDb())
 
@@ -90,6 +101,7 @@ class OperationsViewModel(app: Application) : AndroidViewModel(app) {
     /** operations.html is a fresh page load on every visit: empty message and form, no preview. */
     fun resetPage() {
         _message.value = ""; _form.value = OpsProjectForm(); _formFiles.value = emptyList(); _pendingPhotos.value = emptyList(); _viewer.value = null
+        _reportMonth.value = java.time.Instant.now().toString().take(7)
     }
 
     /** nav `[data-tab]` click: msg(""). */
@@ -255,4 +267,36 @@ class OperationsViewModel(app: Application) : AndroidViewModel(app) {
             msg(out.message)
         }
     }
+
+    /* ---------- Machines & Tools ---------- */
+    /** `#addMachine` */
+    fun addMachine(name: String, serial: String, worker: String) {
+        viewModelScope.launch {
+            val out = QeOps.addMachine(ops.value, name, serial, worker)
+            out.db?.machines?.last()?.let { m -> dao.addMachine(OpsMachineEntity(m.id, m.name, m.serial, m.worker, m.status, ops.value.machines.size)) }
+            msg(out.message)
+        }
+    }
+
+    /** `[data-machine]` / `[data-worker]` change (no #message in V10.1). */
+    fun changeMachine(id: String, status: String?, worker: String?) {
+        viewModelScope.launch {
+            val next = QeOps.changeMachine(ops.value, id, status, worker, now()) ?: return@launch
+            val m = next.machines.first { it.id == id }
+            val h = m.history.last()
+            db.runInTransactionCompat {
+                dao.updateMachine(m.id, m.status, m.worker)
+                dao.addMachineHistory(OpsMachineHistoryEntity(machineId = m.id, at = h.at, status = h.status, worker = h.worker))
+            }
+        }
+    }
+
+    /* ---------- Monthly Reports ---------- */
+    private val _reportMonth = MutableStateFlow(java.time.Instant.now().toString().take(7))
+    /** `#reportMonth` (yyyy-MM; defaults to the current UTC month like `today().slice(0,7)`). */
+    val reportMonth: StateFlow<String> = _reportMonth.asStateFlow()
+    fun setReportMonth(m: String) { _reportMonth.value = m }
+    fun reportFor(db: OpsDb, month: String) = QeOps.report(db, month.ifEmpty { java.time.Instant.now().toString().take(7) })
 }
+
+private suspend fun QeDatabase.runInTransactionCompat(block: suspend () -> Unit) = withTransaction { block() }

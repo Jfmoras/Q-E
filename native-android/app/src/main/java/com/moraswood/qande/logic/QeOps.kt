@@ -28,11 +28,23 @@ data class OpsMovement(
     val projectId: String = "", val rate: Double = 0.0, val at: String = "",
 )
 
-/** The parts of `mwi-operations-v1` that milestone 5 works on (machines are milestone 6). */
+/** machine `history[]` entry `{at,status,worker}`. */
+@Serializable
+data class OpsMachineEvent(val at: String = "", val status: String = "", val worker: String = "")
+
+/** operations.js machine record. */
+@Serializable
+data class OpsMachine(
+    val id: String = "", val name: String = "", val serial: String = "", val worker: String = "", val status: String = "Available",
+    val history: List<OpsMachineEvent> = emptyList(),
+)
+
+/** `mwi-operations-v1` (audit lives in its own table). */
 data class OpsDb(
     val projects: List<OpsProject> = emptyList(),
     val materials: List<OpsMaterial> = emptyList(),
     val movements: List<OpsMovement> = emptyList(),
+    val machines: List<OpsMachine> = emptyList(),
 )
 
 /** Create-project form (`#pCustomer`, `#pName`, `#pValue`, `#pPaid`, `#pNotes`). */
@@ -195,4 +207,49 @@ object QeOps {
         shortAt(m.at) + " · " + m.type + " · " + (db.materials.firstOrNull { it.id == m.materialId }?.name ?: "Unknown") + " · " +
             jsString(m.qty) + " · " + m.worker.ifEmpty { "Owner" } + " · " + (db.projects.firstOrNull { it.id == m.projectId }?.name ?: "No project")
     }
+
+    /* ---------- Machines & Tools ---------- */
+    val MACHINE_STATUSES = listOf("Available", "Assigned", "In Use", "Under Repair", "Needs Maintenance", "Missing", "Retired")
+
+    /** `#addMachine`: name is trimmed, serial / worker are stored as typed. */
+    fun addMachine(db: OpsDb, name0: String, serial: String, worker: String): Outcome {
+        val name = name0.trim()
+        if (name.isEmpty()) return Outcome(null, "Enter machine name.")
+        val id = "MWI-" + (db.machines.size + 1).toString().padStart(4, '0')
+        return Outcome(db.copy(machines = db.machines + OpsMachine(id, name, serial, worker, "Available")), "Machine registered: $id")
+    }
+
+    /** `[data-machine]` / `[data-worker]` change: set status or worker, then push `{at,status,worker}` (no message). */
+    fun changeMachine(db: OpsDb, id: String, status: String?, worker: String?, now: String): OpsDb? {
+        val m = db.machines.firstOrNull { it.id == id } ?: return null
+        val c = if (status != null) m.copy(status = status) else m.copy(worker = worker ?: m.worker)
+        val n = c.copy(history = c.history + OpsMachineEvent(now, c.status, c.worker))
+        return db.copy(machines = db.machines.map { if (it.id == id) n else it })
+    }
+
+    /** Machine card: "<id> · <name>", "Serial: <serial> · Assigned: <worker||None>", lookup note. */
+    fun machineTitle(m: OpsMachine) = m.id + " · " + m.name
+    fun machineDetail(m: OpsMachine) = "Serial: " + m.serial + " · Assigned: " + m.worker.ifEmpty { "None" }
+    fun machineLookup(m: OpsMachine) = "Machine ID for manual lookup or future QR labels: " + m.id
+
+    /* ---------- Monthly Reports ---------- */
+    data class Report(val receipts: Double, val purchases: Double, val used: Double, val other: Double)
+
+    /** `report()`: month = `#reportMonth` value (yyyy-MM) or the current UTC month; records match by `at.startsWith(month)`. */
+    fun report(db: OpsDb, month: String): Report {
+        val pays = db.projects.flatMap { it.payments }.filter { it.at.startsWith(month) }.fold(0.0) { s, x -> s + x.amount }
+        val purchases = db.movements.filter { it.at.startsWith(month) && it.type == "purchase" }.fold(0.0) { s, x -> s + x.qty * x.rate }
+        val used = db.movements.filter { it.at.startsWith(month) && it.type == "issue" }.fold(0.0) { s, x -> s + x.qty * x.rate }
+        val other = db.projects.flatMap { it.expenses }.filter { it.at.startsWith(month) }.fold(0.0) { s, x -> s + x.amount }
+        return Report(pays, purchases, used, other)
+    }
+
+    /** `#reportBody` lines. */
+    fun reportLines(r: Report) = listOf(
+        "Customer receipts: " to fmt(r.receipts),
+        "Inventory purchases: " to fmt(r.purchases),
+        "Material issued (cost): " to fmt(r.used),
+        "Other recorded expenses: " to fmt(r.other),
+    )
+    const val REPORT_NOTE = "Purchases and material consumption are separate measures, not additive project expenses."
 }

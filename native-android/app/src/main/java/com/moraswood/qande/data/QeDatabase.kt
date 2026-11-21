@@ -103,8 +103,13 @@ interface OperationsDao {
     fun observeMachines(): Flow<List<OpsMachineEntity>>
     @Query("SELECT * FROM ops_machines ORDER BY position")
     suspend fun machines(): List<OpsMachineEntity>
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun putMachine(machine: OpsMachineEntity)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun addMachine(machine: OpsMachineEntity)
+    /** UPDATE, never REPLACE: a REPLACE would delete the row and cascade away its history. */
+    @Query("UPDATE ops_machines SET status = :status, worker = :worker WHERE id = :id")
+    suspend fun updateMachine(id: String, status: String, worker: String)
+    @Query("SELECT * FROM ops_machine_history ORDER BY rowId")
+    fun observeMachineHistory(): Flow<List<OpsMachineHistoryEntity>>
     @Query("SELECT * FROM ops_machine_history ORDER BY rowId")
     suspend fun machineHistory(): List<OpsMachineHistoryEntity>
     @Insert
@@ -130,8 +135,9 @@ interface OperationsDao {
         OpsMaterialEntity::class, OpsMovementEntity::class, OpsMachineEntity::class,
         OpsMachineHistoryEntity::class, OpsAuditEntity::class,
         JobComponentLogEntity::class, TemplateEntity::class, TemplateRowEntity::class, ItemPhotoEntity::class,
+        AssetEntity::class, AssetIssueEntity::class, AssetReturnEntity::class, AssetCorrectionEntity::class, AssetDecisionEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class QeDatabase : RoomDatabase() {
@@ -141,12 +147,17 @@ abstract class QeDatabase : RoomDatabase() {
     abstract fun operations(): OperationsDao
     abstract fun templates(): TemplateDao
     abstract fun itemPhotos(): ItemPhotoDao
+    abstract fun assets(): AssetDao
 
     companion object {
         @Volatile private var instance: QeDatabase? = null
         fun get(context: Context): QeDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, QeDatabase::class.java, "mwi-qe.db")
-                .addMigrations(QeMigrations.MIGRATION_1_2)
+                .addMigrations(QeMigrations.MIGRATION_1_2, QeMigrations.MIGRATION_2_3)
+                .addCallback(object : RoomDatabase.Callback() {
+                    // Fresh installs get the append-only triggers too (IF NOT EXISTS: also self-heals).
+                    override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) { QeMigrations.ASSET_TRIGGERS.forEach(db::execSQL) }
+                })
                 .build().also { instance = it }
         }
     }
