@@ -34,6 +34,8 @@ import com.moraswood.qande.ui.screens.HomeScreen
 import com.moraswood.qande.ui.screens.HoppusScreen
 import com.moraswood.qande.ui.screens.NotesScreen
 import com.moraswood.qande.ui.screens.OperationsScreen
+import com.moraswood.qande.ops.OperationsViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moraswood.qande.ui.screens.OperationsTopBar
 import com.moraswood.qande.ui.screens.OpsTab
 import com.moraswood.qande.ui.screens.QuickCalcScreen
@@ -82,6 +84,7 @@ fun QeApp(vm: AppViewModel) {
     val aiBusy by vm.aiBusy.collectAsState()
     val context = LocalContext.current
     var opsTab by rememberSaveable { mutableStateOf(OpsTab.Projects) }
+    val ovm: OperationsViewModel = viewModel()
     val quick by vm.quick.collectAsState()
     val hoppus by vm.hoppus.collectAsState()
     val templates by vm.templates.collectAsState()
@@ -123,7 +126,7 @@ fun QeApp(vm: AppViewModel) {
                     onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },
                     onCloseSaved = { savedPanelOpen = false },
-                    onOperations = { nav.openView(Routes.OPERATIONS) },
+                    onOperations = { opsTab = OpsTab.Projects; ovm.resetPage(); nav.openView(Routes.OPERATIONS) },
                     onNotes = { nav.openView(Routes.NOTES) },
                     onQuickCalc = { nav.openView(Routes.QUICK) },
                     onSettings = { nav.openView(Routes.SETTINGS) },
@@ -196,7 +199,7 @@ fun QeApp(vm: AppViewModel) {
                                     onPrint = { QuotePrint.print(context, vm.workspace.value) },
                                     onExport = {
                                         val err = vm.exportToProjects()
-                                        if (err == null) { opsTab = OpsTab.Projects; nav.openView(Routes.OPERATIONS) }
+                                        if (err == null) { opsTab = OpsTab.Projects; ovm.resetPage(); ovm.consumePendingImport(); nav.openView(Routes.OPERATIONS) }
                                         err
                                     },
                                     onCustomerName = vm::setCustomerName,
@@ -241,7 +244,7 @@ fun QeApp(vm: AppViewModel) {
                 HoppusScreen(hoppus, remember(vm) { HoppusActions(vm::setHoppusField, vm::addHoppusLog, vm::removeHoppusLog, vm::setSawRate) })
             }
             composable(Routes.SETTINGS) { SettingsScreen(templates, vm::deleteTemplate) }
-            composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, message = "") }
+            composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, ovm) }
         }
     }
 }

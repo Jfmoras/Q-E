@@ -644,11 +644,23 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 put("items", JsonArray(q.items.map { buildJsonObject { put("description", it.description); put("unit", it.unit); put("qty", it.qty); put("unitPrice", it.unitPrice) } }))
                 put("option", q.name); put("discountType", q.discountType); put("discountValue", q.discountValue); put("gstPercent", q.gstPercent)
             })
+            // Feature A (native addition, ignored by V10.1): item photos travel with the quotation into the project.
+            put("photos", JsonArray(exportPhotos(s).map { (label, file) -> buildJsonObject { put("label", label); put("file", file) } }))
         }
         db.keyValues().put(KeyValueEntity(StorageKeys.PROJECT_IMPORT_PENDING, payload.toString()))
         null
     } catch (e: Exception) {
         "Could not export quotation: " + e.message
+    }
+
+    /** Photos of the estimation items (falling back to calculator items not sent to estimation), labelled by item name. */
+    private fun exportPhotos(s: WorkspaceState): List<Pair<String, String>> {
+        val out = LinkedHashMap<String, String>()
+        fun add(items: List<CalcItem>) = items.forEachIndexed { i, it ->
+            if (it.photo.isNotEmpty() && it.photo !in out) out[it.photo] = it.name.trim().ifEmpty { "Item " + (i + 1) }
+        }
+        add(s.estimationItems); add(s.items)
+        return out.map { (file, label) -> label to file }
     }
 
     /* ---------- Job Review ---------- */
@@ -671,6 +683,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val rootId = s0.projectId.ifEmpty { uid() }
         val s = s0.copy(projectName = name, projectId = rootId)
         update { s }
+        // Template library: session logs now belong to the saved project id.
+        val session = _sessionKey.value
+        logJob?.cancel(); logJob = null
+        viewModelScope.launch {
+            runCatching { if (session.isNotEmpty() && session != rootId) db.templates().rekeyLogs(session, rootId) }
+            writeLogs(_workspace.value)
+        }
         val now = jsIsoNow()
         viewModelScope.launch {
             try {
@@ -695,6 +714,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         logJob?.let { it.cancel(); flushLogs(_workspace.value) }
         _dismissed.value = emptySet(); _templateStatus.value = emptyMap(); _estStatus.value = emptyMap(); _aiStatus.value = emptyMap()
         update { snap.copy(projectId = x.rootId.ifEmpty { x.id }, revision = revision) }
+        // A loaded project logs under its own id; unsaved work after this starts a fresh session.
+        viewModelScope.launch { _sessionKey.value = newSessionKey() }
         loadedReadOnly = readOnly
         return true
     }
