@@ -124,6 +124,8 @@ fun QeApp(vm: AppViewModel) {
                     onViewProject = { id -> if (vm.viewSavedProject(id)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
                     onReviseProject = { id -> if (vm.reviseSavedProject(id)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
                     onDeleteProject = vm::deleteSavedProject,
+                    onOpenLatest = { root -> if (vm.openLatestRevision(root)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
+                    onPrintRevision = { id -> vm.savedSnapshot(id)?.let { QuotePrint.print(context, it) } },
                     onHoppus = { nav.openView(Routes.HOPPUS) },
                     onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },

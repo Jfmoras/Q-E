@@ -61,6 +61,8 @@ fun HomeScreen(
     onQuickCalc: () -> Unit,
     onSettings: () -> Unit,
     onContinue: () -> Unit,
+    onOpenLatest: (String) -> Unit = {},
+    onPrintRevision: (String) -> Unit = {},
 ) {
     val actions = buildList {
         add(HomeAction("Hoppus Log Volume", "Quarter-girth log measurement and sawing charges.", onHoppus))
@@ -86,7 +88,7 @@ fun HomeScreen(
                 }
             }
         }
-        if (savedPanelOpen) SavedProjectsPanel(savedProjects, onCloseSaved, onViewProject, onReviseProject, onDeleteProject)
+        if (savedPanelOpen) SavedProjectsPanel(savedProjects, onCloseSaved, onViewProject, onReviseProject, onDeleteProject, onOpenLatest, onPrintRevision)
     }
 }
 
@@ -112,11 +114,16 @@ private fun HomeActionCard(action: HomeAction, glyph: String, modifier: Modifier
 
 private val savedDateFormat = DateTimeFormatter.ofPattern("d/M/yyyy, h:mm:ss a", Locale.forLanguageTag("en-IN"))
 
-/** `#savedProjectsPanel` (renderSavedProjects): View / Print, Revise and Delete per saved revision. */
+/**
+ * `#savedProjectsPanel` (renderSavedProjects), Feature E: one card per job "Name · R{latest}" with a revision picker.
+ * Open = latest revision, editable; View / Print, Print, Revise and Delete act on the picked revision.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun SavedProjectsPanel(
     list: List<SavedProjectEntity>, onClose: () -> Unit,
     onView: (String) -> Unit, onRevise: (String) -> Unit, onDelete: (String) -> Unit,
+    onOpenLatest: (String) -> Unit, onPrint: (String) -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf<String?>(null) }
     QeConfirm(if (confirmDelete != null) "Delete this saved revision?" else null) { ok ->
@@ -135,18 +142,38 @@ private fun SavedProjectsPanel(
         if (list.isEmpty()) {
             Text("No saved projects yet.", color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
         } else {
-            list.forEach { x ->
+            com.moraswood.qande.logic.QeRevisions.jobs(list).forEach { job ->
+                var picked by remember(job.rootId, job.latest.id) { mutableStateOf(job.latest.id) }
+                val x = job.revisions.firstOrNull { it.id == picked } ?: job.latest
+                val isLatest = x.id == job.latest.id
                 Column(
                     Modifier.fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(16.dp))
                         .border(1.dp, QeColors.Line, RoundedCornerShape(16.dp)).background(QeColors.Card).padding(10.dp),
                 ) {
-                    Text("${x.name} · R${x.revision}", color = QeColors.Text, fontWeight = FontWeight.Bold)
+                    Text(com.moraswood.qande.logic.QeRevisions.label(job.name, job.latest.revision), color = QeColors.Text, fontWeight = FontWeight.Bold)
                     val date = runCatching { savedDateFormat.format(Instant.parse(x.updatedAt).atZone(ZoneId.systemDefault())) }.getOrDefault(x.updatedAt)
-                    Text(date, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
-                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        QeSecondaryButton("View / Print", onClick = { onView(x.id) })
-                        QePrimaryButton("Revise", onClick = { onRevise(x.id) })
-                        QeDangerButton("Delete") { confirmDelete = x.id }
+                    Text(
+                        "R${x.revision}" + (if (isLatest) " (latest)" else " (read-only)") + (x.basedOn?.let { " · from R$it" } ?: "") + " · " + date,
+                        color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp),
+                    )
+                    if (job.revisions.size > 1) androidx.compose.foundation.layout.FlowRow(
+                        Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        job.revisions.forEach { r ->
+                            val on = r.id == x.id
+                            Text(
+                                "R${r.revision}", color = if (on) QeColors.OnAccent else QeColors.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(if (on) QeColors.Accent else QeColors.SecondaryBg)
+                                    .clickable { picked = r.id }.padding(horizontal = 10.dp, vertical = 5.dp),
+                            )
+                        }
+                    }
+                    androidx.compose.foundation.layout.FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        QePrimaryButton("Open R${job.latest.revision}", onClick = { onOpenLatest(job.rootId) })
+                        QeSecondaryButton("View / Print R${x.revision}", onClick = { onView(x.id) })
+                        QeSecondaryButton("Print R${x.revision}", onClick = { onPrint(x.id) })
+                        QeSecondaryButton("Revise from R${x.revision}", onClick = { onRevise(x.id) })
+                        QeDangerButton("Delete R${x.revision}") { confirmDelete = x.id }
                     }
                 }
             }

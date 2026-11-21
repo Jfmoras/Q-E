@@ -28,6 +28,7 @@ import com.moraswood.qande.logic.QeMath
 import com.moraswood.qande.logic.QeMath.hasData
 import com.moraswood.qande.logic.QeQuote
 import com.moraswood.qande.logic.QeSpecies
+import com.moraswood.qande.logic.QeRevisions
 import com.moraswood.qande.ai.AiService
 import com.moraswood.qande.photos.QuoteImages
 import kotlinx.serialization.json.JsonArray
@@ -755,23 +756,28 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             writeLogs(_workspace.value)
         }
         val now = jsIsoNow()
+        val basedOn = basedOnRevision
         viewModelScope.launch {
             try {
+                // Feature E: R0 on the first save, then every save appends R(latest + 1); nothing is overwritten.
                 val dao = db.savedProjects()
                 val list = dao.all()
-                val existing = list.indexOfFirst { it.rootId.ifEmpty { it.id } == rootId && it.revision == s.revision }
-                val id = if (existing >= 0) list[existing].id else if (s.revision == 0) rootId else uid()
+                val rev = QeRevisions.nextRevision(list, rootId, s.revision)
+                val id = if (rev == 0 && list.none { it.id == rootId }) rootId else uid()
+                update { it.copy(revision = rev) }
                 val snapshot = QeJson.encodeToString(WorkspaceState.serializer(), _workspace.value)
-                val record = SavedProjectEntity(id, rootId, s.revision, name, now, snapshot, 0)
-                val next = if (existing >= 0) list.toMutableList().also { it[existing] = record } else listOf(record) + list
-                dao.replaceAll(next.mapIndexed { i, r -> r.copy(position = i) })
+                dao.insert(SavedProjectEntity(id, rootId, rev, name, now, snapshot, dao.minPosition() - 1, basedOn?.takeIf { it != rev }))
                 if (dao.all().none { it.id == id && it.snapshotJson.isNotEmpty() }) error("Save verification failed")
-                _projectStatus.value = "Saved $name · R${s.revision} on this device."
+                basedOnRevision = rev
+                _projectStatus.value = "Saved $name · R$rev on this device."
             } catch (e: Exception) {
                 _projectStatus.value = "Could not save project. Try fewer/lower-resolution images."
             }
         }
     }
+
+    /** Feature E: revision the workspace was loaded from / last saved as (the next save records it as `basedOn`). */
+    private var basedOnRevision: Int? = null
 
     private fun loadSnapshot(x: SavedProjectEntity, revision: Int, readOnly: Boolean): Boolean {
         val snap = runCatching { QeJson.decodeFromString(WorkspaceState.serializer(), x.snapshotJson).normalizeUnits() }.getOrNull() ?: return false
@@ -781,14 +787,32 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         // A loaded project logs under its own id; unsaved work after this starts a fresh session.
         viewModelScope.launch { _sessionKey.value = newSessionKey() }
         loadedReadOnly = readOnly
+        basedOnRevision = x.revision
         return true
+    }
+
+    /** Feature E: opening a job loads its latest revision, editable. */
+    fun openLatestRevision(rootId: String): Boolean {
+        val job = QeRevisions.jobs(savedProjects.value).firstOrNull { it.rootId == rootId } ?: return false
+        val x = job.latest
+        if (!loadSnapshot(x, x.revision, readOnly = false)) return false
+        _projectStatus.value = "Editing ${QeRevisions.label(x.name, x.revision)} (latest). Saving creates R${x.revision + 1}."
+        return true
+    }
+
+    /** Snapshot of a saved revision for printing without loading it. */
+    fun savedSnapshot(id: String): WorkspaceState? = savedProjects.value.firstOrNull { it.id == id }?.let { x ->
+        runCatching { QeJson.decodeFromString(WorkspaceState.serializer(), x.snapshotJson).normalizeUnits().copy(projectId = QeRevisions.root(x), revision = x.revision) }.getOrNull()
     }
 
     /** `.load-project` (View / Print). Returns true when the workspace should open. */
     fun viewSavedProject(id: String): Boolean {
         val x = savedProjects.value.firstOrNull { it.id == id } ?: return false
+        val latest = QeRevisions.isLatest(savedProjects.value, x)
+        // Feature E: only the latest revision is editable; older ones stay read-only (V10.1 View / Print was always read-only).
         if (!loadSnapshot(x, x.revision, readOnly = true)) return false
-        _projectStatus.value = "Viewing R${x.revision}. Use Revise to make changes without altering this revision."
+        _projectStatus.value = "Viewing R${x.revision}. Use Revise to make changes without altering this revision." +
+            (if (latest) "" else " Only the latest revision can be edited.")
         return true
     }
 
@@ -807,8 +831,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun deleteSavedProject(id: String) {
         viewModelScope.launch {
             val dao = db.savedProjects()
-            dao.replaceAll(dao.all().filter { it.id != id }.mapIndexed { i, r -> r.copy(position = i) })
+            val all = dao.all()
+            val gone = all.firstOrNull { it.id == id } ?: return@launch
+            dao.deleteById(id)
             _projectStatus.value = "Saved revision deleted."
+            // Feature E: revisions share photo files by path; delete only files nothing else references.
+            val assetPhotos = runCatching { db.assets().assets().mapNotNull { it.photoFile }.toSet() }.getOrDefault(emptySet())
+            QeRevisions.orphanedPhotos(gone, all, _workspace.value, assetPhotos).forEach { ItemPhotos.delete(getApplication(), db, it) }
         }
     }
 
