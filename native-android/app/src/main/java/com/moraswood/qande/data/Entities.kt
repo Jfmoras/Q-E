@@ -1,0 +1,151 @@
+package com.moraswood.qande.data
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+
+/*
+ * Room tables mirroring the V10.1 localStorage / IndexedDB shapes (V10.1-inventory.md §3).
+ * - Workspace documents (autosave, quick calculator, hoppus) are kept as their exact V10.1 JSON
+ *   in [KeyValueEntity] so a V10.1 backup round-trips byte-for-byte compatible.
+ * - Saved project revisions, saved notes and all Operations data are relational.
+ */
+
+/** `mwi-autosave-v1`, `mwi-quick-calc-v1`, `mwi-hoppus-v1`, `mwi-ai-settings-v1` (without key) ... */
+@Entity(tableName = "kv_store")
+data class KeyValueEntity(
+    @PrimaryKey val key: String,
+    val json: String,
+)
+
+/** One element of `mwi-projects-v1`: `{id, rootId, revision, name, updatedAt, snapshot}`. */
+@Entity(tableName = "saved_projects", indices = [Index("rootId")])
+data class SavedProjectEntity(
+    @PrimaryKey val id: String,
+    val rootId: String,
+    val revision: Int,
+    val name: String,
+    val updatedAt: String,
+    /** WorkspaceState JSON exactly as V10.1 stored it. */
+    val snapshotJson: String,
+    /** Order in the V10.1 array (0 = newest, list.unshift). */
+    val position: Int,
+)
+
+/** `mwi-saved-notes-v1` array element. */
+@Entity(tableName = "saved_notes")
+data class SavedNoteEntity(
+    @PrimaryKey(autoGenerate = true) val rowId: Long = 0,
+    val position: Int,
+    val text: String,
+)
+
+/** operations `projects[]` : `{id,name,customer,original,status,notes,created}`. */
+@Entity(tableName = "ops_projects")
+data class OpsProjectEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val customer: String,
+    val original: Double,
+    val status: String = "Saved",
+    val notes: String = "",
+    val created: String,
+    val position: Int,
+)
+
+/** `payments[]`, `revisions[]`, `expenses[]` of an operations project: `{amount,note,at}`. */
+@Entity(
+    tableName = "ops_project_entries",
+    foreignKeys = [ForeignKey(entity = OpsProjectEntity::class, parentColumns = ["id"], childColumns = ["projectId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("projectId")],
+)
+data class OpsProjectEntryEntity(
+    @PrimaryKey(autoGenerate = true) val rowId: Long = 0,
+    val projectId: String,
+    /** "payment" | "revision" | "expense" */
+    val kind: String,
+    val amount: Double,
+    val note: String,
+    val at: String,
+)
+
+/** IndexedDB `mwi-project-files-v1/files`: `{id,projectId,name,type,size,at,blob}`; blob kept as a private file. */
+@Entity(
+    tableName = "ops_attachments",
+    foreignKeys = [ForeignKey(entity = OpsProjectEntity::class, parentColumns = ["id"], childColumns = ["projectId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("projectId")],
+)
+data class OpsAttachmentEntity(
+    @PrimaryKey val id: String,
+    val projectId: String,
+    val name: String,
+    val type: String,
+    val size: Long,
+    val at: String,
+    /** File name under filesDir/project-attachments/ */
+    val internalFileName: String,
+)
+
+/** operations `materials[]`: `{id,name,unit,category,rate,min}`. */
+@Entity(tableName = "ops_materials")
+data class OpsMaterialEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val unit: String,
+    val category: String,
+    val rate: Double,
+    val min: Double,
+    val position: Int,
+)
+
+/** operations `movements[]`: `{id,materialId,qty,type,worker,projectId,rate,at}` (append-only). */
+@Entity(tableName = "ops_movements", indices = [Index("materialId"), Index("projectId")])
+data class OpsMovementEntity(
+    @PrimaryKey val id: String,
+    val materialId: String,
+    val qty: Double,
+    /** "purchase" | "issue" | "return" */
+    val type: String,
+    val worker: String,
+    val projectId: String,
+    val rate: Double,
+    val at: String,
+    val position: Int,
+)
+
+/** operations `machines[]`: `{id:'MWI-0001',name,serial,worker,status,history}`. */
+@Entity(tableName = "ops_machines")
+data class OpsMachineEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val serial: String,
+    val worker: String,
+    val status: String = "Available",
+    val position: Int,
+)
+
+/** machine `history[]`: `{at,status,worker}`. */
+@Entity(
+    tableName = "ops_machine_history",
+    foreignKeys = [ForeignKey(entity = OpsMachineEntity::class, parentColumns = ["id"], childColumns = ["machineId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("machineId")],
+)
+data class OpsMachineHistoryEntity(
+    @PrimaryKey(autoGenerate = true) val rowId: Long = 0,
+    val machineId: String,
+    val at: String,
+    val status: String,
+    val worker: String,
+)
+
+/** operations `audit[]`: `{at,type,id,value}` or `{at,type,id,name}`. */
+@Entity(tableName = "ops_audit")
+data class OpsAuditEntity(
+    @PrimaryKey(autoGenerate = true) val rowId: Long = 0,
+    val at: String,
+    val type: String,
+    val refId: String,
+    val value: String? = null,
+    val name: String? = null,
+)
