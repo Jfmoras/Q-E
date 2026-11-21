@@ -16,6 +16,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.moraswood.qande.ui.components.QeTextField
+import com.moraswood.qande.ui.components.QePrimaryButton
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -202,11 +207,49 @@ fun HoppusScreen(logs: HoppusState, actions: HoppusActions) = ToolPage {
     }
 }
 
-/** `#notesView` */
+/**
+ * `#notesView` (renderNotesManager). V10.1 showed every note as an editable textarea with Update / Delete;
+ * per Jason each note now reads as text with Edit (Save / Cancel, in place, no history) and Delete (with confirm).
+ */
 @Composable
-fun NotesScreen() = ToolPage(780) {
+fun NotesScreen(vm: com.moraswood.qande.AppViewModel) = ToolPage(780) {
+    val notes by vm.savedNotes.collectAsState()
+    val status by vm.notesManagerStatus.collectAsState()
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) { vm.clearNotesManagerStatus() }
+    var draft by remember { mutableStateOf("") }
+    var editing by remember(notes) { mutableStateOf<Pair<Int, String>?>(null) }
+    var confirm by remember { mutableStateOf<Int?>(null) }
+    QeConfirm(confirm?.let { "Delete this saved note?" }) { ok ->
+        val i = confirm
+        confirm = null
+        if (ok && i != null) vm.deleteSavedNoteFromManager(i)
+    }
     PageHeading("Saved Notes", "Create and manage notes to reuse on quotations.")
-    PortPendingCard("Settings (notes)")
+    QeCard {
+        QeFieldLabel("New note") { QeTextField(draft, { draft = it }, Modifier.fillMaxWidth(), placeholder = "Enter a note to reuse on quotations", singleLine = false, minLines = 3) }
+        Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QePrimaryButton("Save note", onClick = { scope.launch { if (vm.createSavedNote(draft)) draft = "" } })
+            if (status.isNotEmpty()) Text(status, color = QeColors.Muted, fontSize = 14.sp)
+        }
+        Column(Modifier.padding(top = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (notes.isEmpty()) Text("No saved notes yet.", color = QeColors.Muted)
+            notes.forEachIndexed { i, note ->
+                val e = editing
+                if (e != null && e.first == i) {
+                    QeTextField(e.second, { editing = i to it }, Modifier.fillMaxWidth(), singleLine = false, minLines = 2)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        QeSecondaryButton("Save", onClick = { vm.updateSavedNote(i, e.second); if (e.second.isNotBlank()) editing = null })
+                        QeSecondaryButton("Cancel", onClick = { editing = null })
+                    }
+                } else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(note, color = QeColors.Text, modifier = Modifier.weight(1f))
+                    QeSecondaryButton("Edit", onClick = { editing = i to note })
+                    QeDangerButton("Delete", onClick = { confirm = i })
+                }
+            }
+        }
+    }
 }
 
 /** `#settingsView` — the native Templates card is added at the end (least intrusive place). */

@@ -629,6 +629,57 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Native addition: edit a saved note from the Quotation tab (in place, no history). */
+    fun editSavedNote(idx: Int, text0: String) {
+        val text = text0.trim()
+        if (text.isEmpty()) { _noteStatus.value = "A saved note cannot be empty."; return }
+        viewModelScope.launch {
+            val list = db.savedNotes().all().map { it.text }
+            if (idx !in list.indices) return@launch
+            db.savedNotes().replaceAll(list.mapIndexed { j, n -> if (j == idx) text else n })
+            _noteStatus.value = "Saved note updated."
+        }
+    }
+
+    /* Saved Notes screen (`#notesView`, renderNotesManager) */
+    private val _notesManagerStatus = MutableStateFlow("")
+    /** `#notesManagerStatus` */
+    val notesManagerStatus: StateFlow<String> = _notesManagerStatus.asStateFlow()
+    fun clearNotesManagerStatus() { _notesManagerStatus.value = "" }
+
+    /** `#createSavedNote`; returns true when saved (the caller clears `#newSavedNote`). */
+    suspend fun createSavedNote(text0: String): Boolean {
+        val text = text0.trim()
+        if (text.isEmpty()) { _notesManagerStatus.value = "Enter a note before saving."; return false }
+        val list = db.savedNotes().all().map { it.text }
+        if (list.any { it.lowercase() == text.lowercase() }) { _notesManagerStatus.value = "That note is already saved."; return false }
+        return try {
+            db.savedNotes().replaceAll(list + text); _notesManagerStatus.value = "Note saved."; true
+        } catch (e: Exception) { _notesManagerStatus.value = e.message ?: "Could not save the note."; false }
+    }
+
+    /** `.update-saved-note` */
+    fun updateSavedNote(idx: Int, text0: String) {
+        val text = text0.trim()
+        if (text.isEmpty()) { _notesManagerStatus.value = "A saved note cannot be empty."; return }
+        viewModelScope.launch {
+            val list = db.savedNotes().all().map { it.text }
+            if (idx !in list.indices) return@launch
+            db.savedNotes().replaceAll(list.mapIndexed { j, n -> if (j == idx) text else n })
+            _notesManagerStatus.value = "Note updated."
+        }
+    }
+
+    /** `.delete-saved-note` (the native screen asks to confirm first). */
+    fun deleteSavedNoteFromManager(idx: Int) {
+        viewModelScope.launch {
+            val list = db.savedNotes().all().map { it.text }
+            if (idx !in list.indices) return@launch
+            db.savedNotes().replaceAll(list.filterIndexed { j, _ -> j != idx })
+            _notesManagerStatus.value = "Note deleted."
+        }
+    }
+
     /** `#exportToProjects`: stores the pending import for Operations; returns an error alert or null. */
     suspend fun exportToProjects(): String? = try {
         update(QeQuote::syncActiveOption)

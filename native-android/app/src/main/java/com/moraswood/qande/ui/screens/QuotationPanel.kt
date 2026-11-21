@@ -91,6 +91,8 @@ data class QuotationActions(
     val onRemoveNote: (Int) -> Unit,
     val onAddSavedNote: (Int) -> Unit,
     val onDeleteSavedNote: (Int) -> Unit,
+    /** Native addition (Jason): edit a saved note in place. */
+    val onEditSavedNote: (Int, String) -> Unit = { _, _ -> },
 )
 
 private val UnitOptions = listOf("Set", "Piece", "Nos", "Lumpsum", "Sq.ft", "Rft", "Job")
@@ -219,10 +221,21 @@ fun QuotationPanel(
             }
             val addSaved = @Composable { QeSecondaryButton("Add saved note", onClick = { selected?.let(actions.onAddSavedNote) }) }
             val delSaved = @Composable { QeSecondaryButton("Delete saved", onClick = { selected?.let(actions.onDeleteSavedNote) }) }
+            var editing by remember(savedNotes) { mutableStateOf<Pair<Int, String>?>(null) }
+            val editSaved = @Composable { QeSecondaryButton("Edit saved", onClick = { selected?.let { i -> savedNotes.getOrNull(i)?.let { editing = i to it } } }) }
             if (wide) Row(Modifier.padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                selectNote(Modifier.weight(1f)); addSaved(); delSaved()
+                selectNote(Modifier.weight(1f)); addSaved(); editSaved(); delSaved()
             } else Column(Modifier.padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                selectNote(Modifier.fillMaxWidth()); addSaved(); delSaved()
+                selectNote(Modifier.fillMaxWidth()); addSaved(); editSaved(); delSaved()
+            }
+            editing?.let { (idx, text) ->
+                Column(Modifier.padding(bottom = 12.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QeTextField(text, { editing = idx to it }, Modifier.fillMaxWidth(), singleLine = false, minLines = 2)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        QeSecondaryButton("Save", onClick = { actions.onEditSavedNote(idx, text); if (text.isNotBlank()) editing = null })
+                        QeSecondaryButton("Cancel", onClick = { editing = null })
+                    }
+                }
             }
             state.quote.notes.forEachIndexed { i, note ->
                 Row(Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

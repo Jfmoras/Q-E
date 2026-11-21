@@ -226,6 +226,7 @@ fun QeApp(vm: AppViewModel) {
                                     onRemoveNote = vm::removeNote,
                                     onAddSavedNote = vm::addSavedNote,
                                     onDeleteSavedNote = vm::deleteSavedNote,
+                                    onEditSavedNote = vm::editSavedNote,
                                 )
                             },
                         )
@@ -233,7 +234,7 @@ fun QeApp(vm: AppViewModel) {
                     review = { ReviewPanel(workspace, vm::setActualMaterials, vm::setActualLabourHours) },
                 )
             }
-            composable(Routes.NOTES) { NotesScreen() }
+            composable(Routes.NOTES) { NotesScreen(vm) }
             composable(Routes.QUICK) {
                 QuickCalcScreen(
                     quick,
