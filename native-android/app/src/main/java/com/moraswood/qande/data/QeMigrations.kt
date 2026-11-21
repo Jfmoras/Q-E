@@ -22,4 +22,33 @@ object QeMigrations {
             MIGRATION_1_2_SQL.forEach(db::execSQL)
         }
     }
+
+    /** v2 -> v3: Feature C asset registry + append-only logs (generated from schemas/3.json, checked by MigrationSchemaTest). */
+    val MIGRATION_2_3_SQL: List<String> = listOf(
+        "CREATE TABLE IF NOT EXISTS `assets` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `category` TEXT NOT NULL, `purchaseDate` TEXT NOT NULL, `cost` REAL NOT NULL, `serial` TEXT NOT NULL, `photoFile` TEXT, `createdAt` TEXT NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS `asset_issues` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `assetId` INTEGER NOT NULL, `worker` TEXT NOT NULL, `issuedOn` TEXT NOT NULL, `dueBack` TEXT, `notes` TEXT NOT NULL, `createdAt` TEXT NOT NULL, FOREIGN KEY(`assetId`) REFERENCES `assets`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "CREATE INDEX IF NOT EXISTS `index_asset_issues_assetId` ON `asset_issues` (`assetId`)",
+        "CREATE TABLE IF NOT EXISTS `asset_returns` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `issueId` INTEGER NOT NULL, `returnedOn` TEXT NOT NULL, `condition` TEXT NOT NULL, `createdAt` TEXT NOT NULL, FOREIGN KEY(`issueId`) REFERENCES `asset_issues`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "CREATE INDEX IF NOT EXISTS `index_asset_returns_issueId` ON `asset_returns` (`issueId`)",
+        "CREATE TABLE IF NOT EXISTS `asset_corrections` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `targetType` TEXT NOT NULL, `targetId` INTEGER NOT NULL, `worker` TEXT, `issuedOn` TEXT, `dueBack` TEXT, `clearDueBack` INTEGER NOT NULL, `notes` TEXT, `returnedOn` TEXT, `condition` TEXT, `voidEntry` INTEGER NOT NULL, `reason` TEXT NOT NULL, `requestedAt` TEXT NOT NULL)",
+        "CREATE INDEX IF NOT EXISTS `index_asset_corrections_targetType_targetId` ON `asset_corrections` (`targetType`, `targetId`)",
+        "CREATE TABLE IF NOT EXISTS `asset_correction_decisions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `correctionId` INTEGER NOT NULL, `decision` TEXT NOT NULL, `decidedAt` TEXT NOT NULL, FOREIGN KEY(`correctionId`) REFERENCES `asset_corrections`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "CREATE UNIQUE INDEX IF NOT EXISTS `index_asset_correction_decisions_correctionId` ON `asset_correction_decisions` (`correctionId`)",
+    )
+
+    private val APPEND_ONLY = listOf("asset_issues", "asset_returns", "asset_corrections", "asset_correction_decisions")
+
+    /** BEFORE UPDATE / BEFORE DELETE guards: the asset logs can only grow. */
+    val ASSET_TRIGGERS: List<String> = APPEND_ONLY.flatMap { t ->
+        listOf("UPDATE", "DELETE").map { op ->
+            "CREATE TRIGGER IF NOT EXISTS `${t}_no_${op.lowercase()}` BEFORE $op ON `$t` BEGIN SELECT RAISE(ABORT, '$t is append-only'); END"
+        }
+    }
+
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            MIGRATION_2_3_SQL.forEach(db::execSQL)
+            ASSET_TRIGGERS.forEach(db::execSQL)
+        }
+    }
 }
