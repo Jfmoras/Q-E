@@ -86,7 +86,7 @@ fun CalculatorPanel(
     val requesters = remember { HashMap<String, FocusRequester>() }
     fun fr(ii: Int, ri: Int, key: String) = requesters.getOrPut("$ii:$ri:$key") { FocusRequester() }
 
-    if (banner != null && banner.itemIndex < items.size) TemplateBannerCard(banner, actions)
+    if (banner != null && banner.itemIndex < items.size) TemplateBannerCard(banner, actions.onUseTemplate, actions.onDismissTemplate)
 
     items.forEachIndexed { ii, item ->
         CalcItemCard(ii, item, templateStatus[ii], actions, ::fr) { ri ->
@@ -124,8 +124,9 @@ fun GrandBar(label: String, value: String, button: String, onClick: () -> Unit) 
     }
 }
 
+/** Native addition: template suggestion banner shown above an item list. */
 @Composable
-private fun TemplateBannerCard(banner: TemplateBanner, actions: CalculatorActions) {
+fun TemplateBannerCard(banner: TemplateBanner, onUse: (TemplateBanner) -> Unit, onDismiss: (TemplateBanner) -> Unit) {
     val shape = RoundedCornerShape(16.dp)
     Column(
         Modifier.padding(bottom = 18.dp).fillMaxWidth().clip(shape).background(QeColors.GrandBg).border(1.dp, QeColors.GrandBorder, shape)
@@ -134,8 +135,8 @@ private fun TemplateBannerCard(banner: TemplateBanner, actions: CalculatorAction
         Text(banner.message, color = QeColors.GrandText, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
         Text("${banner.rows.size} row${if (banner.rows.size == 1) "" else "s"} for Item ${banner.itemIndex + 1}. You can edit every value afterwards.", color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
         Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            QePrimaryButton("Use template") { actions.onUseTemplate(banner) }
-            QeSecondaryButton("Dismiss") { actions.onDismissTemplate(banner) }
+            QePrimaryButton("Use template") { onUse(banner) }
+            QeSecondaryButton("Dismiss") { onDismiss(banner) }
         }
     }
 }
