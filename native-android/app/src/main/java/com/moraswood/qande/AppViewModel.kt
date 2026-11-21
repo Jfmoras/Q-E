@@ -13,6 +13,8 @@ import com.moraswood.qande.data.QeDatabase
 import com.moraswood.qande.data.QeJson
 import com.moraswood.qande.data.QuickCalc
 import com.moraswood.qande.data.QuickGroup
+import com.moraswood.qande.data.QuoteItem
+import com.moraswood.qande.data.RateGroup
 import com.moraswood.qande.data.Row
 import com.moraswood.qande.data.SavedProjectEntity
 import com.moraswood.qande.data.StorageKeys
@@ -21,6 +23,7 @@ import com.moraswood.qande.data.TemplateRowEntity
 import com.moraswood.qande.data.WorkspaceState
 import com.moraswood.qande.data.hasProjectWork
 import com.moraswood.qande.data.normalizeUnits
+import com.moraswood.qande.logic.QeEstimate
 import com.moraswood.qande.logic.QeMath
 import com.moraswood.qande.logic.QeMath.hasData
 import com.moraswood.qande.photos.ItemPhotos
@@ -32,6 +35,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
@@ -40,6 +44,8 @@ import java.util.UUID
 
 /** Banner shown above the calculator item list (template library). */
 data class TemplateBanner(
+    /** "calculator" (state.items) or "estimation" (state.estimationItems). */
+    val target: String,
     val itemIndex: Int,
     val message: String,
     val rows: List<Row>,
@@ -83,10 +89,22 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             ts.map { TemplateWithRows(it, byId[it.id].orEmpty()) }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val templateBanner: StateFlow<TemplateBanner?> =
+    private val banners: StateFlow<Pair<TemplateBanner?, TemplateBanner?>> =
         combine(_workspace, _logs, templates, _dismissed, _sessionKey) { ws, logs, tpls, dismissed, session ->
-            computeBanner(ws, logs, tpls, dismissed, setOf(ws.projectId, session).filter { it.isNotEmpty() }.toSet())
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            val keys = setOf(ws.projectId, session).filter { it.isNotEmpty() }.toSet()
+            computeBanner("calculator", ws.items, logs, tpls, dismissed, keys) { item -> item.rows.none { it.hasData() } } to
+                computeBanner("estimation", ws.estimationItems, logs, tpls, dismissed, keys) { item -> item.rows.isEmpty() }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null to null)
+
+    /** Banner above the Timber Calculator item list. */
+    val templateBanner: StateFlow<TemplateBanner?> = banners.map { it.first }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    /** Banner above the Estimation item list (for manually added estimation items without rows). */
+    val estimationBanner: StateFlow<TemplateBanner?> = banners.map { it.second }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private val _estStatus = MutableStateFlow<Map<Int, String>>(emptyMap())
+    /** `.send-quote-status` text per estimation card; a present entry also marks the selling price input-error. */
+    val estimationStatus: StateFlow<Map<Int, String>> = _estStatus.asStateFlow()
+
 
     private var logJob: Job? = null
 
@@ -94,7 +112,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val kv = db.keyValues()
             kv.get(StorageKeys.AUTOSAVE)?.let { json ->
-                runCatching { QeJson.decodeFromString(WorkspaceState.serializer(), json).normalizeUnits() }.onSuccess { _workspace.value = it }
+                runCatching { QeEstimate.syncCostings(QeJson.decodeFromString(WorkspaceState.serializer(), json).normalizeUnits()) }.onSuccess { _workspace.value = it }
             }
             restore(StorageKeys.QUICK_CALC, QuickCalc.serializer())?.let { _quick.value = it }
             restore(StorageKeys.HOPPUS, HoppusState.serializer())?.let { _hoppus.value = it }
@@ -125,6 +143,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         update { WorkspaceState.default() }
         _dismissed.value = emptySet()
         _templateStatus.value = emptyMap()
+        _estStatus.value = emptyMap()
         viewModelScope.launch { _sessionKey.value = newSessionKey() }
     }
 
@@ -153,9 +172,110 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun sendToEstimation() {
         update { s ->
             val x = s.items.mapIndexed { i, it ->
-                CalcItem(name = it.name.trim().ifEmpty { "Item ${i + 1}" }, rows = it.rows.filter { r -> r.hasData() }, photo = it.photo)
+                CalcItem(name = it.name.trim().ifEmpty { "Item ${i + 1}" }, rows = it.rows.filter { r -> r.hasData() }, tag = it.tag, photo = it.photo)
             }.filter { it.rows.isNotEmpty() }
             s.copy(estimationItems = x, costings = x.map { Costing.blank() }, tab = "estimation")
+        }
+        _estStatus.value = emptyMap()
+        scheduleLog()
+    }
+
+    /* ---------- Estimation & Rate Builder (renderEstimation handlers) ---------- */
+
+    private fun updateEstimation(log: Boolean = false, change: (WorkspaceState) -> WorkspaceState) {
+        update(change)
+        if (log) scheduleLog()
+    }
+
+    private fun updateCosting(i: Int, change: (Costing) -> Costing) = updateEstimation { s ->
+        val costings = s.costings.toMutableList()
+        while (costings.size <= i) costings.add(Costing.blank())
+        costings[i] = change(costings[i])
+        s.copy(costings = costings)
+    }
+
+    /** `est-name` input. */
+    fun setEstimationName(i: Int, name: String) = updateEstimation(log = true) { s ->
+        s.copy(estimationItems = s.estimationItems.mapIndexed { j, it -> if (j == i) it.copy(name = name) else it })
+    }
+
+    /** `est-input` / `est-unit` / `labour-mode` / `polish-mode`. Typing the selling price turns sellingAuto off. */
+    fun setCostingField(i: Int, key: String, value: String) {
+        updateCosting(i) { c -> c.with(key, value).let { if (key == "sellingPrice") it.copy(sellingAuto = false) else it } }
+        if (key == "sellingPrice") _estStatus.value = _estStatus.value - i
+    }
+
+    /** `.group-timber-rows`; returns the alert text or null. */
+    fun groupTimberRows(i: Int, rows: List<Int>): String? {
+        val s = _workspace.value
+        val item = s.estimationItems.getOrNull(i) ?: return null
+        if (rows.isEmpty()) return "Select at least one timber row."
+        val types = rows.map { item.rows.getOrNull(it)?.mode }.distinct()
+        if (types.size != 1 || types[0] !in listOf("CFT", "KOL")) return "CFT and KOL rows must be grouped separately."
+        updateCosting(i) { c ->
+            val kept = c.rateGroups.map { g -> g.copy(rows = g.rows.filter { it !in rows }) }.filter { it.rows.isNotEmpty() }
+            val mode = types[0]!!
+            c.copy(
+                rateGroups = kept + RateGroup(
+                    id = uid(), name = "Group " + (kept.size + 1), mode = mode, color = QeEstimate.GroupColors[kept.size % 5],
+                    rate = if (mode == "CFT") c.cftRate else c.kolRate, rows = rows,
+                ),
+            )
+        }
+        return null
+    }
+
+    /** `.ungroup-timber-rows` */
+    fun ungroupTimberRows(i: Int, rows: List<Int>) = updateCosting(i) { c ->
+        c.copy(rateGroups = c.rateGroups.map { g -> g.copy(rows = g.rows.filter { it !in rows }) }.filter { it.rows.isNotEmpty() })
+    }
+
+    fun setGroupRate(i: Int, id: String, rate: String) = updateCosting(i) { c -> c.copy(rateGroups = c.rateGroups.map { if (it.id == id) it.copy(rate = rate) else it }) }
+    fun removeTimberGroup(i: Int, id: String) = updateCosting(i) { c -> c.copy(rateGroups = c.rateGroups.filter { it.id != id }) }
+
+    /** `#newEstimateItem` */
+    fun newEstimationItem() = updateEstimation { s -> s.copy(estimationItems = s.estimationItems + CalcItem(name = "", rows = emptyList()), costings = s.costings + Costing.blank()) }
+
+    /** `#sendToQuotation`; returns the index of the first item without a selling price, or -1 on success. */
+    fun sendToQuotation(): Int {
+        val s = _workspace.value
+        val missing = s.estimationItems.indices.firstOrNull { QeMath.num(s.costings.getOrNull(it)?.sellingPrice) <= 0 } ?: -1
+        if (missing >= 0) {
+            _estStatus.value = _estStatus.value + (missing to SELLING_MISSING)
+            return missing
+        }
+        update { st ->
+            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = st.costings[i].sellingPrice) }
+            st.copy(quoteItems = q.ifEmpty { listOf(QuoteItem.blank()) }, tab = "quotation")
+        }
+        return -1
+    }
+
+    /** `.send-one-quote`; returns false when the selling price is missing. */
+    fun sendOneToQuotation(i: Int): Boolean {
+        val s = _workspace.value
+        val it = s.estimationItems.getOrNull(i) ?: return true
+        val price = s.costings.getOrNull(i)?.sellingPrice.orEmpty()
+        if (QeMath.num(price) <= 0) {
+            _estStatus.value = _estStatus.value + (i to SELLING_MISSING)
+            return false
+        }
+        _estStatus.value = _estStatus.value - i
+        update { st ->
+            val q = QuoteItem(description = it.name, unitPrice = price)
+            val only = st.quoteItems
+            val onlyBlank = only.size == 1 && only[0].description.isEmpty() && only[0].unit.isEmpty() && only[0].qty.isEmpty() && only[0].unitPrice.isEmpty() && only[0].images.isEmpty()
+            st.copy(quoteItems = if (onlyBlank) listOf(q) else st.quoteItems + q, tab = "quotation")
+        }
+        return true
+    }
+
+    fun setEstimationPhoto(i: Int, fileName: String) {
+        val old = _workspace.value.estimationItems.getOrNull(i)?.photo.orEmpty()
+        updateEstimation { s -> s.copy(estimationItems = s.estimationItems.mapIndexed { j, it -> if (j == i) it.copy(photo = fileName) else it }) }
+        viewModelScope.launch {
+            if (fileName.isNotEmpty()) ItemPhotos.register(getApplication(), db, fileName)
+            if (old.isNotEmpty() && old != fileName && !photoReferenced(old)) ItemPhotos.delete(getApplication(), db, old)
         }
     }
 
@@ -202,31 +322,46 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (key.isEmpty()) return
         val dao = db.templates()
         val now = Instant.now().toString()
+        fun entries(itemIndex: Int, label: String, type: String, rows: List<Row>) = rows.mapIndexed { ri, r ->
+            val c = QeMath.calcRow(r)
+            JobComponentLogEntity(
+                jobKey = key, itemIndex = itemIndex, rowIndex = ri, furnitureType = type, typeLabel = label,
+                l = r.l, lUnit = r.lUnit, w = r.w, wUnit = r.wUnit, t = r.t, tUnit = r.tUnit, q = r.q, mode = r.mode,
+                lengthFt = c.lFt, widthIn = c.wIn, thicknessIn = c.tIn, qty = QeMath.num(r.q), loggedAt = now,
+            )
+        }
         runCatching {
+            val calcSignatures = HashSet<Pair<String, List<Row>>>()
             s.items.forEachIndexed { ii, item ->
                 val label = typeLabel(item)
                 val type = TemplateMatcher.normalizeType(label)
-                val rows = if (type.isEmpty()) emptyList() else item.rows.filter { it.hasData() }.mapIndexed { ri, r ->
-                    val c = QeMath.calcRow(r)
-                    JobComponentLogEntity(
-                        jobKey = key, itemIndex = ii, rowIndex = ri, furnitureType = type, typeLabel = label,
-                        l = r.l, lUnit = r.lUnit, w = r.w, wUnit = r.wUnit, t = r.t, tUnit = r.tUnit, q = r.q, mode = r.mode,
-                        lengthFt = c.lFt, widthIn = c.wIn, thicknessIn = c.tIn, qty = QeMath.num(r.q), loggedAt = now,
-                    )
-                }
-                dao.replaceItemLog(keys, ii, rows)
+                val rows = if (type.isEmpty()) emptyList() else item.rows.filter { it.hasData() }
+                if (rows.isNotEmpty()) calcSignatures.add(type to rows)
+                dao.replaceItemLog(keys, ii, entries(ii, label, type, rows))
             }
-            dao.deleteLogsFrom(keys, s.items.size)
+            dao.deleteLogsRange(keys, s.items.size, ESTIMATION_LOG_OFFSET)
+            // Estimation rows are logged too (index offset), unless they are just the copy sent from the calculator.
+            s.estimationItems.forEachIndexed { i, item ->
+                val label = typeLabel(item)
+                val type = TemplateMatcher.normalizeType(label)
+                val placeholder = item.tag.isBlank() && Regex("Item \\d+").matches(item.name)
+                val rows = if (type.isEmpty() || placeholder) emptyList() else item.rows.filter { it.hasData() }
+                val duplicate = (type to rows) in calcSignatures
+                dao.replaceItemLog(keys, ESTIMATION_LOG_OFFSET + i, if (duplicate) emptyList() else entries(ESTIMATION_LOG_OFFSET + i, label, type, rows))
+            }
+            dao.deleteLogsFrom(keys, ESTIMATION_LOG_OFFSET + s.estimationItems.size)
             _logs.value = dao.allLogs()
         }
     }
 
     private fun computeBanner(
-        s: WorkspaceState,
+        target: String,
+        items: List<CalcItem>,
         logs: List<JobComponentLogEntity>,
         tpls: List<TemplateWithRows>,
         dismissed: Set<String>,
         currentKeys: Set<String>,
+        eligible: (CalcItem) -> Boolean,
     ): TemplateBanner? {
         val jobs by lazy {
             logs.filter { it.jobKey !in currentKeys }.groupBy { it.jobKey to it.itemIndex }.map { (k, rows) ->
@@ -243,18 +378,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
         }
-        s.items.forEachIndexed { ii, item ->
+        items.forEachIndexed { ii, item ->
             val label = typeLabel(item)
             val type = TemplateMatcher.normalizeType(label)
-            if (type.isEmpty() || item.rows.any { it.hasData() }) return@forEachIndexed
+            if (type.isEmpty() || !eligible(item)) return@forEachIndexed
             // Saved templates take priority over learned clusters.
             val tpl = tpls.filter { it.rows.isNotEmpty() && TemplateMatcher.typeSimilarity(type, it.template.furnitureType) >= TemplateMatcher.TYPE_THRESHOLD }
                 .maxByOrNull { TemplateMatcher.typeSimilarity(type, it.template.furnitureType) }
             if (tpl != null) {
-                val key = "tpl:${tpl.template.id}:$ii"
+                val key = "$target:tpl:${tpl.template.id}:$ii"
                 if (key !in dismissed) {
                     return TemplateBanner(
-                        ii,
+                        target, ii,
                         "Saved template “${tpl.template.name}” matches this ${label.trim()} — use that template?",
                         tpl.rows.sortedBy { it.position }.map { Row(it.l, it.lUnit, it.w, it.wUnit, it.t, it.tUnit, it.q, it.mode) },
                         key,
@@ -262,10 +397,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
             val suggestion = TemplateMatcher.suggest(type, jobs) ?: return@forEachIndexed
-            val key = "cluster:$type:${suggestion.jobCount}:$ii"
+            val key = "$target:cluster:$type:${suggestion.jobCount}:$ii"
             if (key in dismissed) return@forEachIndexed
             return TemplateBanner(
-                ii,
+                target, ii,
                 "This looks like your last ${suggestion.jobCount} ${TemplateMatcher.plural(label.trim().lowercase())} — use that template?",
                 suggestion.rows,
                 key,
@@ -276,7 +411,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Confirm: pre-fill the item rows (still editable). */
     fun applyTemplate(banner: TemplateBanner) {
-        updateItem(banner.itemIndex) { it.copy(rows = banner.rows.ifEmpty { listOf(Row.blank()) }) }
+        if (banner.target == "estimation") {
+            updateEstimation(log = true) { s -> s.copy(estimationItems = s.estimationItems.mapIndexed { j, it -> if (j == banner.itemIndex) it.copy(rows = banner.rows) else it }) }
+        } else {
+            updateItem(banner.itemIndex) { it.copy(rows = banner.rows.ifEmpty { listOf(Row.blank()) }) }
+        }
         _dismissed.value = _dismissed.value + banner.key
     }
 
@@ -355,7 +494,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /* ---------- persistence ---------- */
 
     private fun update(change: (WorkspaceState) -> WorkspaceState) {
-        _workspace.value = change(_workspace.value)
+        // renderEstimation() side effect: missing costings are created and auto selling prices refreshed.
+        _workspace.value = QeEstimate.syncCostings(change(_workspace.value))
         saveAutosave()
     }
 
@@ -374,12 +514,29 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
         const val SESSION_KEY = "native-job-session-v1"
+        /** job_component_log itemIndex offset for Estimation-tab items. */
+        const val ESTIMATION_LOG_OFFSET = 1000
+        const val SELLING_MISSING = "Enter the estimated selling price before sending to Quotation."
         /** V10.1 quick-group colours (CSS named colours). */
         val QUICK_COLORS = listOf("red", "blue", "green", "orange", "purple")
 
         /** app.js `uid()`: 7 random base-36 characters. */
         fun uid(): String = (1..7).map { "0123456789abcdefghijklmnopqrstuvwxyz"[(Math.random() * 36).toInt()] }.joinToString("")
     }
+}
+
+/** `state.costings[i][key] = value` for the V10.1 est-input / est-unit / mode keys. */
+fun Costing.with(key: String, value: String): Costing = when (key) {
+    "cftRate" -> copy(cftRate = value); "kolRate" -> copy(kolRate = value)
+    "labourMode" -> copy(labourMode = value); "labourLength" -> copy(labourLength = value)
+    "labourLengthUnit" -> copy(labourLengthUnit = value); "labourWidth" -> copy(labourWidth = value)
+    "labourWidthUnit" -> copy(labourWidthUnit = value); "labourQty" -> copy(labourQty = value)
+    "labourRate" -> copy(labourRate = value); "labourLumpsum" -> copy(labourLumpsum = value)
+    "polishMode" -> copy(polishMode = value); "polishRate" -> copy(polishRate = value)
+    "polishLumpsum" -> copy(polishLumpsum = value); "polishAreaOverride" -> copy(polishAreaOverride = value)
+    "consumables" -> copy(consumables = value); "other" -> copy(other = value)
+    "sellingPrice" -> copy(sellingPrice = value)
+    else -> this
 }
 
 /** `row[key] = value` for the calculator keys used by V10.1. */

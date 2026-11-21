@@ -56,6 +56,8 @@ fun QeNumberField(
     compact: Boolean = false,
     placeholder: String = "",
     onEnter: (() -> Unit)? = null,
+    /** V10.1 `.input-error`: red border + light red outline. */
+    error: Boolean = false,
 ) {
     var focused by remember { mutableStateOf(false) }
     var tfv by remember { mutableStateOf(TextFieldValue(value)) }
@@ -79,9 +81,13 @@ fun QeNumberField(
                 if (it.isFocused && !focused) tfv = tfv.copy(selection = TextRange(0, tfv.text.length))
                 focused = it.isFocused
             }
+            .let { if (error) it.border(2.dp, QeColors.ErrorOutline, shape).padding(3.dp) else it }
             .clip(shape)
             .background(QeColors.InputBg)
-            .border(if (focused) 2.dp else 1.dp, if (focused) QeColors.Accent else QeColors.InputBorder, shape)
+            .border(
+                if (focused || error) 2.dp else 1.dp,
+                if (error) QeColors.ErrorBorder else if (focused) QeColors.Accent else QeColors.InputBorder, shape,
+            )
             .padding(horizontal = if (compact) 8.dp else 11.dp, vertical = if (compact) 8.dp else 10.dp),
         decorationBox = { inner ->
             Box {

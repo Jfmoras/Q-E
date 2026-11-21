@@ -153,6 +153,9 @@ interface TemplateDao {
     suspend fun deleteLogs(jobKeys: List<String>, itemIndex: Int)
     @Query("DELETE FROM job_component_log WHERE jobKey IN (:jobKeys) AND itemIndex >= :fromIndex")
     suspend fun deleteLogsFrom(jobKeys: List<String>, fromIndex: Int)
+    /** Deletes item indexes in [fromIndex, toIndex). */
+    @Query("DELETE FROM job_component_log WHERE jobKey IN (:jobKeys) AND itemIndex >= :fromIndex AND itemIndex < :toIndex")
+    suspend fun deleteLogsRange(jobKeys: List<String>, fromIndex: Int, toIndex: Int)
     @Insert
     suspend fun insertLogs(rows: List<JobComponentLogEntity>)
     /** Replaces the log of one calculator item (silent logging). */
