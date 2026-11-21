@@ -60,6 +60,18 @@ object QeMigrations {
         "CREATE TRIGGER IF NOT EXISTS `saved_projects_no_update` BEFORE UPDATE ON `saved_projects` BEGIN SELECT RAISE(ABORT, 'saved revisions are read-only'); END",
     )
 
+    /** Feature H: Yield Tracker entries (new table only). */
+    val MIGRATION_4_5_SQL: List<String> = listOf(
+        "CREATE TABLE IF NOT EXISTS `yield_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `species` TEXT NOT NULL, `jobType` TEXT NOT NULL, `inputVolume` REAL NOT NULL, `inputUnit` TEXT NOT NULL, `outputMode` TEXT NOT NULL, `outputVolume` REAL NOT NULL, `outputRowsJson` TEXT NOT NULL, `offcuts` REAL NOT NULL, `breakage` REAL NOT NULL, `other` REAL NOT NULL, `logDetails` TEXT NOT NULL, `notes` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)",
+    )
+
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_4_5_SQL.forEach(db::execSQL) }
+    }
+
+    /** Plain SQL per step from version 3 on (used by the migration test that replays them on the exported schemas). */
+    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL)
+
     val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {
             MIGRATION_3_4_SQL.forEach(db::execSQL)
