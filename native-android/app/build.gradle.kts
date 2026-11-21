@@ -97,6 +97,9 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+    // Feature L: QR generation (pure Java) and the Google code scanner (no CAMERA permission; scanning UI from Play services).
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     testImplementation("junit:junit:4.13.2")
     // JVM SQLite for the append-only trigger tests (test classpath only, not packaged).
     testImplementation("org.xerial:sqlite-jdbc:3.46.1.0")

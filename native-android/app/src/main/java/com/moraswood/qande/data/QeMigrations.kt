@@ -69,8 +69,34 @@ object QeMigrations {
         override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_4_5_SQL.forEach(db::execSQL) }
     }
 
+    private const val GEN_UUID = "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || " +
+        "substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))"
+
+    /**
+     * Feature L: give every job (rootId) one UUID v4, shared by all its revisions. Idempotent (only rows with '' change);
+     * also run on every open so a restored older backup is backfilled. The read-only trigger is dropped around it (the
+     * caller re-creates it right after).
+     */
+    val JOB_UUID_BACKFILL: List<String> = listOf(
+        "DROP TRIGGER IF EXISTS `saved_projects_no_update`",
+        "UPDATE `saved_projects` SET `jobUuid` = $GEN_UUID WHERE `jobUuid` = '' " +
+            "AND rowid = (SELECT MIN(r.rowid) FROM `saved_projects` r WHERE r.`rootId` = `saved_projects`.`rootId`) " +
+            "AND NOT EXISTS (SELECT 1 FROM `saved_projects` r WHERE r.`rootId` = `saved_projects`.`rootId` AND r.`jobUuid` <> '')",
+        "UPDATE `saved_projects` SET `jobUuid` = (SELECT r.`jobUuid` FROM `saved_projects` r WHERE r.`rootId` = `saved_projects`.`rootId` AND r.`jobUuid` <> '' LIMIT 1) " +
+            "WHERE `jobUuid` = '' AND EXISTS (SELECT 1 FROM `saved_projects` r WHERE r.`rootId` = `saved_projects`.`rootId` AND r.`jobUuid` <> '')",
+    )
+
+    val MIGRATION_5_6_SQL: List<String> get() = listOf(
+        "ALTER TABLE `saved_projects` ADD COLUMN `jobUuid` TEXT NOT NULL DEFAULT ''",
+        "CREATE INDEX IF NOT EXISTS `index_saved_projects_jobUuid` ON `saved_projects` (`jobUuid`)",
+    ) + JOB_UUID_BACKFILL + REVISION_TRIGGERS
+
+    val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_5_6_SQL.forEach(db::execSQL) }
+    }
+
     /** Plain SQL per step from version 3 on (used by the migration test that replays them on the exported schemas). */
-    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL)
+    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL)
 
     val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {

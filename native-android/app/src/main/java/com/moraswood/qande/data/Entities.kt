@@ -20,7 +20,7 @@ data class KeyValueEntity(
 )
 
 /** One element of `mwi-projects-v1`: `{id, rootId, revision, name, updatedAt, snapshot}`. */
-@Entity(tableName = "saved_projects", indices = [Index("rootId"), Index(value = ["rootId", "revision"])])
+@Entity(tableName = "saved_projects", indices = [Index("rootId"), Index(value = ["rootId", "revision"]), Index("jobUuid")])
 data class SavedProjectEntity(
     @PrimaryKey val id: String,
     val rootId: String,
@@ -33,6 +33,8 @@ data class SavedProjectEntity(
     val position: Int,
     /** Feature E (v4): revision this one was created from (null = first save or a pre-v4 record). */
     val basedOn: Int? = null,
+    /** Feature L (v6): job UUID shared by every revision of a job; QR payload `qe://job/<uuid>`. */
+    @androidx.room.ColumnInfo(defaultValue = "''") val jobUuid: String = "",
 )
 
 /** `mwi-saved-notes-v1` array element. */
