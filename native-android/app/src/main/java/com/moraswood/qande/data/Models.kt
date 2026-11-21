@@ -218,6 +218,8 @@ data class WorkspaceState(
     val clientId: String? = null,
     /** Feature P (native): delivery date, ISO yyyy-MM-dd; null = not scheduled. */
     val deliveryDate: String? = null,
+    /** Feature Q: id of the client signature row (write-once); null = unsigned. */
+    val signatureId: String? = null,
     /** Feature J (native): per-category default rates ("furniture" / "dw"); null = none (V10.1). */
     val categoryDefaults: Map<String, CategoryDefaults>? = null,
     /** Feature J (native): group quotation lines under category headings on the print. */
