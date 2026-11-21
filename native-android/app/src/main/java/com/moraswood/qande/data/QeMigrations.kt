@@ -106,8 +106,18 @@ object QeMigrations {
         override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_6_7_SQL.forEach(db::execSQL) }
     }
 
+    /** Feature P: delivery schedule on the per-job metadata (ISO dates, null = none). */
+    val MIGRATION_7_8_SQL: List<String> get() = listOf(
+        "ALTER TABLE `jobs` ADD COLUMN `deliveryDate` TEXT",
+        "ALTER TABLE `jobs` ADD COLUMN `completedAt` TEXT",
+    )
+
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_7_8_SQL.forEach(db::execSQL) }
+    }
+
     /** Plain SQL per step from version 3 on (used by the migration test that replays them on the exported schemas). */
-    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL)
+    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL, 7 to MIGRATION_7_8_SQL)
 
     val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {

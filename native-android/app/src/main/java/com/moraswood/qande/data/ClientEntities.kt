@@ -23,12 +23,14 @@ data class ClientEntity(
 
 /**
  * Mutable per-job metadata keyed by the job UUID (Feature L), kept apart from the append-only revision rows:
- * the linked client (Feature O, DB v7).
+ * the linked client (Feature O, DB v7) and the delivery schedule (Feature P, DB v8: ISO dates yyyy-MM-dd).
  */
 @Entity(tableName = "jobs", indices = [Index("clientId")])
 data class JobMetaEntity(
     @PrimaryKey val jobUuid: String,
     val clientId: String? = null,
+    val deliveryDate: String? = null,
+    val completedAt: String? = null,
 )
 
 @Dao
@@ -56,4 +58,21 @@ interface ClientDao {
     /** Update in place (never REPLACE, which would wipe the job's other columns). */
     @Transaction
     suspend fun linkJob(uuid: String, clientId: String?) { if (setJobClient(uuid, clientId) == 0) insertJob(JobMetaEntity(uuid, clientId)) }
+
+    /* Feature P: delivery schedule */
+    @Query("UPDATE jobs SET clientId = :clientId, deliveryDate = :deliveryDate WHERE jobUuid = :uuid")
+    suspend fun setJobOnSave(uuid: String, clientId: String?, deliveryDate: String?): Int
+    /** Save Project: client + delivery date from the workspace; completion is kept. */
+    @Transaction
+    suspend fun saveJob(uuid: String, clientId: String?, deliveryDate: String?) {
+        if (setJobOnSave(uuid, clientId, deliveryDate) == 0) insertJob(JobMetaEntity(uuid, clientId, deliveryDate))
+    }
+    @Query("UPDATE jobs SET deliveryDate = :date WHERE jobUuid = :uuid")
+    suspend fun setDeliveryDateRow(uuid: String, date: String?): Int
+    @Transaction
+    suspend fun setDeliveryDate(uuid: String, date: String?) { if (setDeliveryDateRow(uuid, date) == 0) insertJob(JobMetaEntity(uuid, deliveryDate = date)) }
+    @Query("UPDATE jobs SET completedAt = :date WHERE jobUuid = :uuid")
+    suspend fun setCompletedRow(uuid: String, date: String?): Int
+    @Transaction
+    suspend fun setCompleted(uuid: String, date: String?) { if (setCompletedRow(uuid, date) == 0) insertJob(JobMetaEntity(uuid, completedAt = date)) }
 }
