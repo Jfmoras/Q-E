@@ -110,6 +110,13 @@ interface OperationsDao {
     @Insert
     suspend fun addMachineHistory(entry: OpsMachineHistoryEntity)
 
+    @Query("SELECT * FROM ops_attachments ORDER BY at, id")
+    fun observeAllAttachments(): Flow<List<OpsAttachmentEntity>>
+    @Query("SELECT * FROM ops_attachments WHERE id = :id")
+    suspend fun attachment(id: String): OpsAttachmentEntity?
+    @Query("DELETE FROM ops_projects WHERE id = :id")
+    suspend fun deleteProjectById(id: String)
+
     @Query("SELECT * FROM ops_audit ORDER BY rowId")
     suspend fun audit(): List<OpsAuditEntity>
     @Insert
@@ -154,6 +161,9 @@ interface TemplateDao {
     @Query("DELETE FROM job_component_log WHERE jobKey IN (:jobKeys) AND itemIndex >= :fromIndex")
     suspend fun deleteLogsFrom(jobKeys: List<String>, fromIndex: Int)
     /** Deletes item indexes in [fromIndex, toIndex). */
+    /** Template library: logs written under the autosave session move to the project id on Save Project. */
+    @Query("UPDATE job_component_log SET jobKey = :to WHERE jobKey = :from")
+    suspend fun rekeyLogs(from: String, to: String)
     @Query("DELETE FROM job_component_log WHERE jobKey IN (:jobKeys) AND itemIndex >= :fromIndex AND itemIndex < :toIndex")
     suspend fun deleteLogsRange(jobKeys: List<String>, fromIndex: Int, toIndex: Int)
     @Insert
