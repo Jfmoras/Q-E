@@ -36,6 +36,13 @@ interface SavedProjectDao {
     suspend fun putAll(items: List<SavedProjectEntity>)
     @Query("DELETE FROM saved_projects")
     suspend fun clear()
+    /** Feature E: every save appends a new revision row (saved revisions are never updated; a trigger enforces it). */
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(item: SavedProjectEntity)
+    @Query("SELECT COALESCE(MIN(position), 0) FROM saved_projects")
+    suspend fun minPosition(): Int
+    @Query("DELETE FROM saved_projects WHERE id = :id")
+    suspend fun deleteById(id: String)
     /** Replaces the whole list, like V10.1 `writeSaved(list)`. */
     @Transaction
     suspend fun replaceAll(items: List<SavedProjectEntity>) { clear(); putAll(items) }
@@ -137,7 +144,7 @@ interface OperationsDao {
         JobComponentLogEntity::class, TemplateEntity::class, TemplateRowEntity::class, ItemPhotoEntity::class,
         AssetEntity::class, AssetIssueEntity::class, AssetReturnEntity::class, AssetCorrectionEntity::class, AssetDecisionEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class QeDatabase : RoomDatabase() {
@@ -153,10 +160,10 @@ abstract class QeDatabase : RoomDatabase() {
         @Volatile private var instance: QeDatabase? = null
         fun get(context: Context): QeDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, QeDatabase::class.java, "mwi-qe.db")
-                .addMigrations(QeMigrations.MIGRATION_1_2, QeMigrations.MIGRATION_2_3)
+                .addMigrations(QeMigrations.MIGRATION_1_2, QeMigrations.MIGRATION_2_3, QeMigrations.MIGRATION_3_4)
                 .addCallback(object : RoomDatabase.Callback() {
                     // Fresh installs get the append-only triggers too (IF NOT EXISTS: also self-heals).
-                    override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) { QeMigrations.ASSET_TRIGGERS.forEach(db::execSQL) }
+                    override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) { (QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS).forEach(db::execSQL) }
                 })
                 .build().also { instance = it }
         }

@@ -48,6 +48,25 @@ object QeMigrations {
     /** Lets a Full Backup restore replace the append-only logs (dropped and re-created inside one transaction). */
     val ASSET_TRIGGER_DROPS: List<String> = APPEND_ONLY.flatMap { t -> listOf("update", "delete").map { op -> "DROP TRIGGER IF EXISTS `${t}_no_$op`" } }
 
+    /** v3 -> v4 (Feature E revisions): `basedOn` column, (rootId, revision) index, legacy empty rootId → id. */
+    val MIGRATION_3_4_SQL: List<String> = listOf(
+        "ALTER TABLE `saved_projects` ADD COLUMN `basedOn` INTEGER",
+        "UPDATE `saved_projects` SET `rootId` = `id` WHERE `rootId` = ''",
+        "CREATE INDEX IF NOT EXISTS `index_saved_projects_rootId_revision` ON `saved_projects` (`rootId`, `revision`)",
+    )
+
+    /** Saved revisions are immutable snapshots: UPDATE is refused (delete / insert stay allowed). */
+    val REVISION_TRIGGERS: List<String> = listOf(
+        "CREATE TRIGGER IF NOT EXISTS `saved_projects_no_update` BEFORE UPDATE ON `saved_projects` BEGIN SELECT RAISE(ABORT, 'saved revisions are read-only'); END",
+    )
+
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            MIGRATION_3_4_SQL.forEach(db::execSQL)
+            REVISION_TRIGGERS.forEach(db::execSQL)
+        }
+    }
+
     val MIGRATION_2_3 = object : Migration(2, 3) {
         override fun migrate(db: SupportSQLiteDatabase) {
             MIGRATION_2_3_SQL.forEach(db::execSQL)

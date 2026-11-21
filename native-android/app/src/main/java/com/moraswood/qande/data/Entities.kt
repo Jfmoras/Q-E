@@ -20,7 +20,7 @@ data class KeyValueEntity(
 )
 
 /** One element of `mwi-projects-v1`: `{id, rootId, revision, name, updatedAt, snapshot}`. */
-@Entity(tableName = "saved_projects", indices = [Index("rootId")])
+@Entity(tableName = "saved_projects", indices = [Index("rootId"), Index(value = ["rootId", "revision"])])
 data class SavedProjectEntity(
     @PrimaryKey val id: String,
     val rootId: String,
@@ -29,8 +29,10 @@ data class SavedProjectEntity(
     val updatedAt: String,
     /** WorkspaceState JSON exactly as V10.1 stored it. */
     val snapshotJson: String,
-    /** Order in the V10.1 array (0 = newest, list.unshift). */
+    /** Order in the V10.1 array (0 = newest, list.unshift). New revisions get min(position) − 1. */
     val position: Int,
+    /** Feature E (v4): revision this one was created from (null = first save or a pre-v4 record). */
+    val basedOn: Int? = null,
 )
 
 /** `mwi-saved-notes-v1` array element. */
