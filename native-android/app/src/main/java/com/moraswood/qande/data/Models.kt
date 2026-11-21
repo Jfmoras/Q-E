@@ -107,6 +107,8 @@ data class CalcItem(
     val rows: List<Row> = emptyList(),
     val tag: LStr = "",
     val photo: LStr = "",
+    /** Feature J (native): estimation category; null = "furniture" (every V10.1 item). */
+    val category: String? = null,
 ) {
     companion object { fun blank() = CalcItem("", listOf(Row.blank())) }
 }
@@ -208,6 +210,9 @@ data class WorkspaceState(
     val actual: Actual = Actual(),
     /** Feature D (native): print other options as a comparison appendix (null/false = active option only). */
     val printComparison: Boolean? = null,
+    /** Feature I (native): door/window builder structures of this job, and the job's wastage-per-cut override (inches). */
+    val doorWindows: List<DwStructure>? = null,
+    val dwWastage: String? = null,
     /** Feature G (native): print each line's area under its description. */
     val printArea: Boolean? = null,
     /** Feature F (native): estimation item groups (null = ungrouped job, exactly V10.1). */
@@ -266,6 +271,34 @@ data class BackupFile(
     val storage: Map<String, String> = emptyMap(),
 )
 
+/**
+ * Feature I — one door/window structure in the builder. Lengths: height/width with V10.1 units; member sizes in inches.
+ * Blank optional fields mean "use the default" (documented in QeDoorWindow).
+ */
+@Serializable
+data class DwStructure(
+    val id: String = "",
+    val name: String = "",
+    val kind: String = "main_door",
+    val height: String = "", val heightUnit: String = "ft",
+    val width: String = "", val widthUnit: String = "ft",
+    val quantity: String = "1",
+    val species: String = "",
+    val wood: String = "5x3", val woodW: String = "", val woodT: String = "",
+    val longs: String = "", val shorts: String = "",
+    val supports: String = "1",
+    val mounting: String = "juttu",
+    val juttuExt: String = "",
+    val subtractDim: String = "",
+    val wastage: String = "",
+    val architrave: Boolean = false, val archW: String = "", val archT: String = "", val archBottom: Boolean = false,
+    val planking: Boolean = false, val plankSide: String = "5", val plankWidth: String = "6", val plankWidthCustom: String = "", val plankT: String = "",
+)
+
+/** Feature I — builder defaults (Settings): Juttu extension per end and wastage per cut, inches. */
+@Serializable
+data class DwDefaults(val juttuExt: String = "3", val wastage: String = "0")
+
 object StorageKeys {
     const val AUTOSAVE = "mwi-autosave-v1"
     const val PROJECTS = "mwi-projects-v1"
@@ -273,6 +306,8 @@ object StorageKeys {
     const val AI_SETTINGS = "mwi-ai-settings-v1"
     const val QUICK_CALC = "mwi-quick-calc-v1"
     const val HOPPUS = "mwi-hoppus-v1"
+    const val DW_TEMPLATES = "mwi-native-dw-templates-v1"
+    const val DW_DEFAULTS = "mwi-native-dw-defaults-v1"
     const val OPERATIONS = "mwi-operations-v1"
     const val PROJECT_IMPORT_PENDING = "mwi-project-import-pending"
     const val BACKUP_FORMAT = "moras-qe-backup"
