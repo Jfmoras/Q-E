@@ -26,6 +26,13 @@ import com.moraswood.qande.data.normalizeUnits
 import com.moraswood.qande.logic.QeEstimate
 import com.moraswood.qande.logic.QeMath
 import com.moraswood.qande.logic.QeMath.hasData
+import com.moraswood.qande.logic.QeQuote
+import com.moraswood.qande.ai.AiService
+import com.moraswood.qande.photos.QuoteImages
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import com.moraswood.qande.photos.ItemPhotos
 import com.moraswood.qande.templates.TemplateMatcher
 import kotlinx.coroutines.Job
@@ -112,7 +119,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val kv = db.keyValues()
             kv.get(StorageKeys.AUTOSAVE)?.let { json ->
-                runCatching { QeEstimate.syncCostings(QeJson.decodeFromString(WorkspaceState.serializer(), json).normalizeUnits()) }.onSuccess { _workspace.value = it }
+                runCatching { QeQuote.syncActiveOption(QeEstimate.syncCostings(QeJson.decodeFromString(WorkspaceState.serializer(), json).normalizeUnits())) }.onSuccess { _workspace.value = it }
             }
             restore(StorageKeys.QUICK_CALC, QuickCalc.serializer())?.let { _quick.value = it }
             restore(StorageKeys.HOPPUS, HoppusState.serializer())?.let { _hoppus.value = it }
@@ -139,6 +146,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** app.js `startNewProject()` after the confirm: `state = defaultState()`. */
     fun startNewProject() {
+        loadedReadOnly = false
+        _aiStatus.value = emptyMap()
         logJob?.let { it.cancel(); flushLogs(_workspace.value) }
         update { WorkspaceState.default() }
         _dismissed.value = emptySet()
@@ -491,11 +500,239 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun removeHoppusLog(i: Int) = updateHoppus { h -> h.copy(rows = h.rows.filterIndexed { idx, _ -> idx != i }) }
     fun setSawRate(v: String) = updateHoppus { it.copy(sawRate = v) }
 
+    /* ---------- Quotation (renderQuotation / renderNotes handlers) ---------- */
+
+    val ai = AiService(app)
+
+    val savedNotes: StateFlow<List<String>> =
+        db.savedNotes().observeAll().map { l -> l.map { it.text } }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private val _aiStatus = MutableStateFlow<Map<Int, String>>(emptyMap())
+    /** `.ai-status` line per quotation item (DOM-only in V10.1, cleared when the item list re-renders). */
+    val aiStatus: StateFlow<Map<Int, String>> = _aiStatus.asStateFlow()
+    private val _aiBusy = MutableStateFlow<Set<Int>>(emptySet())
+    /** Items whose "✨ Improve with AI" button shows "Improving…" (disabled). */
+    val aiBusy: StateFlow<Set<Int>> = _aiBusy.asStateFlow()
+    private val _noteStatus = MutableStateFlow("")
+    /** `#noteStatus` */
+    val noteStatus: StateFlow<String> = _noteStatus.asStateFlow()
+
+    /** renderQuotation() rebuilds the item DOM, which resets the AI status lines. */
+    private fun rerenderQuote(change: (WorkspaceState) -> WorkspaceState) { _aiStatus.value = emptyMap(); update(change) }
+
+    private fun updateQuoteItem(i: Int, change: (QuoteItem) -> QuoteItem) =
+        update { s -> s.copy(quoteItems = s.quoteItems.mapIndexed { j, it -> if (j == i) change(it) else it }) }
+
+    fun setCustomerName(v: String) = update { it.copy(customer = it.customer.copy(name = v)) }
+    fun setCustomerLocation(v: String) = update { it.copy(customer = it.customer.copy(location = v)) }
+    fun setQuoteField(i: Int, key: String, v: String) = updateQuoteItem(i) {
+        when (key) { "description" -> it.copy(description = v); "unit" -> it.copy(unit = v); "qty" -> it.copy(qty = v); "unitPrice" -> it.copy(unitPrice = v); else -> it }
+    }
+    fun addQuoteItem() = rerenderQuote { it.copy(quoteItems = it.quoteItems + QuoteItem.blank()) }
+    fun removeQuoteItem(i: Int) = rerenderQuote { s ->
+        s.copy(quoteItems = if (s.quoteItems.size == 1) listOf(QuoteItem.blank()) else s.quoteItems.filterIndexed { j, _ -> j != i })
+    }
+    fun setDiscountType(v: String) = update { it.copy(quote = it.quote.copy(discountType = v)) }
+    fun setDiscountValue(v: String) = update { it.copy(quote = it.quote.copy(discountValue = v)) }
+    fun setGstPercent(v: String) = update { it.copy(quote = it.quote.copy(gstPercent = v)) }
+
+    fun selectQuoteOption(i: Int) = rerenderQuote { QeQuote.activateOption(it, i) }
+    fun addQuoteOption() = rerenderQuote(QeQuote::addOption)
+    fun duplicateQuoteOption() = rerenderQuote(QeQuote::duplicateOption)
+    /** `#removeQuoteOption`: returns the alert text when only one option is left, otherwise null (caller confirms first). */
+    fun canRemoveQuoteOption(): String? = if (QeQuote.syncActiveOption(_workspace.value).quoteOptions.size <= 1) "At least one quotation option is required." else null
+    fun removeQuoteOption() = rerenderQuote(QeQuote::removeOption)
+    fun setQuoteOptionName(v: String) = update { s0 ->
+        val s = QeQuote.ensureQuoteOptions(s0)
+        s.copy(quoteOptions = s.quoteOptions.mapIndexed { i, o -> if (i == s.activeQuoteOption) o.copy(name = v) else o })
+    }
+
+    /** `.ai-improve` click. */
+    fun improveDescription(i: Int, style: String) {
+        val item = _workspace.value.quoteItems.getOrNull(i) ?: return
+        fun status(msg: String) { _aiStatus.value = _aiStatus.value + (i to msg) }
+        val original = item.description
+        if (original.trim().isEmpty()) { status("Write a description first."); return }
+        if (!ai.hasApiKey()) { status("Add an AI API key in Settings to use this feature."); return }
+        _aiBusy.value = _aiBusy.value + i
+        status("AI is rewriting the description.")
+        viewModelScope.launch {
+            try {
+                val improved = ai.improveDescription(original, style)
+                updateQuoteItem(i) { it.copy(aiOriginal = original, description = improved) }
+                status("Updated. You can edit it further or undo.")
+            } catch (e: Exception) {
+                status(e.message ?: "Could not improve the description.")
+            } finally {
+                _aiBusy.value = _aiBusy.value - i
+            }
+        }
+    }
+
+    /** `.ai-undo` click. */
+    fun undoAi(i: Int) {
+        val original = _workspace.value.quoteItems.getOrNull(i)?.aiOriginal.orEmpty()
+        if (original.isEmpty()) return
+        updateQuoteItem(i) { it.copy(description = original, aiOriginal = "") }
+        _aiStatus.value = _aiStatus.value + (i to "Original description restored.")
+    }
+
+    /** `.q-images` change: returns the V10.1 alert text. */
+    suspend fun addQuoteImages(i: Int, uris: List<android.net.Uri>): String {
+        val ctx = getApplication<Application>()
+        if (_workspace.value.quoteItems.getOrNull(i) == null) return "Could not identify quotation item."
+        val files = uris.filter { QuoteImages.isImage(ctx, it) }.take(QuoteImages.MAX_IMAGES)
+        if (files.isEmpty()) return "Select image files to attach."
+        var added = 0
+        for (f in files) {
+            if ((_workspace.value.quoteItems.getOrNull(i)?.images?.size ?: QuoteImages.MAX_IMAGES) >= QuoteImages.MAX_IMAGES) break
+            val src = QuoteImages.resize(ctx, f)
+            if (src != null && src.startsWith("data:image/")) { updateQuoteItem(i) { it.copy(images = it.images + src) }; added++ }
+        }
+        if (added == 0) return "No images were added. Please try a JPG or PNG photo."
+        _aiStatus.value = emptyMap()
+        return "$added image(s) added and saved to this quotation."
+    }
+
+    fun removeQuoteImage(i: Int, j: Int) = rerenderQuote { s ->
+        s.copy(quoteItems = s.quoteItems.mapIndexed { k, it -> if (k == i) it.copy(images = it.images.filterIndexed { n, _ -> n != j }) else it })
+    }
+
+    /* notes */
+    fun addNote() = update { it.copy(quote = it.quote.copy(notes = it.quote.notes + "")) }
+    fun setNote(i: Int, v: String) = update { s -> s.copy(quote = s.quote.copy(notes = s.quote.notes.mapIndexed { j, n -> if (j == i) v else n })) }
+    fun removeNote(i: Int) = update { s ->
+        s.copy(quote = s.quote.copy(notes = if (s.quote.notes.size == 1) listOf("") else s.quote.notes.filterIndexed { j, _ -> j != i }))
+    }
+    fun saveNote(i: Int) {
+        val note = _workspace.value.quote.notes.getOrNull(i).orEmpty().trim()
+        if (note.isEmpty()) return
+        viewModelScope.launch {
+            val list = db.savedNotes().all().map { it.text }
+            if (list.none { it.lowercase() == note.lowercase() }) db.savedNotes().replaceAll(list + note)
+            _noteStatus.value = "Note saved for future quotations."
+        }
+    }
+    fun addSavedNote(idx: Int) {
+        val note = savedNotes.value.getOrNull(idx) ?: return
+        update { s ->
+            val notes = s.quote.notes
+            s.copy(quote = s.quote.copy(notes = if (notes.size == 1 && notes[0].trim().isEmpty()) listOf(note) else notes + note))
+        }
+    }
+    fun deleteSavedNote(idx: Int) {
+        viewModelScope.launch {
+            val list = db.savedNotes().all().map { it.text }
+            if (idx !in list.indices) return@launch
+            db.savedNotes().replaceAll(list.filterIndexed { j, _ -> j != idx })
+            _noteStatus.value = "Saved note deleted."
+        }
+    }
+
+    /** `#exportToProjects`: stores the pending import for Operations; returns an error alert or null. */
+    suspend fun exportToProjects(): String? = try {
+        update(QeQuote::syncActiveOption)
+        val s = _workspace.value
+        val q = s.quoteOptions[s.activeQuoteOption]
+        val total = QeQuote.totalsForOption(q).grand
+        val payload = buildJsonObject {
+            put("name", s.projectName.ifEmpty { "Quotation " + QeQuote.shortDate() })
+            put("customer", s.customer.name.ifEmpty { "Customer not specified" })
+            put("amount", if (total == Math.floor(total) && Math.abs(total) < 1e15) JsonPrimitive(total.toLong()) else JsonPrimitive(total))
+            put("notes", "Imported from Q&E quotation option: " + q.name.ifEmpty { "Option 1" })
+            put("quotation", buildJsonObject {
+                put("items", JsonArray(q.items.map { buildJsonObject { put("description", it.description); put("unit", it.unit); put("qty", it.qty); put("unitPrice", it.unitPrice) } }))
+                put("option", q.name); put("discountType", q.discountType); put("discountValue", q.discountValue); put("gstPercent", q.gstPercent)
+            })
+        }
+        db.keyValues().put(KeyValueEntity(StorageKeys.PROJECT_IMPORT_PENDING, payload.toString()))
+        null
+    } catch (e: Exception) {
+        "Could not export quotation: " + e.message
+    }
+
+    /* ---------- Job Review ---------- */
+    fun setActualMaterials(v: String) = update { it.copy(actual = it.actual.copy(materials = v)) }
+    fun setActualLabourHours(v: String) = update { it.copy(actual = it.actual.copy(labourHours = v)) }
+
+    /* ---------- Save Project / Saved Projects & Revisions (saveProject, renderSavedProjects) ---------- */
+
+    private val _projectStatus = MutableStateFlow("")
+    /** `#projectStatus` */
+    val projectStatus: StateFlow<String> = _projectStatus.asStateFlow()
+    /** app.js `loadedReadOnly` (not persisted, like V10.1). */
+    private var loadedReadOnly = false
+
+    fun saveProject() {
+        val s0 = QeQuote.syncActiveOption(_workspace.value)
+        val name = s0.projectName.ifEmpty { s0.customer.name }.trim()
+        if (name.isEmpty()) { _projectStatus.value = "Enter a project name before saving."; return }
+        if (loadedReadOnly) { _projectStatus.value = "Loaded revision is protected. Use Revise in Saved Projects to create a new revision."; return }
+        val rootId = s0.projectId.ifEmpty { uid() }
+        val s = s0.copy(projectName = name, projectId = rootId)
+        update { s }
+        val now = jsIsoNow()
+        viewModelScope.launch {
+            try {
+                val dao = db.savedProjects()
+                val list = dao.all()
+                val existing = list.indexOfFirst { it.rootId.ifEmpty { it.id } == rootId && it.revision == s.revision }
+                val id = if (existing >= 0) list[existing].id else if (s.revision == 0) rootId else uid()
+                val snapshot = QeJson.encodeToString(WorkspaceState.serializer(), _workspace.value)
+                val record = SavedProjectEntity(id, rootId, s.revision, name, now, snapshot, 0)
+                val next = if (existing >= 0) list.toMutableList().also { it[existing] = record } else listOf(record) + list
+                dao.replaceAll(next.mapIndexed { i, r -> r.copy(position = i) })
+                if (dao.all().none { it.id == id && it.snapshotJson.isNotEmpty() }) error("Save verification failed")
+                _projectStatus.value = "Saved $name · R${s.revision} on this device."
+            } catch (e: Exception) {
+                _projectStatus.value = "Could not save project. Try fewer/lower-resolution images."
+            }
+        }
+    }
+
+    private fun loadSnapshot(x: SavedProjectEntity, revision: Int, readOnly: Boolean): Boolean {
+        val snap = runCatching { QeJson.decodeFromString(WorkspaceState.serializer(), x.snapshotJson).normalizeUnits() }.getOrNull() ?: return false
+        logJob?.let { it.cancel(); flushLogs(_workspace.value) }
+        _dismissed.value = emptySet(); _templateStatus.value = emptyMap(); _estStatus.value = emptyMap(); _aiStatus.value = emptyMap()
+        update { snap.copy(projectId = x.rootId.ifEmpty { x.id }, revision = revision) }
+        loadedReadOnly = readOnly
+        return true
+    }
+
+    /** `.load-project` (View / Print). Returns true when the workspace should open. */
+    fun viewSavedProject(id: String): Boolean {
+        val x = savedProjects.value.firstOrNull { it.id == id } ?: return false
+        if (!loadSnapshot(x, x.revision, readOnly = true)) return false
+        _projectStatus.value = "Viewing R${x.revision}. Use Revise to make changes without altering this revision."
+        return true
+    }
+
+    /** `.revise-project`. */
+    fun reviseSavedProject(id: String): Boolean {
+        val list = savedProjects.value
+        val x = list.firstOrNull { it.id == id } ?: return false
+        val root = x.rootId.ifEmpty { x.id }
+        val latest = list.filter { it.rootId.ifEmpty { it.id } == root }.maxOf { it.revision }
+        if (!loadSnapshot(x, latest + 1, readOnly = false)) return false
+        _projectStatus.value = "Editing R${latest + 1} based on R${x.revision}. Save to preserve the new revision."
+        return true
+    }
+
+    /** `.delete-project` after `confirm('Delete this saved revision?')`. */
+    fun deleteSavedProject(id: String) {
+        viewModelScope.launch {
+            val dao = db.savedProjects()
+            dao.replaceAll(dao.all().filter { it.id != id }.mapIndexed { i, r -> r.copy(position = i) })
+            _projectStatus.value = "Saved revision deleted."
+        }
+    }
+
     /* ---------- persistence ---------- */
 
     private fun update(change: (WorkspaceState) -> WorkspaceState) {
         // renderEstimation() side effect: missing costings are created and auto selling prices refreshed.
-        _workspace.value = QeEstimate.syncCostings(change(_workspace.value))
+        // renderQuotation()/renderPrintSheet() side effects: ensureQuoteOptions() + syncActiveOption().
+        _workspace.value = QeQuote.syncActiveOption(QeEstimate.syncCostings(change(_workspace.value)))
         saveAutosave()
     }
 
@@ -521,6 +758,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val QUICK_COLORS = listOf("red", "blue", "green", "orange", "purple")
 
         /** app.js `uid()`: 7 random base-36 characters. */
+        /** JS `new Date().toISOString()`. */
+        fun jsIsoNow(): String = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(java.time.ZoneOffset.UTC).format(Instant.now())
+
         fun uid(): String = (1..7).map { "0123456789abcdefghijklmnopqrstuvwxyz"[(Math.random() * 36).toInt()] }.joinToString("")
     }
 }

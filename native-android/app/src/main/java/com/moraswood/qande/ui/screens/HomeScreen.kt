@@ -1,5 +1,12 @@
 package com.moraswood.qande.ui.screens
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.moraswood.qande.ui.components.QeConfirm
+import com.moraswood.qande.ui.components.QeDangerButton
+import com.moraswood.qande.ui.components.QePrimaryButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +49,9 @@ fun HomeScreen(
     showContinue: Boolean,
     savedPanelOpen: Boolean,
     savedProjects: List<SavedProjectEntity>,
+    onViewProject: (String) -> Unit,
+    onReviseProject: (String) -> Unit,
+    onDeleteProject: (String) -> Unit,
     onHoppus: () -> Unit,
     onNewProject: () -> Unit,
     onSavedProjects: () -> Unit,
@@ -76,7 +86,7 @@ fun HomeScreen(
                 }
             }
         }
-        if (savedPanelOpen) SavedProjectsPanel(savedProjects, onCloseSaved)
+        if (savedPanelOpen) SavedProjectsPanel(savedProjects, onCloseSaved, onViewProject, onReviseProject, onDeleteProject)
     }
 }
 
@@ -102,9 +112,17 @@ private fun HomeActionCard(action: HomeAction, glyph: String, modifier: Modifier
 
 private val savedDateFormat = DateTimeFormatter.ofPattern("d/M/yyyy, h:mm:ss a", Locale.forLanguageTag("en-IN"))
 
-/** `#savedProjectsPanel` — list only in the skeleton; View / Print, Revise and Delete arrive in the projects milestone. */
+/** `#savedProjectsPanel` (renderSavedProjects): View / Print, Revise and Delete per saved revision. */
 @Composable
-private fun SavedProjectsPanel(list: List<SavedProjectEntity>, onClose: () -> Unit) {
+private fun SavedProjectsPanel(
+    list: List<SavedProjectEntity>, onClose: () -> Unit,
+    onView: (String) -> Unit, onRevise: (String) -> Unit, onDelete: (String) -> Unit,
+) {
+    var confirmDelete by remember { mutableStateOf<String?>(null) }
+    QeConfirm(if (confirmDelete != null) "Delete this saved revision?" else null) { ok ->
+        val id = confirmDelete; confirmDelete = null
+        if (ok && id != null) onDelete(id)
+    }
     Column(
         Modifier.widthIn(max = 1120.dp).fillMaxWidth().padding(top = 20.dp, bottom = 12.dp)
             .clip(RoundedCornerShape(16.dp)).background(QeColors.Card)
@@ -125,6 +143,11 @@ private fun SavedProjectsPanel(list: List<SavedProjectEntity>, onClose: () -> Un
                     Text("${x.name} · R${x.revision}", color = QeColors.Text, fontWeight = FontWeight.Bold)
                     val date = runCatching { savedDateFormat.format(Instant.parse(x.updatedAt).atZone(ZoneId.systemDefault())) }.getOrDefault(x.updatedAt)
                     Text(date, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
+                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        QeSecondaryButton("View / Print", onClick = { onView(x.id) })
+                        QePrimaryButton("Revise", onClick = { onRevise(x.id) })
+                        QeDangerButton("Delete") { confirmDelete = x.id }
+                    }
                 }
             }
         }

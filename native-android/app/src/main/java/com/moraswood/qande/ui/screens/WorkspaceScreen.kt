@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moraswood.qande.ui.components.PageHeading
-import com.moraswood.qande.ui.components.PortPendingCard
 import com.moraswood.qande.ui.components.QePrimaryButton
 import com.moraswood.qande.ui.components.QeSecondaryButton
 import com.moraswood.qande.ui.components.QeTextField
@@ -53,6 +52,8 @@ fun WorkspaceScreen(
     onShowProjects: () -> Unit,
     calculator: @Composable () -> Unit,
     estimation: @Composable () -> Unit,
+    quotation: @Composable () -> Unit,
+    review: @Composable () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         WorkspaceTabs(tab, onTab)
@@ -63,11 +64,8 @@ fun WorkspaceScreen(
             when (tab) {
                 WorkspaceTab.Calculator -> calculator()
                 WorkspaceTab.Estimation -> estimation()
-                WorkspaceTab.Quotation -> PortPendingCard("Quotation")
-                WorkspaceTab.Review -> {
-                    PageHeading("Actual Cost / Job Review", "Compare what you estimated with what actually happened.")
-                    PortPendingCard("Projects/payments")
-                }
+                WorkspaceTab.Quotation -> quotation()
+                WorkspaceTab.Review -> review()
             }
         }
     }
