@@ -48,7 +48,7 @@ class SettingsBackupTest {
 
     private fun freshDb(): JdbcPort {
         val c = DriverManager.getConnection("jdbc:sqlite::memory:")
-        val schema = Json.parseToJsonElement(File("schemas/com.moraswood.qande.data.QeDatabase/4.json").readText()).jsonObject["database"]!!.jsonObject
+        val schema = Json.parseToJsonElement(File("schemas/com.moraswood.qande.data.QeDatabase/${com.moraswood.qande.backup.QeBackup.SCHEMA}.json").readText()).jsonObject["database"]!!.jsonObject
         c.createStatement().use { st ->
             st.execute("PRAGMA foreign_keys = ON")
             schema["entities"]!!.jsonArray.map { it.jsonObject }.forEach { e ->
