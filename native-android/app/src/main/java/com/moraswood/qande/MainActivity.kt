@@ -23,6 +23,8 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        // Feature C: daily on-device overdue check (unique periodic work, KEEP).
+        com.moraswood.qande.assets.OverdueAlerts.schedule(applicationContext)
         setContent { QeTheme { QeApp(vm) } }
     }
 }
