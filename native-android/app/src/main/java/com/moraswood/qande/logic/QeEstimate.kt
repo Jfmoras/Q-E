@@ -79,7 +79,7 @@ object QeEstimate {
             if (rateGroupForRow(c, j) != null) grouped += amount else ungrouped += amount
         }
         val wood = grouped + ungrouped
-        val labourArea = labourAreaSqft(c)
+        val labourArea = QeArea.labourArea(item, c) // Feature G: = labourAreaSqft(c) whenever the labour L/W are filled (V10.1)
         val labour = if (c.labourMode.ifEmpty { "sqft" } == "lumpsum") num(c.labourLumpsum) else labourArea * num(c.labourRate)
         val polish = if (c.polishMode == "sqft") polishArea * num(c.polishRate) else num(c.polishLumpsum)
         val cost = wood + labour + polish + num(c.consumables) + num(c.other)

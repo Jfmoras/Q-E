@@ -90,6 +90,8 @@ val QeJson = Json {
 data class Row(
     val l: LStr = "", val lUnit: LStr = "", val w: LStr = "", val wUnit: LStr = "",
     val t: LStr = "", val tUnit: LStr = "", val q: LStr = "", val mode: LStr = "",
+    /** Feature G (native): "LT" = vertical piece, its area is length × thickness (default length × width). */
+    val areaFace: String? = null,
 ) {
     companion object { fun blank() = Row("", "ft", "", "in", "", "in", "", "CFT") }
 }
@@ -129,6 +131,8 @@ data class Costing(
     val polishAreaOverride: LStr = "",
     val consumables: LStr = "", val other: LStr = "", val sellingPrice: LStr = "",
     @Serializable(with = LooseBoolSerializer::class) val sellingAuto: Boolean? = null,
+    /** Feature G (native): item area override in sq.ft (blank = computed from the rows). */
+    val areaOverride: String? = null,
 ) {
     companion object {
         fun blank() = Costing(
@@ -147,6 +151,8 @@ data class QuoteItem(
     val species: String? = null,
     /** Feature D (native): CFT/KOL link captured at Send to Quotation, used to re-price the line for another species. */
     val wood: WoodLink? = null,
+    /** Feature G (native): item area (sq.ft, 2 decimals) carried from Estimation; printed when "Show area" is on. */
+    val area: String? = null,
 ) {
     companion object { fun blank() = QuoteItem() }
 }
@@ -202,6 +208,8 @@ data class WorkspaceState(
     val actual: Actual = Actual(),
     /** Feature D (native): print other options as a comparison appendix (null/false = active option only). */
     val printComparison: Boolean? = null,
+    /** Feature G (native): print each line's area under its description. */
+    val printArea: Boolean? = null,
     /** Feature F (native): estimation item groups (null = ungrouped job, exactly V10.1). */
     val itemGroups: List<ItemGroup>? = null,
 ) {
