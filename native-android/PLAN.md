@@ -30,7 +30,7 @@
 | 3 | **Estimation** ✅ (+ Feature B handoff, estimation photos, estimation template logging) | estimation cards, measurement table, rate groups (group/ungroup/remove, colours), wood/labour/polish subcards, consumables/other, auto selling price, metrics, Send this item / Send to Quotation with validation, new estimation item |
 | 4 | **Quotation** ✅ (+ Save Project / Saved Projects revisions, Job Review tab) | letterhead, date, customer, options (add/duplicate/remove/select/rename), items (desc, units datalist, qty, price, total, remove), images (≤6, resize), AI improve/undo, discount/GST totals, notes (saved notes select/add/delete, save/remove), print/Save-as-PDF sheet (all options), Export to Projects |
 | 5 | **Projects/payments** ✅ (+ Feature A carry-over, template logs keyed by project id) | (Save Project, Saved Projects panel and Job Review landed in milestone 4) Operations › Projects (create with document upload, import quotation, pending import from Export to Projects, search, totals, notes, status, entries payment/revision/expense, history, delete; **+ Feature A: item photos carried into the project on quotation→project conversion**), attachments (upload/list/open preview image/PDF/remove), Expenses & Inventory (materials, movements, stock, low-stock, history) |
-| 6 | **Machines** | Operations › Machines & Tools (register MWI-0001…, status, worker, history) and Monthly Reports; **+ Feature C asset tracking (below)** |
+| 6 | **Machines** ✅ | Operations › Machines & Tools (register MWI-0001…, status, worker, history) and Monthly Reports; **+ Feature C asset tracking (below)** |
 | 7 | **Settings** | Full Backup & Restore (V10.1 JSON format, confirm, restore; **+ item photos & native template tables in the backup — Feature A**), AI API settings (detection, defaults, save/remove, encrypted key), Length converter, Saved Notes manager |
 | 8 | **Final signed build** | parity review against V10.1-inventory.md, remove placeholders, README, final signed APK artifact `Q-E-native-permanently-signed-apk` |
 
@@ -91,4 +91,17 @@
 - Attachments: SAF multi-select → private copies in filesDir/project-attachments (15 MB limit, same messages); preview: images via BitmapFactory, PDFs via PdfRenderer pages in a scrollable panel (no WebView); "Download / Open externally" hands the file to another app via FileProvider.
 - Opening Operations behaves like a fresh operations.html load (Projects tab, empty form/message); only Export to Projects consumes `mwi-project-import-pending`.
 - Deviations: an expanded project card stays expanded after Add entry / status change (V10.1 re-rendered and collapsed it); notes save when the field loses focus (the textarea `change` event); "No app on this device can open …" message when nothing can open an attachment; a line "Item photos from the quotation (n) will be attached." appears when Feature A photos are pending.
-- Machines & Tools and Monthly Reports remain milestone 6.
+- Machines & Tools and Monthly Reports: done in milestone 6.
+
+## Milestone 6 notes / deviations
+- Machines & Tools and Monthly Reports are exact ports (`QeOps.addMachine/changeMachine/report`); QeOpsTest's V10.1 harness now also replays machine registration, status / worker changes and monthly summaries (current month, empty month, default month).
+- Machine edits use an SQL UPDATE (never REPLACE, which would cascade-delete the machine's history); every status / worker change appends `{at,status,worker}` like V10.1. V10.1 does not display the history, neither does the port.
+- Monthly Reports month field: V10.1 used `<input type=month>`; native uses a YYYY-MM field with ‹ › month buttons. Same default (current UTC month) and the same `at.startsWith(month)` matching.
+- Saved Notes screen ported (create / duplicate check / statuses as V10.1). Per Jason: notes show as text with Edit (Save / Cancel, in place) and Delete with a confirm; Quotation tab gained "Edit saved".
+- Feature C (Assets tab, native addition): Room v3 with MIGRATION_2_3 (5 new tables, nothing dropped or altered) + 8 BEFORE UPDATE/DELETE triggers that RAISE(ABORT) on the issue / return / correction / decision logs (also re-applied on every open with IF NOT EXISTS). AssetDao has insert/query methods only.
+  - Status is derived, never stored: in stock / issued / overdue (overdue = open issue whose due-back date is before today; the due date itself is not overdue). Default due-back = today + 2 days.
+  - Corrections reference an issue or return and change nothing until an approved decision exists; approved corrections overlay fields (later approval wins), can clear the due date or void an entry. Originals stay in the history timeline (voided entries struck through).
+  - Owner review queue behind a 4–8 digit PIN: PBKDF2WithHmacSHA256, 16-byte random salt, 120 000 iterations, constant-time compare, 30 s lockout after 5 wrong tries; re-locks when Operations is reopened.
+  - Daily WorkManager job (unique periodic, KEEP) posts one notification per overdue asset ("Overdue: <asset>", "Issued to <worker> · due back <date>") on channel `asset-overdue`; POST_NOTIFICATIONS is requested from the Assets tab on Android 13+.
+  - Asset photos reuse the item photo store (filesDir/item_photos). Asset data is not in the JSON backup yet (milestone 7).
+  - Tests: AssetTrackingTest (status, corrections, PIN incl. a PBKDF2 known-answer vector, v2→v3 migration vs the exported schema, and the triggers on a real SQLite via sqlite-jdbc on the test classpath only).

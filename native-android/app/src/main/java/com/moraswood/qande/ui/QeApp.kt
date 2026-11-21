@@ -85,6 +85,7 @@ fun QeApp(vm: AppViewModel) {
     val context = LocalContext.current
     var opsTab by rememberSaveable { mutableStateOf(OpsTab.Projects) }
     val ovm: OperationsViewModel = viewModel()
+    val avm: com.moraswood.qande.assets.AssetsViewModel = viewModel()
     val quick by vm.quick.collectAsState()
     val hoppus by vm.hoppus.collectAsState()
     val templates by vm.templates.collectAsState()
@@ -126,7 +127,7 @@ fun QeApp(vm: AppViewModel) {
                     onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },
                     onCloseSaved = { savedPanelOpen = false },
-                    onOperations = { opsTab = OpsTab.Projects; ovm.resetPage(); nav.openView(Routes.OPERATIONS) },
+                    onOperations = { opsTab = OpsTab.Projects; ovm.resetPage(); avm.resetPage(); nav.openView(Routes.OPERATIONS) },
                     onNotes = { nav.openView(Routes.NOTES) },
                     onQuickCalc = { nav.openView(Routes.QUICK) },
                     onSettings = { nav.openView(Routes.SETTINGS) },
@@ -199,7 +200,7 @@ fun QeApp(vm: AppViewModel) {
                                     onPrint = { QuotePrint.print(context, vm.workspace.value) },
                                     onExport = {
                                         val err = vm.exportToProjects()
-                                        if (err == null) { opsTab = OpsTab.Projects; ovm.resetPage(); ovm.consumePendingImport(); nav.openView(Routes.OPERATIONS) }
+                                        if (err == null) { opsTab = OpsTab.Projects; ovm.resetPage(); avm.resetPage(); ovm.consumePendingImport(); nav.openView(Routes.OPERATIONS) }
                                         err
                                     },
                                     onCustomerName = vm::setCustomerName,
@@ -245,7 +246,7 @@ fun QeApp(vm: AppViewModel) {
                 HoppusScreen(hoppus, remember(vm) { HoppusActions(vm::setHoppusField, vm::addHoppusLog, vm::removeHoppusLog, vm::setSawRate) })
             }
             composable(Routes.SETTINGS) { SettingsScreen(templates, vm::deleteTemplate) }
-            composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, ovm) }
+            composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, ovm, avm) }
         }
     }
 }
