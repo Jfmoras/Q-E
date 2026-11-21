@@ -56,6 +56,7 @@ import com.moraswood.qande.ui.components.QeConfirm
 import com.moraswood.qande.ui.components.QeDangerButton
 import com.moraswood.qande.ui.components.QeFieldLabel
 import com.moraswood.qande.ui.components.QeNumberField
+import com.moraswood.qande.ui.components.QeCheckbox
 import com.moraswood.qande.ui.components.QePrimaryButton
 import com.moraswood.qande.ui.components.QeSecondaryButton
 import com.moraswood.qande.ui.components.QeSelect
@@ -93,6 +94,10 @@ data class QuotationActions(
     val onDeleteSavedNote: (Int) -> Unit,
     /** Native addition (Jason): edit a saved note in place. */
     val onEditSavedNote: (Int, String) -> Unit = { _, _ -> },
+    /** Feature D: duplicate the whole option as a wood-species option (species, Rate/CFT, Rate/KOL) → status line. */
+    val onDuplicateAsSpecies: (String, String, String) -> String = { _, _, _ -> "" },
+    val onOptionSpecies: (String) -> Unit = {},
+    val onPrintComparison: (Boolean) -> Unit = {},
 )
 
 private val UnitOptions = listOf("Set", "Piece", "Nos", "Lumpsum", "Sq.ft", "Rft", "Job")
@@ -114,10 +119,22 @@ fun QuotationPanel(
     QeAlert(alert) { alert = null }
     QeConfirm(if (confirmRemove) "Remove this quotation option?" else null) { ok -> confirmRemove = false; if (ok) actions.onRemoveOption() }
 
+    var speciesDialog by remember { mutableStateOf(false) }
+    var speciesStatus by remember { mutableStateOf("") }
+    if (speciesDialog) SpeciesDialog(onDismiss = { speciesDialog = false }) { sp, cft, kol ->
+        speciesDialog = false
+        speciesStatus = actions.onDuplicateAsSpecies(sp, cft, kol)
+    }
+
     // .quote-actions
     Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End) {
         QePrimaryButton("Print quotation", onClick = actions.onPrint)
         QeSecondaryButton("Export to Projects", onClick = { scope.launch { actions.onExport()?.let { alert = it } } })
+    }
+    // Feature D: print the official (active) option; other options only as an opt-in appendix.
+    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+        QeCheckbox(state.printComparison == true, actions.onPrintComparison)
+        Text("Include other options as comparison appendix", color = QeColors.Text, fontSize = 14.sp)
     }
 
     val shape = RoundedCornerShape(16.dp)
@@ -169,11 +186,17 @@ fun QuotationPanel(
                 }
                 if (wide) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { selectField(Modifier.weight(1f)); nameField(Modifier.weight(1f)) }
                 else { selectField(Modifier.fillMaxWidth()); nameField(Modifier.fillMaxWidth()) }
+                QeFieldLabel("Wood species") {
+                    QeTextField(opts.getOrNull(active)?.species.orEmpty(), actions.onOptionSpecies, Modifier.fillMaxWidth(), placeholder = "e.g. Teak, Sal, Honne (optional)")
+                }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     QeSecondaryButton("+ Add option", onClick = actions.onAddOption)
                     QeSecondaryButton("Duplicate option", onClick = actions.onDuplicateOption)
+                    QeSecondaryButton("Duplicate as new option (wood species)", onClick = { speciesDialog = true })
                     QeDangerButton("Remove option") { val msg = actions.canRemoveOption(); if (msg != null) alert = msg else confirmRemove = true }
                 }
+                if (speciesStatus.isNotEmpty()) Text(speciesStatus, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
+                if (opts.size > 1) OptionsPricing(opts, active, actions.onSelectOption)
             }
 
             // #quotationItems
@@ -318,6 +341,15 @@ private fun QuoteItemCard(
             if (wide) Row(horizontalArrangement = Arrangement.spacedBy(9.dp), verticalAlignment = Alignment.Bottom) {
                 units(Modifier.weight(0.75f)); qty(Modifier.weight(0.7f)); price(Modifier.weight(1f)); total(Modifier.weight(1f))
             } else { units(Modifier.fillMaxWidth()); qty(Modifier.fillMaxWidth()); price(Modifier.fillMaxWidth()); total(Modifier.fillMaxWidth()) }
+            QeFieldLabel("Wood species (optional)") {
+                QeTextField(it.species.orEmpty(), { v -> actions.onField(i, "species", v) }, Modifier.fillMaxWidth(), placeholder = "Species for this line")
+            }
+            it.wood?.let { w ->
+                Text(
+                    "Timber link: ${"%.2f".format(w.cft)} CFT · ${"%.2f".format(w.kol)} KOL · wood ${QeFormat.money(w.woodCft + w.woodKol)}",
+                    color = QeColors.Muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp),
+                )
+            }
         }
         // .quote-image-actions
         FlowRow(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -392,4 +424,57 @@ fun ReviewPanel(state: WorkspaceState, onMaterials: (String) -> Unit, onLabourHo
         Text("Use this after job completion to compare estimated costs against actual material and labour usage.",
             color = QeColors.Muted, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp))
     }
+}
+
+
+/** Feature D: every option with its full pricing; the active option carries the official total. */
+@Composable
+private fun OptionsPricing(opts: List<com.moraswood.qande.data.QuoteOption>, active: Int, onSelect: (Int) -> Unit) {
+    Column(Modifier.padding(top = 12.dp).fillMaxWidth()) {
+        Text("Options & pricing", color = QeColors.Text, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
+        opts.forEachIndexed { i, o ->
+            val t = QeQuote.totalsForOption(o)
+            val on = i == active
+            val shape = RoundedCornerShape(10.dp)
+            Column(
+                Modifier.padding(bottom = 6.dp).fillMaxWidth().clip(shape).background(if (on) QeColors.GrandBg else QeColors.Soft)
+                    .border(if (on) 2.dp else 1.dp, if (on) QeColors.Accent else QeColors.Line, shape).clickable { onSelect(i) }.padding(10.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(com.moraswood.qande.logic.QeSpecies.optionLabel(o, i), color = QeColors.Text, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    if (on) Text("● Active — official total", color = QeColors.Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    "Total ${QeFormat.rs(t.subtotal)}" + (if (t.discount > 0) " · Discount - ${QeFormat.rs(t.discount)}" else "") +
+                        " · GST (${QeQuote.jsNumber(num(o.gstPercent))}%) ${QeFormat.rs(t.gst)}",
+                    color = QeColors.Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp),
+                )
+                Text("Grand total ${QeFormat.rs(t.grand)}", color = QeColors.Text, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 2.dp))
+            }
+        }
+    }
+}
+
+/** Feature D: species name + optional species rates for re-pricing linked lines. */
+@Composable
+private fun SpeciesDialog(onDismiss: () -> Unit, onOk: (String, String, String) -> Unit) {
+    var sp by remember { mutableStateOf("") }
+    var cft by remember { mutableStateOf("") }
+    var kol by remember { mutableStateOf("") }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = QeColors.Card,
+        title = { Text("Duplicate as new option", color = QeColors.Text) },
+        text = {
+            Column {
+                Text("Copies every line, image, discount and GST of the current option. Lines sent from Estimation are re-priced from their CFT/KOL with the rates below; other lines keep their price.",
+                    color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 10.dp))
+                QeFieldLabel("Wood species") { QeTextField(sp, { sp = it }, Modifier.fillMaxWidth(), placeholder = "e.g. Teak") }
+                QeFieldLabel("Rate / CFT for this species") { QeNumberField(cft, { cft = it }, Modifier.fillMaxWidth()) }
+                QeFieldLabel("Rate / KOL for this species") { QeNumberField(kol, { kol = it }, Modifier.fillMaxWidth()) }
+            }
+        },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = { onOk(sp, cft, kol) }) { Text("Duplicate", color = QeColors.Accent) } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancel", color = QeColors.Muted) } },
+    )
 }

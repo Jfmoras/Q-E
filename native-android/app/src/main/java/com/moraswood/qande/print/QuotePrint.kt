@@ -129,7 +129,12 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
         header()
         titleRow(state)
         customerBar(state)
-        state.quoteOptions.forEachIndexed { oi, opt -> option(oi, opt) }
+        // Feature D: the active option is the official quotation; others only as an opt-in comparison appendix.
+        val order = com.moraswood.qande.logic.QeSpecies.printOrder(state, state.printComparison == true)
+        order.forEachIndexed { k, (oi, opt) ->
+            if (k == 1) appendixHeading()
+            option(oi, opt)
+        }
         notes(state.quote.notes.filter { it.isNotBlank() })
         footer()
         page?.let { doc.finishPage(it) }
@@ -213,10 +218,18 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
 
     private fun tableHeaderHeight(): Float = layout("Sl. No.", tp(8f, true), mm(10f), Layout.Alignment.ALIGN_CENTER).height + mm(4.4f)
 
+    private fun appendixHeading() {
+        val l = layout("COMPARISON APPENDIX — other options for reference (not part of the quoted total)", tp(10f, true, brown), contentW)
+        ensure(l.height + mm(20f))
+        y += mm(4f)
+        draw(l, left, y)
+        y += l.height + mm(1f)
+    }
+
     private fun option(oi: Int, opt: com.moraswood.qande.data.QuoteOption) {
         y += mm(18f * 0.75f * 25.4f / 72f) // .print-option margin 18px
         val t = QeQuote.totalsForOption(opt)
-        val h3 = layout("OPTION ${oi + 1}: ${collapse(opt.name.ifEmpty { "Option " + (oi + 1) })}", tp(11.25f, true), contentW)
+        val h3 = layout("OPTION ${oi + 1}: ${collapse(com.moraswood.qande.logic.QeSpecies.optionLabel(opt, oi))}", tp(11.25f, true), contentW)
         val h3Block = mm(3.7f) + h3.height + mm(1.3f) + mm(3.2f)
         ensure(h3Block + tableHeaderHeight() + mm(12f)) // h3 break-after:avoid
         y += mm(3.7f)
@@ -236,7 +249,7 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
         opt.items.forEachIndexed { i, x ->
             val texts = listOf(
                 layout("${i + 1}", cell, mm(colW[0]) - padX * 2, Layout.Alignment.ALIGN_CENTER),
-                layout(preLine(x.description.ifEmpty { "-" }), bold, mm(colW[1]) - padX * 2),
+                layout(preLine(x.description.ifEmpty { "-" }) + (x.species?.takeIf { it.isNotBlank() && it != opt.species }?.let { "\nSpecies: $it" } ?: ""), bold, mm(colW[1]) - padX * 2),
                 layout(collapse(QeQuote.unitsText(x)), cell, mm(colW[2]) - padX * 2, Layout.Alignment.ALIGN_OPPOSITE),
                 layout(QeFormat.rs(num(x.unitPrice)), cell, mm(colW[3]) - padX * 2, Layout.Alignment.ALIGN_OPPOSITE),
                 layout(QeFormat.rs(num(x.qty) * num(x.unitPrice)), cell, mm(colW[4]) - padX * 2, Layout.Alignment.ALIGN_OPPOSITE),
