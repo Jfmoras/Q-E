@@ -53,7 +53,7 @@ jobs:
           QE_KEYSTORE_PASSWORD: ${{ secrets.QE_KEYSTORE_PASSWORD }}
           QE_KEY_PASSWORD: ${{ secrets.QE_KEY_PASSWORD }}
           QE_KEY_ALIAS: ${{ secrets.QE_KEY_ALIAS }}
-        run: gradle -p native-android --no-daemon --stacktrace :app:assembleRelease
+        run: gradle -p native-android --no-daemon --stacktrace :app:testReleaseUnitTest :app:assembleRelease
       - name: Verify APK signature and native-only contents
         run: |
           APK=native-android/app/build/outputs/apk/release/app-release.apk

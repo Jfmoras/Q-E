@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -21,7 +22,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.moraswood.qande.AppViewModel
+import com.moraswood.qande.ui.components.QeConfirm
 import com.moraswood.qande.ui.components.QeTopBar
+import com.moraswood.qande.ui.screens.CalculatorActions
+import com.moraswood.qande.ui.screens.CalculatorPanel
+import com.moraswood.qande.ui.screens.HoppusActions
+import com.moraswood.qande.ui.screens.QuickActions
 import com.moraswood.qande.ui.screens.HomeScreen
 import com.moraswood.qande.ui.screens.HoppusScreen
 import com.moraswood.qande.ui.screens.NotesScreen
@@ -65,6 +71,24 @@ fun QeApp(vm: AppViewModel) {
     var savedPanelOpen by rememberSaveable { mutableStateOf(false) }
     var projectStatus by rememberSaveable { mutableStateOf("") }
     var opsTab by rememberSaveable { mutableStateOf(OpsTab.Projects) }
+    val quick by vm.quick.collectAsState()
+    val hoppus by vm.hoppus.collectAsState()
+    val templates by vm.templates.collectAsState()
+    val banner by vm.templateBanner.collectAsState()
+    val templateStatus by vm.templateStatus.collectAsState()
+    var confirmNewProject by rememberSaveable { mutableStateOf(false) }
+
+    // app.js startNewProject(): confirm only when there is work to lose.
+    fun startNewProject() {
+        if (vm.hasProjectWork()) { confirmNewProject = true; return }
+        vm.startNewProject(); nav.openView(Routes.WORKSPACE)
+    }
+    QeConfirm(
+        if (confirmNewProject) "Start a new project? Your current unsaved work will be replaced. Save the current project first if you want to keep it." else null,
+    ) { ok ->
+        confirmNewProject = false
+        if (ok) { vm.startNewProject(); nav.openView(Routes.WORKSPACE) }
+    }
 
     // Back-button fix: with no navigation history left, finish() the activity instead of doing nothing.
     BackHandler(enabled = entry != null && nav.previousBackStackEntry == null) { activity?.finish() }
@@ -80,7 +104,7 @@ fun QeApp(vm: AppViewModel) {
                     savedPanelOpen = savedPanelOpen,
                     savedProjects = savedProjects,
                     onHoppus = { nav.openView(Routes.HOPPUS) },
-                    onNewProject = { nav.openView(Routes.WORKSPACE) },
+                    onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },
                     onCloseSaved = { savedPanelOpen = false },
                     onOperations = { nav.openView(Routes.OPERATIONS) },
@@ -99,12 +123,40 @@ fun QeApp(vm: AppViewModel) {
                     projectStatus = projectStatus,
                     onSaveProject = { projectStatus = "Saving projects is ported in the projects milestone." },
                     onShowProjects = { savedPanelOpen = true; nav.goHome() },
+                    calculator = {
+                        CalculatorPanel(
+                            items = workspace.items,
+                            banner = banner,
+                            templateStatus = templateStatus,
+                            actions = remember(vm) {
+                                CalculatorActions(
+                                    onItemName = vm::setItemName,
+                                    onRowField = vm::setRowField,
+                                    onAddRow = vm::addRow,
+                                    onNewItem = vm::addItem,
+                                    onSendToEstimation = vm::sendToEstimation,
+                                    onItemTag = vm::setItemTag,
+                                    onItemPhoto = vm::setItemPhoto,
+                                    onSaveTemplate = vm::saveItemAsTemplate,
+                                    onUseTemplate = vm::applyTemplate,
+                                    onDismissTemplate = vm::dismissTemplate,
+                                )
+                            },
+                        )
+                    },
                 )
             }
             composable(Routes.NOTES) { NotesScreen() }
-            composable(Routes.QUICK) { QuickCalcScreen() }
-            composable(Routes.HOPPUS) { HoppusScreen() }
-            composable(Routes.SETTINGS) { SettingsScreen() }
+            composable(Routes.QUICK) {
+                QuickCalcScreen(
+                    quick,
+                    remember(vm) { QuickActions(vm::setQuickRate, vm::setQuickField, vm::addQuickRow, vm::setQuickGroupRate, vm::ungroupQuick, vm::groupQuickRows) },
+                )
+            }
+            composable(Routes.HOPPUS) {
+                HoppusScreen(hoppus, remember(vm) { HoppusActions(vm::setHoppusField, vm::addHoppusLog, vm::removeHoppusLog, vm::setSawRate) })
+            }
+            composable(Routes.SETTINGS) { SettingsScreen(templates, vm::deleteTemplate) }
             composable(Routes.OPERATIONS) { OperationsScreen(opsTab, { opsTab = it }, message = "") }
         }
     }
