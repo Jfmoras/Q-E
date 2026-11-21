@@ -1,0 +1,13 @@
+[
+ {"state":{"quoteItems":[{"description":"Teak door","unit":"Nos","qty":"2","unitPrice":"18500","images":[],"aiOriginal":""},{"description":"Frame","unit":"Set","qty":"1.5","unitPrice":"7333.33","images":[],"aiOriginal":""}],"quote":{"discountType":"percent","discountValue":"7.5","gstPercent":"18","notes":[""]}}},
+ {"state":{"quoteItems":[{"description":"Cot","unit":"","qty":"3","unitPrice":"12999.99","images":[],"aiOriginal":""}],"quote":{"discountType":"amount","discountValue":"999999","gstPercent":"12","notes":[""]}}},
+ {"state":{"quoteItems":[{"description":"x","unit":"","qty":"abc","unitPrice":"","images":[],"aiOriginal":""},{"description":"y","unit":"Rft","qty":"-2","unitPrice":"150","images":[],"aiOriginal":""}],"quote":{"discountType":"amount","discountValue":"-50","gstPercent":"","notes":[""]}}},
+ {"state":{"quoteItems":[{"description":"Table","unit":"Nos","qty":"1","unitPrice":"0.5","images":[],"aiOriginal":""},{"description":"Chair","unit":"Nos","qty":"4","unitPrice":"2499.5","images":[],"aiOriginal":""}],"quote":{"discountType":"percent","discountValue":"0","gstPercent":"2.5","notes":[""]}}},
+ {"state":{"quoteItems":[{"description":"Wardrobe","unit":"Sq.ft","qty":"48.75","unitPrice":"1450","images":[],"aiOriginal":""}],"quote":{"discountType":"percent","discountValue":"150","gstPercent":"18","notes":[""]}},
+  "ops":[["click","addQuoteOption"],["name","Plywood"],["field",0,"description","Ply wardrobe"],["field",0,"qty","48.75"],["field",0,"unitPrice","980"],["quote","discountValue","1000"],
+         ["click","duplicateQuoteOption"],["quote","gstPercent","12"],["addItem"],["field",1,"qty","2"],["field",1,"unitPrice","350.25"],
+         ["activate",0],["quote","discountType","amount"],["quote","discountValue","2500"],["activate",2],["click","removeQuoteOption"],["click","removeQuoteOption"],["click","removeQuoteOption"],["name",""]]},
+ {"state":{"quoteItems":[{"description":"Old","unit":"","qty":"1","unitPrice":"100","images":[],"aiOriginal":""}],"quote":{"discountType":"amount","discountValue":"10","gstPercent":"5","notes":[""]},
+   "quoteOptions":[{"name":"A","items":[{"description":"Old","unit":"","qty":"1","unitPrice":"100","images":[],"aiOriginal":""}],"discountType":"amount","discountValue":"10","gstPercent":"5"},{"name":"B","items":[{"description":"New","unit":"","qty":"3","unitPrice":"33.335","images":[],"aiOriginal":""}],"discountType":"","gstPercent":"28"}],"activeQuoteOption":7},
+  "ops":[["activate",1],["activate",0],["click","duplicateQuoteOption"]]}
+]

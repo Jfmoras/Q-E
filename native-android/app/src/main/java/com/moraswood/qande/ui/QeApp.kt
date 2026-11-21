@@ -40,6 +40,10 @@ import com.moraswood.qande.ui.screens.QuickCalcScreen
 import com.moraswood.qande.ui.screens.SettingsScreen
 import com.moraswood.qande.ui.screens.WorkspaceScreen
 import com.moraswood.qande.ui.screens.WorkspaceTab
+import com.moraswood.qande.ui.screens.QuotationActions
+import com.moraswood.qande.ui.screens.QuotationPanel
+import com.moraswood.qande.ui.screens.ReviewPanel
+import com.moraswood.qande.print.QuotePrint
 import com.moraswood.qande.ui.theme.QeColors
 
 /** V10.1 views (`showView`) as navigation routes. Every view sits directly above Home, like the WebView history. */
@@ -71,7 +75,12 @@ fun QeApp(vm: AppViewModel) {
     val workspace by vm.workspace.collectAsState()
     val savedProjects by vm.savedProjects.collectAsState()
     var savedPanelOpen by rememberSaveable { mutableStateOf(false) }
-    var projectStatus by rememberSaveable { mutableStateOf("") }
+    val projectStatus by vm.projectStatus.collectAsState()
+    val savedNotes by vm.savedNotes.collectAsState()
+    val noteStatus by vm.noteStatus.collectAsState()
+    val aiStatus by vm.aiStatus.collectAsState()
+    val aiBusy by vm.aiBusy.collectAsState()
+    val context = LocalContext.current
     var opsTab by rememberSaveable { mutableStateOf(OpsTab.Projects) }
     val quick by vm.quick.collectAsState()
     val hoppus by vm.hoppus.collectAsState()
@@ -107,6 +116,9 @@ fun QeApp(vm: AppViewModel) {
                     showContinue = vm.hasProjectWork(),
                     savedPanelOpen = savedPanelOpen,
                     savedProjects = savedProjects,
+                    onViewProject = { id -> if (vm.viewSavedProject(id)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
+                    onReviseProject = { id -> if (vm.reviseSavedProject(id)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
+                    onDeleteProject = vm::deleteSavedProject,
                     onHoppus = { nav.openView(Routes.HOPPUS) },
                     onNewProject = { startNewProject() },
                     onSavedProjects = { savedPanelOpen = true },
@@ -125,7 +137,7 @@ fun QeApp(vm: AppViewModel) {
                     projectName = workspace.projectName,
                     onProjectName = vm::setProjectName,
                     projectStatus = projectStatus,
-                    onSaveProject = { projectStatus = "Saving projects is ported in the projects milestone." },
+                    onSaveProject = vm::saveProject,
                     onShowProjects = { savedPanelOpen = true; nav.goHome() },
                     calculator = {
                         CalculatorPanel(
@@ -172,6 +184,50 @@ fun QeApp(vm: AppViewModel) {
                             },
                         )
                     },
+                    quotation = {
+                        QuotationPanel(
+                            state = workspace,
+                            savedNotes = savedNotes,
+                            noteStatus = noteStatus,
+                            aiStatus = aiStatus,
+                            aiBusy = aiBusy,
+                            actions = remember(vm) {
+                                QuotationActions(
+                                    onPrint = { QuotePrint.print(context, vm.workspace.value) },
+                                    onExport = {
+                                        val err = vm.exportToProjects()
+                                        if (err == null) { opsTab = OpsTab.Projects; nav.openView(Routes.OPERATIONS) }
+                                        err
+                                    },
+                                    onCustomerName = vm::setCustomerName,
+                                    onCustomerLocation = vm::setCustomerLocation,
+                                    onSelectOption = vm::selectQuoteOption,
+                                    onOptionName = vm::setQuoteOptionName,
+                                    onAddOption = vm::addQuoteOption,
+                                    onDuplicateOption = vm::duplicateQuoteOption,
+                                    canRemoveOption = vm::canRemoveQuoteOption,
+                                    onRemoveOption = vm::removeQuoteOption,
+                                    onField = vm::setQuoteField,
+                                    onRemoveItem = vm::removeQuoteItem,
+                                    onAddItem = vm::addQuoteItem,
+                                    onImprove = vm::improveDescription,
+                                    onUndoAi = vm::undoAi,
+                                    onAddImages = vm::addQuoteImages,
+                                    onRemoveImage = vm::removeQuoteImage,
+                                    onDiscountType = vm::setDiscountType,
+                                    onDiscountValue = vm::setDiscountValue,
+                                    onGst = vm::setGstPercent,
+                                    onAddNote = vm::addNote,
+                                    onNote = vm::setNote,
+                                    onSaveNote = vm::saveNote,
+                                    onRemoveNote = vm::removeNote,
+                                    onAddSavedNote = vm::addSavedNote,
+                                    onDeleteSavedNote = vm::deleteSavedNote,
+                                )
+                            },
+                        )
+                    },
+                    review = { ReviewPanel(workspace, vm::setActualMaterials, vm::setActualLabourHours) },
                 )
             }
             composable(Routes.NOTES) { NotesScreen() }
