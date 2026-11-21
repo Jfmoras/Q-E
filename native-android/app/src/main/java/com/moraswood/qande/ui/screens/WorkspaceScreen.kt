@@ -52,6 +52,7 @@ fun WorkspaceScreen(
     onSaveProject: () -> Unit,
     onShowProjects: () -> Unit,
     calculator: @Composable () -> Unit,
+    estimation: @Composable () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         WorkspaceTabs(tab, onTab)
@@ -61,10 +62,7 @@ fun WorkspaceScreen(
         ) {
             when (tab) {
                 WorkspaceTab.Calculator -> calculator()
-                WorkspaceTab.Estimation -> {
-                    PageHeading("Estimation & Rate Builder", "Price every item separately. CFT/KOL rates, labour, polish and selling price can all differ item by item.")
-                    PortPendingCard("Estimation")
-                }
+                WorkspaceTab.Estimation -> estimation()
                 WorkspaceTab.Quotation -> PortPendingCard("Quotation")
                 WorkspaceTab.Review -> {
                     PageHeading("Actual Cost / Job Review", "Compare what you estimated with what actually happened.")

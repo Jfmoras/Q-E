@@ -27,7 +27,7 @@
 |---|---|---|
 | 1 | **Skeleton** ✅ | Gradle (Compose, Navigation, Room+kapt, serialization), permanent signing + signed-release workflow, V10.1 charcoal theme, top bar (logo, title, Home), Home grid (8 actions, glyphs), Saved Projects panel shell, workspace tabs + project toolbar, Operations header/nav, placeholder screens, Room schema for every V10.1 data shape, launcher icons, configChanges, back fix |
 | 2 | **Calculator** ✅ (+ template library, item photo capture) | workspace Timber Calculator (items, rows, unit selects, converted hint, Enter-key flow, item & grand totals, Send to Estimation); General CFT/KOL calculator with colour groups (`mwi-quick-calc-v1`); Hoppus log volume (`mwi-hoppus-v1`); QeMath + unit tests |
-| 3 | **Estimation** | **+ Feature B handoff (below)**; estimation cards, measurement table, rate groups (group/ungroup/remove, colours), wood/labour/polish subcards, consumables/other, auto selling price, metrics, Send this item / Send to Quotation with validation, new estimation item |
+| 3 | **Estimation** ✅ (+ Feature B handoff, estimation photos, estimation template logging) | estimation cards, measurement table, rate groups (group/ungroup/remove, colours), wood/labour/polish subcards, consumables/other, auto selling price, metrics, Send this item / Send to Quotation with validation, new estimation item |
 | 4 | **Quotation** | letterhead, date, customer, options (add/duplicate/remove/select/rename), items (desc, units datalist, qty, price, total, remove), images (≤6, resize), AI improve/undo, discount/GST totals, notes (saved notes select/add/delete, save/remove), print/Save-as-PDF sheet (all options), Export to Projects |
 | 5 | **Projects/payments** | Save Project (revisions, read-only guard), Saved Projects panel (View/Print, Revise, Delete), Continue Current Project, New Project confirm, Job Review tab; Operations › Projects (create with document upload, import quotation, pending import from Export to Projects, search, totals, notes, status, entries payment/revision/expense, history, delete; **+ Feature A: item photos carried into the project on quotation→project conversion**), attachments (upload/list/open preview image/PDF/remove), Expenses & Inventory (materials, movements, stock, low-stock, history) |
 | 6 | **Machines** | Operations › Machines & Tools (register MWI-0001…, status, worker, history) and Monthly Reports; **+ Feature C asset tracking (below)** |
@@ -48,13 +48,14 @@
 - Silent logging: 1.5 s after any calculator edit each item with a type (optional "Furniture type tag", else the item name) and rows is re-logged under jobKey = projectId (once saved) or the session key `native-job-session-v1` (new on New Project).
 - Matching (`templates/TemplateMatcher.kt`, unit-tested): normalised type (lowercase, punctuation stripped, de-pluralised, token-sorted Levenshtein ≥ 0.8) → per-job components in common units (V10.1 toFeet / toInches) → greedy best-pair component score (L 0.30, W 0.30, T 0.25, qty 0.15 relative similarity, ×0.7 if CFT/KOL differs; unpaired rows score 0 so row-count differences count) → jobs ≥ 0.75 cluster around the job with most neighbours; 2+ jobs → banner with per-component medians in the representative job's units. Saved templates of the same type are offered first.
 - Banner above the calculator item list for the first typed item whose rows are still blank: "This looks like your last N <type>s — use that template?" Use template / Dismiss. "Save as template" per item; Settings › Templates lists/deletes.
-- TODO estimation milestone: log estimation-screen rows the same way. Projects milestone: re-key session logs to the projectId on Save Project.
+- Estimation milestone (done): Estimation-tab items are logged too (itemIndex offset 1000) unless they are the unchanged copy sent from the calculator or an unnamed "Item n"; a manually added estimation item without rows gets the same banner on the Estimation tab and "Use template" fills its rows. `tag` is carried by Send to Estimation.
+- Projects milestone: re-key session logs to the projectId on Save Project.
 
 ### Feature A — one photo per item (t5u)
 - Landed in milestone 2: camera (TakePicture → FileProvider `${applicationId}.files`, `item_photos/`, no CAMERA permission) or gallery (PickVisualMedia, no storage permission); copied to `filesDir/item_photos/`, file name in `CalcItem.photo` (JSON, ignored by V10.1) + `item_photos` registry table; downsampled EXIF-rotated thumbnail; Retake / Replace / Remove; carried by Send to Estimation.
-- Milestone 3: show the thumbnail on estimation cards. Milestone 5: carry photos into the Operations project on quotation→project conversion. Milestone 7: include `item_photos/` in Full Backup.
+- Milestone 3 (done): photo box (thumbnail + Take/Choose/Replace/Remove) on every estimation card. Milestone 5: carry photos into the Operations project on quotation→project conversion. Milestone 7: include `item_photos/` in Full Backup.
 
-### Feature B — calculator → estimation handoff (t5u) — milestone 3
+### Feature B — calculator → estimation handoff (t5u) — landed in milestone 3
 - V10.1 already has it: grand-bar **"Send to Estimation →"** copies items (trimmed name or "Item n", rows with any value) to `estimationItems`, resets costings and opens the Estimation tab, whose cards show each item's CFT/KOL from those rows. Kept exactly (ported in milestone 2); milestone 3 ports the Estimation screen so it opens pre-filled and only rates, labour, polish, consumables, other and selling price are entered.
 
 ### Feature C — asset / tool / machine tracking (t6u) — milestone 6
@@ -66,3 +67,10 @@
 - Owner gating: owner PIN set on first use, PBKDF2 salted hash; required to open the review queue and approve/reject. Workers can file issues/returns/corrections only.
 - Overdue alerts: WorkManager daily PeriodicWorkRequest, notification channel, POST_NOTIFICATIONS request on Android 13+, `work-runtime-ktx`; one notification per overdue issue naming asset and worker.
 - UI: asset list with status chips (green in stock, amber issued, red overdue, V10.1 palette), tap → full history timeline.
+
+## Milestone 3 notes / deviations
+- Estimation math lives in `logic/QeEstimate.kt` (labourAreaSqft, rateGroupForRow, effectiveTimberRate, groupSummary, costingResult incl. its selling-price side effect, estimateGrand). `QeEstimateTest` compares against output of the unchanged app.js functions run in node (`src/test/resources/estimation/`).
+- The renderEstimation() side effects (missing costings created, auto selling price refreshed) are applied on load and after every state change (`QeEstimate.syncCostings`).
+- Send to Quotation / Send this item write `quoteItems` and switch to the Quotation tab exactly like V10.1; the Quotation screen itself is milestone 4.
+- Missing selling price: status text + input-error styling + focus; V10.1 additionally calls scrollIntoView (Compose brings the focused field into view).
+- Layout follows the V10.1 phone breakpoint (≤850 px: single-column subcards, 2×2 metrics).

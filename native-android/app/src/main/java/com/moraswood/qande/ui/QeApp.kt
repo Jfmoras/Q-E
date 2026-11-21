@@ -26,6 +26,8 @@ import com.moraswood.qande.ui.components.QeConfirm
 import com.moraswood.qande.ui.components.QeTopBar
 import com.moraswood.qande.ui.screens.CalculatorActions
 import com.moraswood.qande.ui.screens.CalculatorPanel
+import com.moraswood.qande.ui.screens.EstimationActions
+import com.moraswood.qande.ui.screens.EstimationPanel
 import com.moraswood.qande.ui.screens.HoppusActions
 import com.moraswood.qande.ui.screens.QuickActions
 import com.moraswood.qande.ui.screens.HomeScreen
@@ -76,6 +78,8 @@ fun QeApp(vm: AppViewModel) {
     val templates by vm.templates.collectAsState()
     val banner by vm.templateBanner.collectAsState()
     val templateStatus by vm.templateStatus.collectAsState()
+    val estimationBanner by vm.estimationBanner.collectAsState()
+    val estimationStatus by vm.estimationStatus.collectAsState()
     var confirmNewProject by rememberSaveable { mutableStateOf(false) }
 
     // app.js startNewProject(): confirm only when there is work to lose.
@@ -138,6 +142,30 @@ fun QeApp(vm: AppViewModel) {
                                     onItemTag = vm::setItemTag,
                                     onItemPhoto = vm::setItemPhoto,
                                     onSaveTemplate = vm::saveItemAsTemplate,
+                                    onUseTemplate = vm::applyTemplate,
+                                    onDismissTemplate = vm::dismissTemplate,
+                                )
+                            },
+                        )
+                    },
+                    estimation = {
+                        EstimationPanel(
+                            items = workspace.estimationItems,
+                            costings = workspace.costings,
+                            status = estimationStatus,
+                            banner = estimationBanner,
+                            actions = remember(vm) {
+                                EstimationActions(
+                                    onName = vm::setEstimationName,
+                                    onField = vm::setCostingField,
+                                    onGroup = vm::groupTimberRows,
+                                    onUngroup = vm::ungroupTimberRows,
+                                    onGroupRate = vm::setGroupRate,
+                                    onRemoveGroup = vm::removeTimberGroup,
+                                    onNewItem = vm::newEstimationItem,
+                                    onSendToQuotation = vm::sendToQuotation,
+                                    onSendOne = vm::sendOneToQuotation,
+                                    onPhoto = vm::setEstimationPhoto,
                                     onUseTemplate = vm::applyTemplate,
                                     onDismissTemplate = vm::dismissTemplate,
                                 )
