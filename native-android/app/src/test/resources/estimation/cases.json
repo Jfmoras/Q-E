@@ -1,0 +1,12 @@
+[
+ {"items":[{"name":"Bed","rows":[
+   {"l":"7","lUnit":"ft","w":"6","wUnit":"in","t":"2","tUnit":"in","q":"4","mode":"CFT"},
+   {"l":"180","lUnit":"cm","w":"4","wUnit":"in","t":"25","tUnit":"mm","q":"12","mode":"CFT"},
+   {"l":"6","lUnit":"ft","w":"4","wUnit":"in","t":"3","tUnit":"in","q":"2","mode":"KOL"}]}],
+  "costings":[{"rateGroups":[{"id":"g1","name":"Group 1","mode":"CFT","color":"#ef4444","rate":"2500","rows":[1]}],"rowRates":[],"cftRate":"1800","kolRate":"950","labourMode":"sqft","labourLength":"2100","labourLengthUnit":"mm","labourWidth":"36","labourWidthUnit":"in","labourQty":"2","labourRate":"120","labourLumpsum":"","polishMode":"sqft","polishRate":"35","polishLumpsum":"","polishAreaOverride":"","consumables":"750","other":"300.5","sellingPrice":"","sellingAuto":true}]},
+ {"items":[{"name":"Table","rows":[{"l":"5","lUnit":"ft","w":"30","wUnit":"in","t":"1","tUnit":"in","q":"1","mode":"CFT"}]},{"name":"","rows":[]}],
+  "costings":[{"rateGroups":[],"cftRate":"2000","kolRate":"","labourMode":"lumpsum","labourLumpsum":"4000","polishMode":"lumpsum","polishLumpsum":"1500","polishAreaOverride":"","consumables":"","other":"","sellingPrice":"12000","sellingAuto":false},
+              {"rateGroups":[],"labourMode":"sqft","polishMode":"sqft","polishAreaOverride":"40","polishRate":"25","sellingPrice":"","sellingAuto":false}]},
+ {"items":[{"name":"Shelf","rows":[{"l":"3","lUnit":"ft","w":"10","wUnit":"in","t":"1","tUnit":"in","q":"3","mode":"KOL"},{"l":"3","lUnit":"ft","w":"10","wUnit":"in","t":"1","tUnit":"in","q":"1","mode":"CFT"}]}],
+  "costings":[{"rateGroups":[{"id":"x","name":"Group 1","mode":"KOL","color":"#3b82f6","rate":"1200","rows":[0,1]}],"cftRate":"1000","kolRate":"800","labourMode":"","labourLength":"3","labourLengthUnit":"","labourWidth":"2","labourWidthUnit":"","labourQty":"1","labourRate":"100","polishMode":"","polishLumpsum":"200","sellingPrice":"5000","sellingAuto":true}]}
+]

@@ -1,0 +1,104 @@
+[
+ {
+  "rs": [
+   {
+    "wood": 12691.759687519376,
+    "grouped": 4843.759687519376,
+    "ungrouped": 7848,
+    "labourArea": 41.33858267716535,
+    "labour": 4960.6299212598415,
+    "polish": 3915.05166677,
+    "polishArea": 111.85861905057142,
+    "surface": 111.85861905057142,
+    "cost": 22617.941275549216,
+    "selling": 22618,
+    "profit": 0.05872445078421151,
+    "markup": "0.0",
+    "margin": "0.0",
+    "sellingPrice": "22618",
+    "sellingAuto": true,
+    "money": "₹22,618"
+   }
+  ],
+  "grand": {
+   "cost": 22617.941275549216,
+   "selling": 22618,
+   "profit": 0.05872445078421151
+  },
+  "grandMoney": "₹22,618"
+ },
+ {
+  "rs": [
+   {
+    "wood": 2083.3333333333335,
+    "grouped": 0,
+    "ungrouped": 2083.3333333333335,
+    "labourArea": 0,
+    "labour": 4000,
+    "polish": 1500,
+    "polishArea": 26.25,
+    "surface": 26.25,
+    "cost": 7583.333333333334,
+    "selling": 12000,
+    "profit": 4416.666666666666,
+    "markup": "58.2",
+    "margin": "36.8",
+    "sellingPrice": "12000",
+    "sellingAuto": false,
+    "money": "₹7,583"
+   },
+   {
+    "wood": 0,
+    "grouped": 0,
+    "ungrouped": 0,
+    "labourArea": 0,
+    "labour": 0,
+    "polish": 1000,
+    "polishArea": 40,
+    "surface": 0,
+    "cost": 1000,
+    "selling": 1000,
+    "profit": 0,
+    "markup": "0.0",
+    "margin": "0.0",
+    "sellingPrice": "1000",
+    "sellingAuto": true,
+    "money": "₹1,000"
+   }
+  ],
+  "grand": {
+   "cost": 8583.333333333334,
+   "selling": 13000,
+   "profit": 4416.666666666666
+  },
+  "grandMoney": "₹13,000"
+ },
+ {
+  "rs": [
+   {
+    "wood": 3130,
+    "grouped": 3130,
+    "ungrouped": 0,
+    "labourArea": 6,
+    "labour": 600,
+    "polish": 200,
+    "polishArea": 22.555555555555557,
+    "surface": 22.555555555555557,
+    "cost": 3930,
+    "selling": 3930,
+    "profit": 0,
+    "markup": "0.0",
+    "margin": "0.0",
+    "sellingPrice": "3930",
+    "sellingAuto": true,
+    "money": "₹3,930"
+   }
+  ],
+  "grand": {
+   "cost": 3930,
+   "selling": 3930,
+   "profit": 0
+  },
+  "grandMoney": "₹3,930"
+ }
+]
