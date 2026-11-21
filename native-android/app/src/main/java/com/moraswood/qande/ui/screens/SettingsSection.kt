@@ -54,7 +54,7 @@ private fun localeFormat(d: Double, maxFraction: Int): String = runCatching {
 @Composable
 private fun SettingsH3(text: String) = Text(text, color = QeColors.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
-/** V10.1 `#settings` cards: Full Backup & Restore, AI API, Length converter. */
+/** V10.1 `#settings` cards: Full Backup & Restore, AI API (the Length converter moved to its own Home card, t36u). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsCards(svm: SettingsViewModel) {
@@ -111,12 +111,16 @@ fun SettingsCards(svm: SettingsViewModel) {
             Text(f.status, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterVertically))
         }
     }
+}
 
+/** V10.1 Settings › Length converter card, moved to its own Home card/screen (t36u). Same LengthConverter logic. */
+@Composable
+fun LengthConverterCard() {
     var value by rememberSaveable { mutableStateOf("") }
     var from by rememberSaveable { mutableStateOf("mm") }
     var to by rememberSaveable { mutableStateOf("in") }
     val units = LengthConverter.UNITS.map { it.code to it.label }
-    QeCard(Modifier.padding(top = 18.dp)) {
+    QeCard {
         SettingsH3("Length converter")
         Text(LengthConverter.INTRO, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -135,4 +139,11 @@ fun SettingsCards(svm: SettingsViewModel) {
             modifier = Modifier.padding(top = 6.dp).fillMaxWidth().clip(RoundedCornerShape(9.dp)).background(QeColors.Soft).padding(14.dp),
         )
     }
+}
+
+/** Home › Length Converter. */
+@Composable
+fun LengthConverterScreen() = ToolPage(780) {
+    com.moraswood.qande.ui.components.PageHeading("Length Converter")
+    LengthConverterCard()
 }

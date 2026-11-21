@@ -29,7 +29,6 @@ import com.moraswood.qande.ui.screens.CalculatorPanel
 import com.moraswood.qande.ui.screens.EstimationActions
 import com.moraswood.qande.ui.screens.EstimationPanel
 import com.moraswood.qande.ui.screens.HoppusActions
-import com.moraswood.qande.ui.screens.QuickActions
 import com.moraswood.qande.ui.screens.HomeScreen
 import com.moraswood.qande.ui.screens.LogCalculatorScreen
 import com.moraswood.qande.ui.screens.NotesScreen
@@ -38,7 +37,6 @@ import com.moraswood.qande.ops.OperationsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moraswood.qande.ui.screens.OperationsTopBar
 import com.moraswood.qande.ui.screens.OpsTab
-import com.moraswood.qande.ui.screens.QuickCalcScreen
 import com.moraswood.qande.ui.screens.SettingsScreen
 import com.moraswood.qande.ui.screens.WorkspaceScreen
 import com.moraswood.qande.ui.screens.WorkspaceTab
@@ -53,7 +51,7 @@ object Routes {
     const val HOME = "home"
     const val WORKSPACE = "workspace"
     const val NOTES = "notes"
-    const val QUICK = "quick"
+    const val LENGTH = "length"
     const val HOPPUS = "hoppus"
     const val SETTINGS = "settings"
     const val OPERATIONS = "operations"
@@ -91,7 +89,6 @@ fun QeApp(vm: AppViewModel) {
     val avm: com.moraswood.qande.assets.AssetsViewModel = viewModel()
     val svm: com.moraswood.qande.settings.SettingsViewModel = viewModel()
     val yvm: com.moraswood.qande.yieldtracker.YieldViewModel = viewModel()
-    val quick by vm.quick.collectAsState()
     val hoppus by vm.hoppus.collectAsState()
     val templates by vm.templates.collectAsState()
     val banner by vm.templateBanner.collectAsState()
@@ -164,7 +161,7 @@ fun QeApp(vm: AppViewModel) {
                     onCloseSaved = { savedPanelOpen = false },
                     onOperations = { opsTab = OpsTab.Projects; ovm.resetPage(); avm.resetPage(); nav.openView(Routes.OPERATIONS) },
                     onNotes = { nav.openView(Routes.NOTES) },
-                    onQuickCalc = { nav.openView(Routes.QUICK) },
+                    onLengthConverter = { nav.openView(Routes.LENGTH) },
                     onSettings = { nav.openView(Routes.SETTINGS) },
                     onContinue = { nav.openView(Routes.WORKSPACE) },
                 )
@@ -292,12 +289,7 @@ fun QeApp(vm: AppViewModel) {
                 )
             }
             composable(Routes.NOTES) { NotesScreen(vm) }
-            composable(Routes.QUICK) {
-                QuickCalcScreen(
-                    quick,
-                    remember(vm) { QuickActions(vm::setQuickRate, vm::setQuickField, vm::addQuickRow, vm::setQuickGroupRate, vm::ungroupQuick, vm::groupQuickRows) },
-                )
-            }
+            composable(Routes.LENGTH) { com.moraswood.qande.ui.screens.LengthConverterScreen() }
             composable(Routes.HOPPUS) {
                 LogCalculatorScreen(hoppus, remember(vm) { HoppusActions(vm::setHoppusField, vm::addHoppusLog, vm::removeHoppusLog, vm::setSawRate) }, yvm)
             }
