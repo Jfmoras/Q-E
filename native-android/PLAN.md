@@ -268,3 +268,15 @@
 - minSdk 26 / AGP 8.7.3 compatible; R8 is off (isMinifyEnabled = false), so no keep rules needed. APK size: +1.06 MB
   (7.92 → 8.98 MB unsigned local build). Scanner needs Google Play services on the phone (graceful message otherwise).
 - Scope ASSUMPTION: QR codes are for saved quotations/projects (Saved Projects); Operations › Projects & Payments rows have no QR.
+
+## Feature M — voice input (notes)
+- A 🎤 button sits next to each L / W / T and Pieces field in the Timber Calculator. It opens the system speech recogniser
+  (`RecognizerIntent.ACTION_RECOGNIZE_SPEECH`, en-IN, free form, up to 5 alternatives); the app itself requests no
+  RECORD_AUDIO permission. No recogniser on the phone → "Voice input is not available…" alert; nothing understood →
+  "Couldn't read a measurement…" alert with what was heard. Fields are never cleared on failure.
+- Parser `logic/QeVoice.kt` (pure Kotlin, tested): digits or number words up to the hundreds ("twenty five", "one hundred
+  twenty"), "point" decimals, "and a half / quarter / three quarters", "½". "by" / "x" / "into" split values into
+  consecutive fields starting at the tapped one (L → W → T → Pieces). "7 feet 4 inches" (or "seven feet four") becomes
+  88 in, with the unit select set to "in"; a spoken unit (ft, in, cm, mm, m) sets that field's unit. "quantity 4" / "qty 4" /
+  "4 pieces" fill Pieces. Values only; rows are not added automatically.
+- ASSUMPTION: Pieces has no unit, so a spoken unit there is ignored; values beyond Pieces are dropped.

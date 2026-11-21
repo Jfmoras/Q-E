@@ -2,6 +2,7 @@ package com.moraswood.qande.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,8 +65,8 @@ class CalculatorActions(
     val onDismissTemplate: (TemplateBanner) -> Unit,
 )
 
-private val MeasureW = 172.dp
-private val PiecesW = 104.dp
+private val MeasureW = 208.dp
+private val PiecesW = 140.dp
 private val TypeW = 96.dp
 private val TotalW = 200.dp
 
@@ -86,13 +87,37 @@ fun CalculatorPanel(
     val requesters = remember { HashMap<String, FocusRequester>() }
     fun fr(ii: Int, ri: Int, key: String) = requesters.getOrPut("$ii:$ri:$key") { FocusRequester() }
 
+    // Feature M: speech → measurements via the system RecognizerIntent (no RECORD_AUDIO permission in the app).
+    var voiceTarget by remember { mutableStateOf<Triple<Int, Int, String>?>(null) }
+    var voiceMsg by remember { mutableStateOf<String?>(null) }
+    com.moraswood.qande.ui.components.QeAlert(voiceMsg) { voiceMsg = null }
+    val voice = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { res ->
+        val target = voiceTarget ?: return@rememberLauncherForActivityResult
+        voiceTarget = null
+        if (res.resultCode != android.app.Activity.RESULT_OK) return@rememberLauncherForActivityResult
+        val heard = res.data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS).orEmpty()
+        val pick = heard.map { com.moraswood.qande.logic.QeVoice.parse(it) }.firstOrNull { !it.isEmpty }
+        val sets = pick?.let { com.moraswood.qande.logic.QeVoice.assign(target.third, it) }.orEmpty()
+        if (sets.isEmpty()) voiceMsg = com.moraswood.qande.logic.QeVoice.NO_MATCH + (heard.firstOrNull()?.let { " (heard: “$it”)" } ?: "")
+        else sets.forEach { (k, v) -> actions.onRowField(target.first, target.second, k, v) }
+    }
+    val onMic: (Int, Int, String) -> Unit = { ii, ri, key ->
+        val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
+            .putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+            .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, com.moraswood.qande.logic.QeVoice.PROMPT)
+        voiceTarget = Triple(ii, ri, key)
+        try { voice.launch(intent) } catch (e: android.content.ActivityNotFoundException) { voiceTarget = null; voiceMsg = com.moraswood.qande.logic.QeVoice.UNAVAILABLE }
+    }
+
     if (banner != null && banner.itemIndex < items.size) TemplateBannerCard(banner, actions.onUseTemplate, actions.onDismissTemplate)
 
     items.forEachIndexed { ii, item ->
-        CalcItemCard(ii, item, templateStatus[ii], actions, ::fr) { ri ->
+        CalcItemCard(ii, item, templateStatus[ii], actions, ::fr, onEnterLastField = { ri ->
             actions.onAddRow(ii)
             pendingFocus = ii to ri + 1
-        }
+        }, onMic = onMic)
     }
     LaunchedEffect(pendingFocus, items) {
         val p = pendingFocus ?: return@LaunchedEffect
@@ -150,6 +175,7 @@ private fun CalcItemCard(
     actions: CalculatorActions,
     fr: (Int, Int, String) -> FocusRequester,
     onEnterLastField: (Int) -> Unit,
+    onMic: (Int, Int, String) -> Unit = { _, _, _ -> },
 ) {
     val shape = RoundedCornerShape(16.dp)
     Column(Modifier.padding(bottom = 18.dp).fillMaxWidth().clip(shape).background(QeColors.Card).border(1.dp, QeColors.Line, shape)) {
@@ -173,7 +199,7 @@ private fun CalcItemCard(
                 QeTh("Length", MeasureW); QeTh("Width", MeasureW); QeTh("Thickness", MeasureW)
                 QeTh("No. of pieces", PiecesW); QeTh("Type", TypeW); QeTh("Total", TotalW)
             }
-            item.rows.forEachIndexed { ri, r -> CalcRowView(ii, ri, r, actions, fr, onEnterLastField) }
+            item.rows.forEachIndexed { ri, r -> CalcRowView(ii, ri, r, actions, fr, onEnterLastField, onMic) }
         }
         QeSecondaryButton("+ Add row", modifier = Modifier.padding(12.dp)) { actions.onAddRow(ii) }
         val tot = QeMath.itemTotals(item)
@@ -197,6 +223,7 @@ private val modeOptions = listOf("CFT" to "CFT", "KOL" to "KOL")
 private fun CalcRowView(
     ii: Int, ri: Int, r: CalcRow, actions: CalculatorActions,
     fr: (Int, Int, String) -> FocusRequester, onEnterLastField: (Int) -> Unit,
+    onMic: (Int, Int, String) -> Unit = { _, _, _ -> },
 ) {
     val x = QeMath.calcRow(r)
     val lu = r.lUnit.ifEmpty { "ft" }; val wu = r.wUnit.ifEmpty { "in" }; val tu = r.tUnit.ifEmpty { "in" }
@@ -211,10 +238,12 @@ private fun CalcRowView(
                         onEnter = { runCatching { fr(ii, ri, if (key == "l") "w" else if (key == "w") "t" else "q").requestFocus() } },
                     )
                     QeSelect(unit.second, unitOptions, { actions.onRowField(ii, ri, unit.first, it) }, Modifier.width(68.dp), compact = true, bold = true)
+                    MicButton { onMic(ii, ri, key) }
                 }
             }
-            Box(Modifier.width(PiecesW).padding(8.dp)) {
-                QeNumberField(r.q, { actions.onRowField(ii, ri, "q", it) }, Modifier.fillMaxWidth(), focusRequester = fr(ii, ri, "q"), compact = true, onEnter = { onEnterLastField(ri) })
+            Row(Modifier.width(PiecesW).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                QeNumberField(r.q, { actions.onRowField(ii, ri, "q", it) }, Modifier.weight(1f), focusRequester = fr(ii, ri, "q"), compact = true, onEnter = { onEnterLastField(ri) })
+                MicButton { onMic(ii, ri, "q") }
             }
             Box(Modifier.width(TypeW).padding(8.dp)) {
                 QeSelect(r.mode, modeOptions, { actions.onRowField(ii, ri, "mode", it) }, Modifier.fillMaxWidth(), compact = true)
@@ -230,3 +259,14 @@ private fun CalcRowView(
         }
     }
 }
+
+/** Feature M: mic next to a measurement field. */
+@Composable
+private fun MicButton(onClick: () -> Unit) {
+    Box(
+        Modifier.padding(top = 4.dp).width(30.dp).height(30.dp).clip(RoundedCornerShape(15.dp)).background(QeColors.Soft)
+            .border(1.dp, QeColors.Line, RoundedCornerShape(15.dp)).clickable(onClickLabel = "Voice input", onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { Text("🎤", fontSize = 13.sp) }
+}
+
