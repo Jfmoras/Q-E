@@ -126,7 +126,29 @@ object QeMigrations {
         override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_8_9_SQL.forEach(db::execSQL) }
     }
 
-    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL, 7 to MIGRATION_7_8_SQL, 8 to MIGRATION_8_9_SQL)
+    /** Projects & Payments comments board is append-only: UPDATE / DELETE refused (dropped only inside a Full Backup restore). */
+    val COMMENT_TRIGGERS: List<String> = listOf("UPDATE", "DELETE").map { op ->
+        "CREATE TRIGGER IF NOT EXISTS `pp_comments_no_${op.lowercase()}` BEFORE $op ON `pp_comments` BEGIN SELECT RAISE(ABORT, 'comments are append-only'); END"
+    }
+    val COMMENT_TRIGGER_DROPS: List<String> = listOf("update", "delete").map { "DROP TRIGGER IF EXISTS `pp_comments_no_$it`" }
+
+    /** Projects & Payments dashboard tables (new tables only). Copied from schemas/10.json createSql. */
+    val MIGRATION_9_10_SQL: List<String> get() = listOf(
+        "CREATE TABLE IF NOT EXISTS `pp_projects` (`projectId` TEXT NOT NULL, `description` TEXT NOT NULL, `status` TEXT NOT NULL, `startDate` TEXT NOT NULL, `jobUuid` TEXT NOT NULL, `jobRootId` TEXT NOT NULL, `quoteRevision` INTEGER NOT NULL, `quotePdfId` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, PRIMARY KEY(`projectId`))",
+        "CREATE INDEX IF NOT EXISTS `index_pp_projects_jobUuid` ON `pp_projects` (`jobUuid`)",
+        "CREATE TABLE IF NOT EXISTS `pp_items` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `position` INTEGER NOT NULL, `name` TEXT NOT NULL, `qty` TEXT NOT NULL, `unit` TEXT NOT NULL, `price` REAL NOT NULL, `sizes` TEXT NOT NULL, `wood` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "CREATE INDEX IF NOT EXISTS `index_pp_items_projectId` ON `pp_items` (`projectId`)",
+        "CREATE TABLE IF NOT EXISTS `pp_hardware` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `name` TEXT NOT NULL, `qty` TEXT NOT NULL, `note` TEXT NOT NULL, `createdAt` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "CREATE INDEX IF NOT EXISTS `index_pp_hardware_projectId` ON `pp_hardware` (`projectId`)",
+        "CREATE TABLE IF NOT EXISTS `pp_comments` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `author` TEXT NOT NULL, `text` TEXT NOT NULL, `at` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "CREATE INDEX IF NOT EXISTS `index_pp_comments_projectId` ON `pp_comments` (`projectId`)",
+    ) + COMMENT_TRIGGERS
+
+    val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_9_10_SQL.forEach(db::execSQL) }
+    }
+
+    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL, 7 to MIGRATION_7_8_SQL, 8 to MIGRATION_8_9_SQL, 9 to MIGRATION_9_10_SQL)
 
     val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {

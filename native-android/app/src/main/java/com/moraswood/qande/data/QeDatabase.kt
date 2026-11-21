@@ -144,8 +144,9 @@ interface OperationsDao {
         JobComponentLogEntity::class, TemplateEntity::class, TemplateRowEntity::class, ItemPhotoEntity::class,
         AssetEntity::class, AssetIssueEntity::class, AssetReturnEntity::class, AssetCorrectionEntity::class, AssetDecisionEntity::class,
         YieldEntryEntity::class, ClientEntity::class, JobMetaEntity::class, SignatureEntity::class,
+        PpProjectEntity::class, PpItemEntity::class, PpHardwareEntity::class, PpCommentEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class QeDatabase : RoomDatabase() {
@@ -159,15 +160,16 @@ abstract class QeDatabase : RoomDatabase() {
     abstract fun yields(): YieldDao
     abstract fun clients(): ClientDao
     abstract fun signatures(): SignatureDao
+    abstract fun projects(): ProjectsDao
 
     companion object {
         @Volatile private var instance: QeDatabase? = null
         fun get(context: Context): QeDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, QeDatabase::class.java, "mwi-qe.db")
-                .addMigrations(QeMigrations.MIGRATION_1_2, QeMigrations.MIGRATION_2_3, QeMigrations.MIGRATION_3_4, QeMigrations.MIGRATION_4_5, QeMigrations.MIGRATION_5_6, QeMigrations.MIGRATION_6_7, QeMigrations.MIGRATION_7_8, QeMigrations.MIGRATION_8_9)
+                .addMigrations(QeMigrations.MIGRATION_1_2, QeMigrations.MIGRATION_2_3, QeMigrations.MIGRATION_3_4, QeMigrations.MIGRATION_4_5, QeMigrations.MIGRATION_5_6, QeMigrations.MIGRATION_6_7, QeMigrations.MIGRATION_7_8, QeMigrations.MIGRATION_8_9, QeMigrations.MIGRATION_9_10)
                 .addCallback(object : RoomDatabase.Callback() {
                     // Fresh installs get the append-only triggers too (IF NOT EXISTS: also self-heals).
-                    override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) { (QeMigrations.JOB_UUID_BACKFILL + QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS).forEach(db::execSQL) }
+                    override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) { (QeMigrations.JOB_UUID_BACKFILL + QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS + QeMigrations.COMMENT_TRIGGERS).forEach(db::execSQL) }
                 })
                 .build().also { instance = it }
         }
