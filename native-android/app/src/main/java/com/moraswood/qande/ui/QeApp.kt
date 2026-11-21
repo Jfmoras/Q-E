@@ -191,6 +191,7 @@ fun QeApp(vm: AppViewModel) {
                                     onUngroupItems = vm::ungroupItems,
                                     onItemGroupField = vm::setItemGroupField,
                                     onToggleItemGroup = vm::toggleItemGroup,
+                                    onRowFace = vm::setEstimationRowFace,
                                 )
                             },
                             groups = workspace.itemGroups.orEmpty(),
@@ -220,6 +221,7 @@ fun QeApp(vm: AppViewModel) {
                                     onDuplicateAsSpecies = vm::duplicateAsSpecies,
                                     onOptionSpecies = vm::setQuoteOptionSpecies,
                                     onPrintComparison = vm::setPrintComparison,
+                                    onPrintArea = vm::setPrintArea,
                                     canRemoveOption = vm::canRemoveQuoteOption,
                                     onRemoveOption = vm::removeQuoteOption,
                                     onField = vm::setQuoteField,

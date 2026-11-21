@@ -29,6 +29,7 @@ import com.moraswood.qande.logic.QeMath.hasData
 import com.moraswood.qande.logic.QeQuote
 import com.moraswood.qande.logic.QeSpecies
 import com.moraswood.qande.logic.QeRevisions
+import com.moraswood.qande.logic.QeArea
 import com.moraswood.qande.logic.QeGroups
 import com.moraswood.qande.ai.AiService
 import com.moraswood.qande.photos.QuoteImages
@@ -217,6 +218,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (key == "sellingPrice") _estStatus.value = _estStatus.value - i
     }
 
+    /** Feature G: mark an estimation row as a vertical piece (area = length × thickness) or back to length × width. */
+    fun setEstimationRowFace(i: Int, ri: Int, vertical: Boolean) = updateEstimation(log = true) { s ->
+        s.copy(estimationItems = s.estimationItems.mapIndexed { j, it ->
+            if (j != i) it else it.copy(rows = it.rows.mapIndexed { k, r -> if (k == ri) r.copy(areaFace = if (vertical) "LT" else null) else r })
+        })
+    }
+
+    /** Feature G: the item area carried to a quotation line (null when n/a). */
+    private fun quoteArea(st: WorkspaceState, i: Int): String? {
+        val item = st.estimationItems.getOrNull(i) ?: return null
+        return QeArea.label(item, st.costings.getOrNull(i)).takeIf { it != "n/a" }
+    }
+
     /** `.group-timber-rows`; returns the alert text or null. */
     fun groupTimberRows(i: Int, rows: List<Int>): String? {
         val s = _workspace.value
@@ -270,7 +284,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         update { st ->
             val p = QeGroups.quotePrices(st)
-            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = p[i], wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i))) }
+            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = p[i], wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)), area = quoteArea(st, i)) }
             st.copy(quoteItems = q.ifEmpty { listOf(QuoteItem.blank()) }, tab = "quotation")
         }
         return -1
@@ -287,7 +301,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         _estStatus.value = _estStatus.value - i
         update { st ->
-            val q = QuoteItem(description = it.name, unitPrice = price, wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)))
+            val q = QuoteItem(description = it.name, unitPrice = price, wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)), area = quoteArea(st, i))
             val only = st.quoteItems
             val onlyBlank = only.size == 1 && only[0].description.isEmpty() && only[0].unit.isEmpty() && only[0].qty.isEmpty() && only[0].unitPrice.isEmpty() && only[0].images.isEmpty()
             st.copy(quoteItems = if (onlyBlank) listOf(q) else st.quoteItems + q, tab = "quotation")
@@ -542,7 +556,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setCustomerName(v: String) = update { it.copy(customer = it.customer.copy(name = v)) }
     fun setCustomerLocation(v: String) = update { it.copy(customer = it.customer.copy(location = v)) }
     fun setQuoteField(i: Int, key: String, v: String) = updateQuoteItem(i) {
-        when (key) { "description" -> it.copy(description = v); "unit" -> it.copy(unit = v); "qty" -> it.copy(qty = v); "unitPrice" -> it.copy(unitPrice = v); "species" -> it.copy(species = v.ifEmpty { null }); else -> it }
+        when (key) { "description" -> it.copy(description = v); "unit" -> it.copy(unit = v); "qty" -> it.copy(qty = v); "unitPrice" -> it.copy(unitPrice = v); "species" -> it.copy(species = v.ifEmpty { null }); "area" -> it.copy(area = v.ifEmpty { null }); else -> it }
     }
     fun addQuoteItem() = rerenderQuote { it.copy(quoteItems = it.quoteItems + QuoteItem.blank()) }
     fun removeQuoteItem(i: Int) = rerenderQuote { s ->
@@ -569,6 +583,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(quoteOptions = s.quoteOptions.mapIndexed { i, o -> if (i == s.activeQuoteOption) o.copy(species = v.ifEmpty { null }) else o })
     }
     fun setPrintComparison(on: Boolean) = update { it.copy(printComparison = if (on) true else null) }
+
+    /** Feature G: "Show area on print". */
+    fun setPrintArea(on: Boolean) = update { it.copy(printArea = if (on) true else null) }
 
     fun setQuoteOptionName(v: String) = update { s0 ->
         val s = QeQuote.ensureQuoteOptions(s0)
@@ -904,6 +921,7 @@ fun Costing.with(key: String, value: String): Costing = when (key) {
     "polishLumpsum" -> copy(polishLumpsum = value); "polishAreaOverride" -> copy(polishAreaOverride = value)
     "consumables" -> copy(consumables = value); "other" -> copy(other = value)
     "sellingPrice" -> copy(sellingPrice = value)
+    "areaOverride" -> copy(areaOverride = value.ifEmpty { null })
     else -> this
 }
 

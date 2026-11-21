@@ -81,6 +81,8 @@ class EstimationActions(
     val onUngroupItems: (String) -> Unit = {},
     val onItemGroupField: (String, String, String) -> Unit = { _, _, _ -> },
     val onToggleItemGroup: (String) -> Unit = {},
+    /** Feature G: mark a row vertical (area = length × thickness). */
+    val onRowFace: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
 )
 
 fun cssHex(hex: String, fallback: Color = Color(0xFF3B82F6)): Color =
@@ -248,7 +250,7 @@ private fun EstMeasureField(label: String, value: String, unit: String, modifier
     }
 }
 
-private val ColW: List<Dp> = listOf(110.dp, 110.dp, 110.dp, 80.dp, 70.dp, 130.dp, 70.dp, 150.dp, 120.dp)
+private val ColW: List<Dp> = listOf(110.dp, 110.dp, 110.dp, 80.dp, 70.dp, 130.dp, 70.dp, 150.dp, 120.dp, 150.dp)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -275,7 +277,7 @@ private fun EstimateCard(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             QeFieldLabel("Item", Modifier.width(260.dp)) { QeTextField(item.name, { actions.onName(i, it) }, modifier = Modifier.fillMaxWidth()) }
             Text(
-                line("${QeFormat.toFixed(r.tot.cft, 3)} CFT" to true, " · " to false, "${QeFormat.toFixed(r.tot.kol, 3)} KOL" to true),
+                line("${QeFormat.toFixed(r.tot.cft, 3)} CFT" to true, " · " to false, "${QeFormat.toFixed(r.tot.kol, 3)} KOL" to true, " · " to false, "${com.moraswood.qande.logic.QeArea.label(item, c).let { if (it == "n/a") "Area n/a" else "$it sq.ft" }}" to true),
                 color = QeColors.Text, fontSize = 13.sp, modifier = Modifier.align(Alignment.Bottom).padding(bottom = 18.dp),
             )
         }
@@ -284,7 +286,7 @@ private fun EstimateCard(
 
         if (item.rows.isNotEmpty()) {
             Column(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                Row { listOf("Length", "Width", "Thickness", "Pieces", "Type", "Total", "Select", "Rate group", "Wood amount").forEachIndexed { k, h -> QeTh(h, ColW[k]) } }
+                Row { listOf("Length", "Width", "Thickness", "Pieces", "Type", "Total", "Select", "Rate group", "Wood amount", "Area (sq.ft)").forEachIndexed { k, h -> QeTh(h, ColW[k]) } }
                 item.rows.forEachIndexed { j, x ->
                     val z = QeMath.calcRow(x)
                     val lu = x.lUnit.ifEmpty { "ft" }; val wu = x.wUnit.ifEmpty { "in" }; val tu = x.tUnit.ifEmpty { "in" }
@@ -309,6 +311,15 @@ private fun EstimateCard(
                             ) else Text("Default ${z.mode}", color = QeColors.Text)
                         }
                         Cell(ColW[8]) { Text(QeFormat.money(z.value * QeMath.num(effective)), color = QeColors.Text) }
+                        Cell(ColW[9]) {
+                            Column {
+                                Text(QeFormat.toFixed(com.moraswood.qande.logic.QeArea.rowArea(x), 2) + if (x.areaFace == "LT") " (L×T)" else " (L×W)", color = QeColors.Text)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    QeCheckbox(x.areaFace == "LT") { on -> actions.onRowFace(i, j, on) }
+                                    Text("Vertical", color = QeColors.Muted, fontSize = 12.sp)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -352,7 +363,13 @@ private fun EstimateCard(
             QeFieldLabel("Pricing method") {
                 QeSelect(if (mode == "lumpsum") "lumpsum" else "sqft", listOf("sqft" to "Per sq.ft", "lumpsum" to "Lumpsum"), field("labourMode"), Modifier.fillMaxWidth())
             }
+            // Feature G: item area from the rows (read-only) with an override
+            val areaLabel = com.moraswood.qande.logic.QeArea.label(item, c)
+            CalcLine(line("Item area (from rows): " to false, (if (areaLabel == "n/a") "n/a" else "$areaLabel sq.ft") to true))
+            EstField("Override item area (optional)", c.areaOverride.orEmpty(), onChange = field("areaOverride"))
             if (mode == "sqft") {
+                if (com.moraswood.qande.logic.QeArea.autoLabour(c))
+                    Text("Length and width blank — labour uses the item area (× quantity when filled).", color = QeColors.Muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
                 Text("Enter finished door/window dimensions in any unit. The app converts both measurements to feet before calculating sq.ft.", color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     EstMeasureField("Length", c.labourLength, c.labourLengthUnit.ifEmpty { "ft" }, Modifier.weight(1f), field("labourLength"), field("labourLengthUnit"))

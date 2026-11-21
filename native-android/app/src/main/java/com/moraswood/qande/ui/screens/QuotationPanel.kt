@@ -98,6 +98,8 @@ data class QuotationActions(
     val onDuplicateAsSpecies: (String, String, String) -> String = { _, _, _ -> "" },
     val onOptionSpecies: (String) -> Unit = {},
     val onPrintComparison: (Boolean) -> Unit = {},
+    /** Feature G: show each line's area on the print. */
+    val onPrintArea: (Boolean) -> Unit = {},
 )
 
 private val UnitOptions = listOf("Set", "Piece", "Nos", "Lumpsum", "Sq.ft", "Rft", "Job")
@@ -135,6 +137,10 @@ fun QuotationPanel(
     Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
         QeCheckbox(state.printComparison == true, actions.onPrintComparison)
         Text("Include other options as comparison appendix", color = QeColors.Text, fontSize = 14.sp)
+    }
+    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+        QeCheckbox(state.printArea == true, actions.onPrintArea)
+        Text("Show area (sq.ft) on print", color = QeColors.Text, fontSize = 14.sp)
     }
 
     val shape = RoundedCornerShape(16.dp)
@@ -343,6 +349,10 @@ private fun QuoteItemCard(
             } else { units(Modifier.fillMaxWidth()); qty(Modifier.fillMaxWidth()); price(Modifier.fillMaxWidth()); total(Modifier.fillMaxWidth()) }
             QeFieldLabel("Wood species (optional)") {
                 QeTextField(it.species.orEmpty(), { v -> actions.onField(i, "species", v) }, Modifier.fillMaxWidth(), placeholder = "Species for this line")
+            }
+            // Feature G: area carried from Estimation (editable)
+            QeFieldLabel("Area (sq.ft, optional)") {
+                QeTextField(it.area.orEmpty(), { v -> actions.onField(i, "area", v) }, Modifier.fillMaxWidth(), placeholder = "From estimation")
             }
             it.wood?.let { w ->
                 Text(
