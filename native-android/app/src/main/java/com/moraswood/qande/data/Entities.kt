@@ -149,3 +149,67 @@ data class OpsAuditEntity(
     val value: String? = null,
     val name: String? = null,
 )
+
+/* ---------- Schema v2 (native additions: template library + item photos) ---------- */
+
+/**
+ * Template library: one row per calculator component, silently logged while the owner edits.
+ * A "job" = one calculator item of one project/session: (jobKey, itemIndex).
+ * jobKey = WorkspaceState.projectId once the project is saved, otherwise the autosave session id.
+ */
+@Entity(tableName = "job_component_log", indices = [Index(value = ["jobKey", "itemIndex"]), Index("furnitureType")])
+data class JobComponentLogEntity(
+    @PrimaryKey(autoGenerate = true) val rowId: Long = 0,
+    val jobKey: String,
+    val itemIndex: Int,
+    val rowIndex: Int,
+    /** Normalised furniture type (TemplateMatcher.normalizeType). */
+    val furnitureType: String,
+    /** Label as typed (tag, or item name when no tag). */
+    val typeLabel: String,
+    val l: String, val lUnit: String,
+    val w: String, val wUnit: String,
+    val t: String, val tUnit: String,
+    val q: String,
+    val mode: String,
+    /** Converted values used for matching (V10.1 toFeet / toInches). */
+    val lengthFt: Double,
+    val widthIn: Double,
+    val thicknessIn: Double,
+    val qty: Double,
+    val loggedAt: String,
+)
+
+/** A saved template ("Save as template"), tagged by furniture type. */
+@Entity(tableName = "templates", indices = [Index("furnitureType")])
+data class TemplateEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val furnitureType: String,
+    val createdAt: String,
+    val sourceJobKey: String,
+)
+
+@Entity(
+    tableName = "template_rows",
+    foreignKeys = [ForeignKey(entity = TemplateEntity::class, parentColumns = ["id"], childColumns = ["templateId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("templateId")],
+)
+data class TemplateRowEntity(
+    @PrimaryKey(autoGenerate = true) val rowId: Long = 0,
+    val templateId: Long,
+    val position: Int,
+    val l: String, val lUnit: String,
+    val w: String, val wUnit: String,
+    val t: String, val tUnit: String,
+    val q: String,
+    val mode: String,
+)
+
+/** Registry of item photos stored in filesDir/item_photos/ (CalcItem.photo holds [fileName]). */
+@Entity(tableName = "item_photos")
+data class ItemPhotoEntity(
+    @PrimaryKey val fileName: String,
+    val createdAt: String,
+    val sizeBytes: Long,
+)

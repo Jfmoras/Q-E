@@ -122,8 +122,9 @@ interface OperationsDao {
         OpsProjectEntity::class, OpsProjectEntryEntity::class, OpsAttachmentEntity::class,
         OpsMaterialEntity::class, OpsMovementEntity::class, OpsMachineEntity::class,
         OpsMachineHistoryEntity::class, OpsAuditEntity::class,
+        JobComponentLogEntity::class, TemplateEntity::class, TemplateRowEntity::class, ItemPhotoEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class QeDatabase : RoomDatabase() {
@@ -131,12 +132,69 @@ abstract class QeDatabase : RoomDatabase() {
     abstract fun savedProjects(): SavedProjectDao
     abstract fun savedNotes(): SavedNoteDao
     abstract fun operations(): OperationsDao
+    abstract fun templates(): TemplateDao
+    abstract fun itemPhotos(): ItemPhotoDao
 
     companion object {
         @Volatile private var instance: QeDatabase? = null
         fun get(context: Context): QeDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, QeDatabase::class.java, "mwi-qe.db")
+                .addMigrations(QeMigrations.MIGRATION_1_2)
                 .build().also { instance = it }
         }
     }
+}
+
+@Dao
+interface TemplateDao {
+    @Query("SELECT * FROM job_component_log ORDER BY jobKey, itemIndex, rowIndex")
+    suspend fun allLogs(): List<JobComponentLogEntity>
+    @Query("DELETE FROM job_component_log WHERE itemIndex = :itemIndex AND jobKey IN (:jobKeys)")
+    suspend fun deleteLogs(jobKeys: List<String>, itemIndex: Int)
+    @Query("DELETE FROM job_component_log WHERE jobKey IN (:jobKeys) AND itemIndex >= :fromIndex")
+    suspend fun deleteLogsFrom(jobKeys: List<String>, fromIndex: Int)
+    @Insert
+    suspend fun insertLogs(rows: List<JobComponentLogEntity>)
+    /** Replaces the log of one calculator item (silent logging). */
+    @Transaction
+    suspend fun replaceItemLog(jobKeys: List<String>, itemIndex: Int, rows: List<JobComponentLogEntity>) {
+        deleteLogs(jobKeys, itemIndex)
+        if (rows.isNotEmpty()) insertLogs(rows)
+    }
+
+    @Query("SELECT * FROM templates ORDER BY createdAt DESC, id DESC")
+    fun observeTemplates(): Flow<List<TemplateEntity>>
+    @Query("SELECT * FROM templates ORDER BY createdAt DESC, id DESC")
+    suspend fun templates(): List<TemplateEntity>
+    @Query("SELECT * FROM template_rows ORDER BY templateId, position")
+    fun observeTemplateRows(): Flow<List<TemplateRowEntity>>
+    @Query("SELECT * FROM template_rows WHERE templateId = :templateId ORDER BY position")
+    suspend fun templateRows(templateId: Long): List<TemplateRowEntity>
+    @Insert
+    suspend fun insertTemplate(template: TemplateEntity): Long
+    @Insert
+    suspend fun insertTemplateRows(rows: List<TemplateRowEntity>)
+    @Transaction
+    suspend fun saveTemplate(template: TemplateEntity, rows: List<TemplateRowEntity>): Long {
+        val id = insertTemplate(template)
+        insertTemplateRows(rows.map { it.copy(templateId = id) })
+        return id
+    }
+    @Query("DELETE FROM template_rows WHERE templateId = :id")
+    suspend fun deleteTemplateRows(id: Long)
+    @Query("DELETE FROM templates WHERE id = :id")
+    suspend fun deleteTemplateOnly(id: Long)
+    /** Rows are removed explicitly as well as by the FK cascade. */
+    @Transaction
+    suspend fun deleteTemplate(id: Long) { deleteTemplateRows(id); deleteTemplateOnly(id) }
+}
+
+@Dao
+interface ItemPhotoDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun put(photo: ItemPhotoEntity)
+    @Query("DELETE FROM item_photos WHERE fileName = :fileName")
+    suspend fun delete(fileName: String)
+    @Query("SELECT * FROM item_photos")
+    suspend fun all(): List<ItemPhotoEntity>
 }
