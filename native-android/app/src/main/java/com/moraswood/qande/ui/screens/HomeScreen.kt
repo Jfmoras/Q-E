@@ -67,12 +67,14 @@ fun HomeScreen(
     onJobQr: ((SavedProjectEntity) -> Unit)? = null,
     onDuplicate: ((String) -> Unit)? = null,
     onScanQr: (() -> Unit)? = null,
+    onClients: (() -> Unit)? = null,
 ) {
     val actions = buildList {
         add(HomeAction("Log Calculator", "Hoppus log volume, sawing charges and the Yield Tracker.", onHoppus))
         add(HomeAction("New Project", "Start a calculator, estimate and quotation.", onNewProject))
         add(HomeAction("Door & Window Builder", "Frames, planking and architrave for the current project → CFT rows and a cut list.", onBuilder))
         add(HomeAction("Saved Projects", "Open or remove a project saved on this device.", onSavedProjects))
+        if (onClients != null) add(HomeAction("Clients", "Client details, past jobs and total spend.", onClients))
         if (onScanQr != null) add(HomeAction("Scan job QR", "Open a saved job by scanning its QR label.", onScanQr))
         add(HomeAction("Projects · Expenses · Inventory · Machines", "Manage project payments, material stock, machine status and monthly reports.", onOperations))
         add(HomeAction("Notes", "Manage notes to reuse in quotations.", onNotes))

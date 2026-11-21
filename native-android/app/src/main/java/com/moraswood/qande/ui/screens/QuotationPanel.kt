@@ -98,6 +98,9 @@ data class QuotationActions(
     val onDuplicateAsSpecies: (String, String, String) -> String = { _, _, _ -> "" },
     val onOptionSpecies: (String) -> Unit = {},
     val onPrintComparison: (Boolean) -> Unit = {},
+    /** Feature O: client picker (null = no client) and "Save as client" → status line. */
+    val onPickClient: (String?) -> Unit = {},
+    val onSaveAsClient: () -> String = { "" },
     /** Feature G: show each line's area on the print. */
     val onPrintArea: (Boolean) -> Unit = {},
     /** Feature J: group quotation lines by category on print. */
@@ -116,6 +119,7 @@ fun QuotationPanel(
     aiStatus: Map<Int, String>,
     aiBusy: Set<Int>,
     actions: QuotationActions,
+    clients: List<com.moraswood.qande.data.ClientEntity> = emptyList(),
 ) {
     val scope = rememberCoroutineScope()
     var alert by remember { mutableStateOf<String?>(null) }
@@ -171,6 +175,15 @@ fun QuotationPanel(
                 Text("QUOTATION", color = QeColors.Text, fontSize = 26.sp, fontWeight = FontWeight.Bold)
                 Text("Date: " + QeQuote.longDate(), color = QeColors.Text, fontSize = 16.sp)
             }
+            // Feature O (native, screen only): pick a saved client to fill the customer block.
+            var clientStatus by remember { mutableStateOf("") }
+            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                val linked = state.clientId?.takeIf { id -> clients.any { it.id == id } }
+                QeSelect(linked, listOf<Pair<String?, String>>(null to (if (clients.isEmpty()) "No saved clients" else "Client: none")) + clients.map { it.id to ("Client: " + it.name + (if (it.phone.isNotBlank()) " · " + it.phone else "")) },
+                    { clientStatus = ""; actions.onPickClient(it) }, Modifier.weight(1f))
+                if (linked == null) QeSecondaryButton("Save as client", onClick = { clientStatus = actions.onSaveAsClient() })
+            }
+            if (clientStatus.isNotEmpty()) Text(clientStatus, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
             // .customer-grid
             if (wide) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QeTextField(state.customer.name, actions.onCustomerName, Modifier.weight(1f), placeholder = "Customer name")
