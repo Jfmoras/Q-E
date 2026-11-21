@@ -82,11 +82,12 @@ fun SettingsCards(svm: SettingsViewModel) {
             color = QeColors.Text, fontSize = 15.sp, modifier = Modifier.padding(vertical = 8.dp),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            QePrimaryButton("Export Backup", enabled = !busy) { save.launch(QeBackup.FILE_NAME) }
-            QeSecondaryButton("Import Backup", enabled = !busy) { open.launch(arrayOf("application/json", "text/plain")) }
+            QePrimaryButton("Backup", enabled = !busy) { save.launch(QeBackup.FILE_NAME) }
+            QeSecondaryButton("Restore", enabled = !busy) { open.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
         }
+        QeSecondaryButton("Share backup", enabled = !busy, modifier = Modifier.padding(top = 8.dp)) { svm.share() }
         Text(
-            "The native backup also includes item photos, project files, templates and asset logs. Always export a Full Backup before reinstalling or updating.",
+            "One file with everything: projects, quotations and revisions, signatures, payments, Projects & Payments (status, comments, hardware, documents, PDFs), notes, calculations, templates, machines and asset logs, inventory, clients, calendar dates, yield and settings. Photos and files are embedded. Restore replaces all data after a confirmation. V10.1 backups can still be restored.",
             color = QeColors.Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp),
         )
         if (busy) Text("Working…", color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
