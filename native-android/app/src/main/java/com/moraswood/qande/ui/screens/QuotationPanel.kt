@@ -101,6 +101,8 @@ data class QuotationActions(
     /** Feature O: client picker (null = no client) and "Save as client" → status line. */
     val onPickClient: (String?) -> Unit = {},
     val onSaveAsClient: () -> String = { "" },
+    /** Feature P: delivery date (ISO yyyy-MM-dd, null clears). */
+    val onDeliveryDate: (String?) -> Unit = {},
     /** Feature G: show each line's area on the print. */
     val onPrintArea: (Boolean) -> Unit = {},
     /** Feature J: group quotation lines by category on print. */
@@ -184,6 +186,7 @@ fun QuotationPanel(
                 if (linked == null) QeSecondaryButton("Save as client", onClick = { clientStatus = actions.onSaveAsClient() })
             }
             if (clientStatus.isNotEmpty()) Text(clientStatus, color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+            DeliveryDateRow(state.deliveryDate, actions.onDeliveryDate)
             // .customer-grid
             if (wide) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QeTextField(state.customer.name, actions.onCustomerName, Modifier.weight(1f), placeholder = "Customer name")
@@ -510,4 +513,31 @@ private fun SpeciesDialog(onDismiss: () -> Unit, onOk: (String, String, String) 
         confirmButton = { androidx.compose.material3.TextButton(onClick = { onOk(sp, cft, kol) }) { Text("Duplicate", color = QeColors.Accent) } },
         dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancel", color = QeColors.Muted) } },
     )
+}
+
+/** Feature P (native, screen only): delivery date shown on the Delivery calendar. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun DeliveryDateRow(date: String?, onDate: (String?) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val parsed = com.moraswood.qande.logic.QeCalendar.parse(date)
+    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Delivery date:", color = QeColors.Muted, fontSize = 14.sp)
+        QeSecondaryButton(parsed?.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.ENGLISH)) ?: "Set date", onClick = { open = true })
+        if (parsed != null) QeSecondaryButton("Clear", onClick = { onDate(null) })
+    }
+    if (open) {
+        val millis = (parsed ?: java.time.LocalDate.now()).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        val st = androidx.compose.material3.rememberDatePickerState(initialSelectedDateMillis = millis)
+        androidx.compose.material3.DatePickerDialog(
+            onDismissRequest = { open = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    st.selectedDateMillis?.let { onDate(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()) }
+                    open = false
+                }) { Text("OK") }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { open = false }) { Text("Cancel") } },
+        ) { androidx.compose.material3.DatePicker(st) }
+    }
 }

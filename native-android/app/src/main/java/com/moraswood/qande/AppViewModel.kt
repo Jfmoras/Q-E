@@ -102,6 +102,31 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             .flowOn(kotlinx.coroutines.Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    /* ---------- Feature P: delivery calendar ---------- */
+    private val _today = MutableStateFlow(java.time.LocalDate.now())
+    /** Re-read "today" when the calendar opens (the app may stay open past midnight). */
+    fun refreshToday() { _today.value = java.time.LocalDate.now() }
+    val calendarEntries: StateFlow<List<com.moraswood.qande.logic.QeCalendar.Entry>> =
+        combine(savedProjects, jobMeta, _today) { s, m, t -> com.moraswood.qande.logic.QeCalendar.entries(s, m, t) }
+            .flowOn(kotlinx.coroutines.Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** Quotation › Delivery date (ISO; null clears). Saved to the job on Save Project. */
+    fun setDeliveryDate(date: String?) = update { it.copy(deliveryDate = date?.takeIf { d -> d.isNotBlank() }) }
+
+    /** Calendar › move a saved job's delivery date (kept in `jobs`, no new revision). */
+    fun moveDelivery(jobUuid: String, date: java.time.LocalDate?) {
+        if (jobUuid.isBlank()) return
+        viewModelScope.launch { db.clients().setDeliveryDate(jobUuid, date?.toString()) }
+        if (_workspace.value.jobUuid == jobUuid) update { it.copy(deliveryDate = date?.toString()) }
+    }
+
+    /** Calendar › Mark completed (today) / Not completed. */
+    fun setCompleted(jobUuid: String, date: java.time.LocalDate?) {
+        if (jobUuid.isBlank()) return
+        viewModelScope.launch { db.clients().setCompleted(jobUuid, date?.toString()) }
+    }
+
     /** Add or edit a client; returns an error message, or null when saved. */
     fun saveClient(c: com.moraswood.qande.data.ClientEntity): String? {
         val x = c.copy(name = c.name.trim(), phone = c.phone.trim(), address = c.address.trim(), notes = c.notes.trim())
@@ -917,7 +942,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 update { it.copy(revision = rev, jobUuid = uuid) }
                 val snapshot = QeJson.encodeToString(WorkspaceState.serializer(), _workspace.value)
                 dao.insert(SavedProjectEntity(id, rootId, rev, name, now, snapshot, dao.minPosition() - 1, basedOn?.takeIf { it != rev }, uuid))
-                runCatching { db.clients().linkJob(uuid, _workspace.value.clientId) }
+                runCatching { db.clients().saveJob(uuid, _workspace.value.clientId, _workspace.value.deliveryDate) }
                 if (dao.all().none { it.id == id && it.snapshotJson.isNotEmpty() }) error("Save verification failed")
                 basedOnRevision = rev
                 _projectStatus.value = "Saved $name · R$rev on this device."
@@ -934,7 +959,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val snap = runCatching { QeJson.decodeFromString(WorkspaceState.serializer(), x.snapshotJson).normalizeUnits() }.getOrNull() ?: return false
         logJob?.let { it.cancel(); flushLogs(_workspace.value) }
         _dismissed.value = emptySet(); _templateStatus.value = emptyMap(); _estStatus.value = emptyMap(); _aiStatus.value = emptyMap()
-        update { snap.copy(projectId = x.rootId.ifEmpty { x.id }, revision = revision, jobUuid = snap.jobUuid ?: x.jobUuid.ifBlank { null }) }
+        val uuid0 = snap.jobUuid ?: x.jobUuid.ifBlank { null }
+        // Feature P: the job's schedule row (moved on the calendar) wins over the date saved in the snapshot.
+        val sched = uuid0?.let { u -> jobMeta.value.firstOrNull { it.jobUuid == u } }
+        update { snap.copy(projectId = x.rootId.ifEmpty { x.id }, revision = revision, jobUuid = uuid0, deliveryDate = if (sched != null) sched.deliveryDate else snap.deliveryDate) }
         // A loaded project logs under its own id; unsaved work after this starts a fresh session.
         viewModelScope.launch { _sessionKey.value = newSessionKey() }
         loadedReadOnly = readOnly
