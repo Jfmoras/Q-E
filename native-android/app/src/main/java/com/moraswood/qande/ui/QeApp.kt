@@ -52,6 +52,7 @@ object Routes {
     const val WORKSPACE = "workspace"
     const val NOTES = "notes"
     const val LENGTH = "length"
+    const val TIMBER = "timber"
     const val HOPPUS = "hoppus"
     const val SETTINGS = "settings"
     const val OPERATIONS = "operations"
@@ -162,6 +163,8 @@ fun QeApp(vm: AppViewModel) {
                     onOperations = { opsTab = OpsTab.Projects; ovm.resetPage(); avm.resetPage(); nav.openView(Routes.OPERATIONS) },
                     onNotes = { nav.openView(Routes.NOTES) },
                     onLengthConverter = { nav.openView(Routes.LENGTH) },
+                    onTimberCalculator = { nav.openView(Routes.TIMBER) },
+                    onProjectsPayments = { opsTab = OpsTab.Projects; ovm.resetPage(); avm.resetPage(); nav.openView(Routes.OPERATIONS) },
                     onSettings = { nav.openView(Routes.SETTINGS) },
                     onContinue = { nav.openView(Routes.WORKSPACE) },
                 )
@@ -289,6 +292,7 @@ fun QeApp(vm: AppViewModel) {
                 )
             }
             composable(Routes.NOTES) { NotesScreen(vm) }
+            composable(Routes.TIMBER) { com.moraswood.qande.ui.screens.TimberCalculatorScreen() }
             composable(Routes.LENGTH) { com.moraswood.qande.ui.screens.LengthConverterScreen() }
             composable(Routes.HOPPUS) {
                 LogCalculatorScreen(hoppus, remember(vm) { HoppusActions(vm::setHoppusField, vm::addHoppusLog, vm::removeHoppusLog, vm::setSawRate) }, yvm)

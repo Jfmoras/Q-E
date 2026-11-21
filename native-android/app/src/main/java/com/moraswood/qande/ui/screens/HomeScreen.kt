@@ -60,6 +60,8 @@ fun HomeScreen(
     onOperations: () -> Unit,
     onNotes: () -> Unit,
     onLengthConverter: () -> Unit,
+    onTimberCalculator: () -> Unit = {},
+    onProjectsPayments: () -> Unit = {},
     onSettings: () -> Unit,
     onContinue: () -> Unit,
     onOpenLatest: (String) -> Unit = {},
@@ -73,12 +75,14 @@ fun HomeScreen(
     val actions = buildList {
         add(HomeAction("Log Calculator", "Hoppus log volume, sawing charges and the Yield Tracker.", onHoppus))
         add(HomeAction("New Project", "Start a calculator, estimate and quotation.", onNewProject))
+        add(HomeAction("Timber Calculator", "Quick CFT / KOL check with items and rows. Nothing is saved.", onTimberCalculator))
         add(HomeAction("Length Converter", "Millimetres, centimetres, metres, inches, feet, yards and miles.", onLengthConverter))
         add(HomeAction("Door & Window Builder", "Frames, planking and architrave for the current project → CFT rows and a cut list.", onBuilder))
         add(HomeAction("Saved Projects", "Open or remove a project saved on this device.", onSavedProjects))
         if (onClients != null) add(HomeAction("Clients", "Client details, past jobs and total spend.", onClients))
         if (onCalendar != null) add(HomeAction("Delivery Calendar", "Delivery and completion dates by month; overdue jobs in red.", onCalendar))
         if (onScanQr != null) add(HomeAction("Scan job QR", "Open a saved job by scanning its QR label.", onScanQr))
+        add(HomeAction("Projects and Payments", "Projects list, project details, quotations and payment tracking.", onProjectsPayments))
         add(HomeAction("Projects · Expenses · Inventory · Machines", "Manage project payments, material stock, machine status and monthly reports.", onOperations))
         add(HomeAction("Notes", "Manage notes to reuse in quotations.", onNotes))
         add(HomeAction("⚙ Settings", "AI, backup and restore.", onSettings))
