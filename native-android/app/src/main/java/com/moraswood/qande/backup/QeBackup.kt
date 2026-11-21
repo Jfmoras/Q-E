@@ -50,7 +50,7 @@ object QeBackup {
     const val LEGACY_PLAIN_KEY = "mwi-openai-api-key-v1"
     const val CONFIRM = "Replace existing saved data with backup?"
     const val RESTORED = "Restored. Reloading."
-    const val SCHEMA = 5
+    const val SCHEMA = 6
     val FILE_DIRS = setOf("item_photos", "project-attachments")
 
     /** Parents before children (insert order); deletes run in reverse. */
