@@ -53,6 +53,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
@@ -125,6 +127,29 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setCompleted(jobUuid: String, date: java.time.LocalDate?) {
         if (jobUuid.isBlank()) return
         viewModelScope.launch { db.clients().setCompleted(jobUuid, date?.toString()) }
+    }
+
+    /* ---------- Feature Q: client signature ---------- */
+    /** The open quotation's signature row (null = unsigned). */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val signature: StateFlow<com.moraswood.qande.data.SignatureEntity?> =
+        _workspace.map { it.signatureId }.distinctUntilChanged()
+            .mapLatest { id -> id?.let { db.signatures().get(it) } }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Pad › Save: write-once row, the workspace points at it (Save Project keeps it with the revision). */
+    fun saveSignature(png: String, signer: String) {
+        if (png.isBlank()) return
+        val row = com.moraswood.qande.data.SignatureEntity("s" + uid() + uid(), png, signer.trim(), jsIsoNow(), _workspace.value.jobUuid.orEmpty())
+        viewModelScope.launch { db.signatures().insert(row); update { it.copy(signatureId = row.id) } }
+    }
+
+    /** Clear only unlinks it from the open quotation; saved revisions that printed it keep their row. */
+    fun clearSignature() = update { it.copy(signatureId = null) }
+
+    /** Print with the snapshot's own signature (current quotation or a saved revision). */
+    fun withSignature(state: WorkspaceState, block: (com.moraswood.qande.data.SignatureEntity?) -> Unit) {
+        viewModelScope.launch { block(state.signatureId?.let { db.signatures().get(it) }) }
     }
 
     /** Add or edit a client; returns an error message, or null when saved. */

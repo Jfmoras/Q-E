@@ -144,7 +144,7 @@ fun QeApp(vm: AppViewModel) {
                     onReviseProject = { id -> if (vm.reviseSavedProject(id)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
                     onDeleteProject = vm::deleteSavedProject,
                     onOpenLatest = { root -> if (vm.openLatestRevision(root)) { savedPanelOpen = false; nav.openView(Routes.WORKSPACE) } },
-                    onPrintRevision = { id -> vm.savedSnapshot(id)?.let { QuotePrint.print(context, it) } },
+                    onPrintRevision = { id -> vm.savedSnapshot(id)?.let { st -> vm.withSignature(st) { sig -> QuotePrint.print(context, st, sig) } } },
                     onJobQr = { x -> qrJob = x },
                     onDuplicate = { id -> vm.duplicateSavedProject(id) { msg -> scanAlert = msg } },
                     onScanQr = {
@@ -240,9 +240,10 @@ fun QeApp(vm: AppViewModel) {
                             aiStatus = aiStatus,
                             aiBusy = aiBusy,
                             clients = vm.clients.collectAsState().value,
+                            signature = vm.signature.collectAsState().value,
                             actions = remember(vm) {
                                 QuotationActions(
-                                    onPrint = { QuotePrint.print(context, vm.workspace.value) },
+                                    onPrint = { val st = vm.workspace.value; vm.withSignature(st) { sig -> QuotePrint.print(context, st, sig) } },
                                     onExport = {
                                         val err = vm.exportToProjects()
                                         if (err == null) { opsTab = OpsTab.Projects; ovm.resetPage(); avm.resetPage(); ovm.consumePendingImport(); nav.openView(Routes.OPERATIONS) }
@@ -253,6 +254,8 @@ fun QeApp(vm: AppViewModel) {
                                     onPickClient = vm::pickClient,
                                     onSaveAsClient = vm::saveCustomerAsClient,
                                     onDeliveryDate = vm::setDeliveryDate,
+                                    onSaveSignature = vm::saveSignature,
+                                    onClearSignature = vm::clearSignature,
                                     onSelectOption = vm::selectQuoteOption,
                                     onOptionName = vm::setQuoteOptionName,
                                     onAddOption = vm::addQuoteOption,
