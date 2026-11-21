@@ -276,10 +276,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /* ---------- Feature F: item groups ---------- */
     /** Returns the alert text or null. */
     fun groupItems(selected: List<Int>): String? {
+        if (!com.moraswood.qande.logic.QeCategories.sameCategory(_workspace.value, selected)) return "Items in a group must be in the same category."
         var err: String? = null
         updateEstimation { s -> QeGroups.group(s, selected) ?: s.also { err = "Select one or more items to group." } }
         return err
     }
+    /** Feature J: move an estimation item between Furniture and Doors & Windows. */
+    fun moveEstimationCategory(i: Int, cat: String) = updateEstimation(log = true) { com.moraswood.qande.logic.QeCategories.move(it, i, cat) }
+    fun setCategoryDefault(cat: String, key: String, v: String) = updateEstimation { com.moraswood.qande.logic.QeCategories.setDefault(it, cat, key, v) }
+    fun setQuoteGroupByCategory(on: Boolean) = update { it.copy(quoteGroupByCategory = if (on) true else null) }
+
     fun ungroupItems(id: String) = updateEstimation { QeGroups.ungroup(it, id) }
     fun setItemGroupField(id: String, key: String, v: String) = updateEstimation { s -> QeGroups.update(s, id) { QeGroups.setField(it, key, v) } }
     fun toggleItemGroup(id: String) = updateEstimation { s -> QeGroups.update(s, id) { it.copy(collapsed = if (it.collapsed == true) null else true) } }
@@ -297,7 +303,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         update { st ->
             val p = QeGroups.quotePrices(st)
-            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = p[i], wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)), area = quoteArea(st, i)) }
+            val q = st.estimationItems.mapIndexed { i, it -> QuoteItem(description = it.name, unitPrice = p[i], wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)), area = quoteArea(st, i), category = st.estimationItems.getOrNull(i)?.category?.let { c -> com.moraswood.qande.logic.QeCategories.stored(c) }) }
             st.copy(quoteItems = q.ifEmpty { listOf(QuoteItem.blank()) }, tab = "quotation")
         }
         return -1
@@ -314,7 +320,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         _estStatus.value = _estStatus.value - i
         update { st ->
-            val q = QuoteItem(description = it.name, unitPrice = price, wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)), area = quoteArea(st, i))
+            val q = QuoteItem(description = it.name, unitPrice = price, wood = QeSpecies.link(it, QeGroups.effectiveCosting(st, i)), area = quoteArea(st, i), category = st.estimationItems.getOrNull(i)?.category?.let { c -> com.moraswood.qande.logic.QeCategories.stored(c) })
             val only = st.quoteItems
             val onlyBlank = only.size == 1 && only[0].description.isEmpty() && only[0].unit.isEmpty() && only[0].qty.isEmpty() && only[0].unitPrice.isEmpty() && only[0].images.isEmpty()
             st.copy(quoteItems = if (onlyBlank) listOf(q) else st.quoteItems + q, tab = "quotation")
@@ -620,7 +626,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setCustomerName(v: String) = update { it.copy(customer = it.customer.copy(name = v)) }
     fun setCustomerLocation(v: String) = update { it.copy(customer = it.customer.copy(location = v)) }
     fun setQuoteField(i: Int, key: String, v: String) = updateQuoteItem(i) {
-        when (key) { "description" -> it.copy(description = v); "unit" -> it.copy(unit = v); "qty" -> it.copy(qty = v); "unitPrice" -> it.copy(unitPrice = v); "species" -> it.copy(species = v.ifEmpty { null }); "area" -> it.copy(area = v.ifEmpty { null }); else -> it }
+        when (key) { "description" -> it.copy(description = v); "unit" -> it.copy(unit = v); "qty" -> it.copy(qty = v); "unitPrice" -> it.copy(unitPrice = v); "species" -> it.copy(species = v.ifEmpty { null }); "area" -> it.copy(area = v.ifEmpty { null }); "category" -> it.copy(category = com.moraswood.qande.logic.QeCategories.stored(v)); else -> it }
     }
     fun addQuoteItem() = rerenderQuote { it.copy(quoteItems = it.quoteItems + QuoteItem.blank()) }
     fun removeQuoteItem(i: Int) = rerenderQuote { s ->

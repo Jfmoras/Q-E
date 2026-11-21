@@ -246,7 +246,20 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
         tableHeader()
         val padX = mm(2f); val padY = mm(2.6f)
         val cell = tp(9f); val bold = tp(9f, true)
-        opt.items.forEachIndexed { i, x ->
+        // Feature J: optional category headings (Furniture first); numbering runs on across categories.
+        var n = 0
+        com.moraswood.qande.logic.QeCategories.printOrder(opt.items, { it.category }, state0.quoteGroupByCategory == true).forEach { (heading, lines) ->
+          if (heading != null) {
+            val hl = layout(heading, tp(9.5f, true, brown), contentW - padX * 2)
+            val hh = hl.height + padY * 2
+            if (ensure(hh + mm(10f))) tableHeader()
+            canvas.drawRect(left, y, left + contentW, y + hh, fill(Color.parseColor("#f4f0eb")))
+            canvas.drawRect(left, y, left + contentW, y + hh, stroke(Color.parseColor("#ddd3ca"), mm(0.25f)))
+            draw(hl, left + padX, y + padY)
+            y += hh
+          }
+          lines.forEach { (_, x) ->
+            val i = n++
             val texts = listOf(
                 layout("${i + 1}", cell, mm(colW[0]) - padX * 2, Layout.Alignment.ALIGN_CENTER),
                 layout(preLine(x.description.ifEmpty { "-" }) + (x.species?.takeIf { it.isNotBlank() && it != opt.species }?.let { "\nSpecies: $it" } ?: "") + (if (state0.printArea == true) x.area?.takeIf { it.isNotBlank() }?.let { "\nArea: $it sq.ft" } ?: "" else ""), bold, mm(colW[1]) - padX * 2),
@@ -264,6 +277,7 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
                 cx += w
             }
             y += h
+          }
         }
 
         // .print-totals (58 mm, right) with the 86 mm GRAND TOTAL row.

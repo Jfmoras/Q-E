@@ -100,6 +100,8 @@ data class QuotationActions(
     val onPrintComparison: (Boolean) -> Unit = {},
     /** Feature G: show each line's area on the print. */
     val onPrintArea: (Boolean) -> Unit = {},
+    /** Feature J: group quotation lines by category on print. */
+    val onGroupByCategory: (Boolean) -> Unit = {},
 )
 
 private val UnitOptions = listOf("Set", "Piece", "Nos", "Lumpsum", "Sq.ft", "Rft", "Job")
@@ -141,6 +143,10 @@ fun QuotationPanel(
     Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
         QeCheckbox(state.printArea == true, actions.onPrintArea)
         Text("Show area (sq.ft) on print", color = QeColors.Text, fontSize = 14.sp)
+    }
+    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+        QeCheckbox(state.quoteGroupByCategory == true, actions.onGroupByCategory)
+        Text("Group lines by category on print", color = QeColors.Text, fontSize = 14.sp)
     }
 
     val shape = RoundedCornerShape(16.dp)
@@ -349,6 +355,10 @@ private fun QuoteItemCard(
             } else { units(Modifier.fillMaxWidth()); qty(Modifier.fillMaxWidth()); price(Modifier.fillMaxWidth()); total(Modifier.fillMaxWidth()) }
             QeFieldLabel("Wood species (optional)") {
                 QeTextField(it.species.orEmpty(), { v -> actions.onField(i, "species", v) }, Modifier.fillMaxWidth(), placeholder = "Species for this line")
+            }
+            // Feature J: category of the line
+            QeFieldLabel("Category") {
+                QeSelect(com.moraswood.qande.logic.QeCategories.of(it.category), com.moraswood.qande.logic.QeCategories.ALL, { v -> actions.onField(i, "category", v) }, Modifier.fillMaxWidth())
             }
             // Feature G: area carried from Estimation (editable)
             QeFieldLabel("Area (sq.ft, optional)") {
