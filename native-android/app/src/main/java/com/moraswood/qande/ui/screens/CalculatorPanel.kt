@@ -77,6 +77,8 @@ fun CalculatorPanel(
     banner: TemplateBanner?,
     templateStatus: Map<Int, String>,
     actions: CalculatorActions,
+    /** Standalone Timber Calculator (Home): no tag/template/photo, no Send to Estimation. */
+    standalone: Boolean = false,
 ) {
     PageHeading(
         "Timber Calculator",
@@ -111,10 +113,10 @@ fun CalculatorPanel(
         try { voice.launch(intent) } catch (e: android.content.ActivityNotFoundException) { voiceTarget = null; voiceMsg = com.moraswood.qande.logic.QeVoice.UNAVAILABLE }
     }
 
-    if (banner != null && banner.itemIndex < items.size) TemplateBannerCard(banner, actions.onUseTemplate, actions.onDismissTemplate)
+    if (!standalone && banner != null && banner.itemIndex < items.size) TemplateBannerCard(banner, actions.onUseTemplate, actions.onDismissTemplate)
 
     items.forEachIndexed { ii, item ->
-        CalcItemCard(ii, item, templateStatus[ii], actions, ::fr, onEnterLastField = { ri ->
+        CalcItemCard(ii, item, templateStatus[ii], actions, ::fr, standalone = standalone, onEnterLastField = { ri ->
             actions.onAddRow(ii)
             pendingFocus = ii to ri + 1
         }, onMic = onMic)
@@ -129,13 +131,13 @@ fun CalculatorPanel(
 
     QeSecondaryButton("+ New Item", onClick = actions.onNewItem)
     val g = QeMath.grandTotals(items)
-    GrandBar("Grand Total", "${QeFormat.toFixed(g.cft, 3)} CFT | ${QeFormat.toFixed(g.kol, 3)} KOL", "Send to Estimation →", actions.onSendToEstimation)
+    GrandBar("Grand Total", "${QeFormat.toFixed(g.cft, 3)} CFT | ${QeFormat.toFixed(g.kol, 3)} KOL", if (standalone) null else "Send to Estimation →", actions.onSendToEstimation)
 }
 
 /** `.grand-bar` */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun GrandBar(label: String, value: String, button: String, onClick: () -> Unit) {
+fun GrandBar(label: String, value: String, button: String?, onClick: () -> Unit) {
     val shape = RoundedCornerShape(16.dp)
     FlowRow(
         Modifier.padding(top = 18.dp).fillMaxWidth().clip(shape).background(QeColors.GrandBg).border(1.dp, QeColors.GrandBorder, shape)
@@ -145,7 +147,7 @@ fun GrandBar(label: String, value: String, button: String, onClick: () -> Unit) 
     ) {
         Text(label, color = QeColors.GrandText, modifier = Modifier.align(Alignment.CenterVertically))
         Text(value, color = QeColors.GrandText, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterVertically))
-        QePrimaryButton(button, modifier = Modifier.fillMaxWidth(), onClick = onClick)
+        if (button != null) QePrimaryButton(button, modifier = Modifier.fillMaxWidth(), onClick = onClick)
     }
 }
 
@@ -174,6 +176,7 @@ private fun CalcItemCard(
     status: String?,
     actions: CalculatorActions,
     fr: (Int, Int, String) -> FocusRequester,
+    standalone: Boolean = false,
     onEnterLastField: (Int) -> Unit,
     onMic: (Int, Int, String) -> Unit = { _, _, _ -> },
 ) {
@@ -185,7 +188,7 @@ private fun CalcItemCard(
             QeTextField(item.name, { actions.onItemName(ii, it) }, placeholder = "Item name", modifier = Modifier.weight(1f))
         }
         // Native additions: furniture type tag, Save as template, item photo.
-        Column(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 12.dp)) {
+        if (!standalone) Column(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 12.dp)) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 QeTextField(item.tag, { actions.onItemTag(ii, it) }, placeholder = "Furniture type tag (optional)", modifier = Modifier.width(260.dp))
                 QeSecondaryButton("Save as template") { actions.onSaveTemplate(ii) }
