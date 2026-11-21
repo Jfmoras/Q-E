@@ -94,9 +94,18 @@ data class Row(
     companion object { fun blank() = Row("", "ft", "", "in", "", "in", "", "CFT") }
 }
 
-/** `{name, rows:[Row]}` used for both `items` (calculator) and `estimationItems`. */
+/**
+ * `{name, rows:[Row]}` used for both `items` (calculator) and `estimationItems`.
+ * Native additions (ignored by V10.1, which keeps unknown fields): [tag] = optional furniture-type label
+ * for the template library, [photo] = file name of the item photo under filesDir/item_photos/.
+ */
 @Serializable
-data class CalcItem(val name: LStr = "", val rows: List<Row> = emptyList()) {
+data class CalcItem(
+    val name: LStr = "",
+    val rows: List<Row> = emptyList(),
+    val tag: LStr = "",
+    val photo: LStr = "",
+) {
     companion object { fun blank() = CalcItem("", listOf(Row.blank())) }
 }
 
