@@ -45,6 +45,9 @@ object QeMigrations {
         }
     }
 
+    /** Lets a Full Backup restore replace the append-only logs (dropped and re-created inside one transaction). */
+    val ASSET_TRIGGER_DROPS: List<String> = APPEND_ONLY.flatMap { t -> listOf("update", "delete").map { op -> "DROP TRIGGER IF EXISTS `${t}_no_$op`" } }
+
     val MIGRATION_2_3 = object : Migration(2, 3) {
         override fun migrate(db: SupportSQLiteDatabase) {
             MIGRATION_2_3_SQL.forEach(db::execSQL)
