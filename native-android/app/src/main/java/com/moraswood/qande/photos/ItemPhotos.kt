@@ -40,6 +40,18 @@ object ItemPhotos {
         }.getOrNull()
     }
 
+    /** Feature N: copies an existing photo to a new file; null when the source is missing. */
+    suspend fun copyOf(context: Context, name: String): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            if (name.contains('/') || name.contains("..")) return@runCatching null
+            val src = file(context, name)
+            if (!src.exists()) return@runCatching null
+            val copy = "item-" + UUID.randomUUID().toString() + "." + src.extension.ifEmpty { "jpg" }
+            src.copyTo(file(context, copy))
+            copy
+        }.getOrNull()
+    }
+
     suspend fun register(context: Context, db: QeDatabase, name: String) = withContext(Dispatchers.IO) {
         val f = file(context, name)
         if (f.exists()) runCatching { db.itemPhotos().put(ItemPhotoEntity(name, Instant.now().toString(), f.length())) }
