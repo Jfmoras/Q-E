@@ -95,8 +95,19 @@ object QeMigrations {
         override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_5_6_SQL.forEach(db::execSQL) }
     }
 
+    /** Feature O: clients + per-job metadata (linked client). */
+    val MIGRATION_6_7_SQL: List<String> get() = listOf(
+        "CREATE TABLE IF NOT EXISTS `clients` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `phone` TEXT NOT NULL, `address` TEXT NOT NULL, `notes` TEXT NOT NULL, `createdAt` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "CREATE TABLE IF NOT EXISTS `jobs` (`jobUuid` TEXT NOT NULL, `clientId` TEXT, PRIMARY KEY(`jobUuid`))",
+        "CREATE INDEX IF NOT EXISTS `index_jobs_clientId` ON `jobs` (`clientId`)",
+    )
+
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_6_7_SQL.forEach(db::execSQL) }
+    }
+
     /** Plain SQL per step from version 3 on (used by the migration test that replays them on the exported schemas). */
-    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL)
+    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL)
 
     val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {
