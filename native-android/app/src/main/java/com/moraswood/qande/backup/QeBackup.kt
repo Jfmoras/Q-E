@@ -50,7 +50,7 @@ object QeBackup {
     const val LEGACY_PLAIN_KEY = "mwi-openai-api-key-v1"
     const val CONFIRM = "Replace existing saved data with backup?"
     const val RESTORED = "Restored. Reloading."
-    const val SCHEMA = 3
+    const val SCHEMA = 4
     val FILE_DIRS = setOf("item_photos", "project-attachments")
 
     /** Parents before children (insert order); deletes run in reverse. */
@@ -311,7 +311,7 @@ object QeBackup {
             val snap = p["snapshot"]
             port.exec(
                 "INSERT OR REPLACE INTO saved_projects(id, rootId, revision, name, updatedAt, snapshotJson, position) VALUES (?,?,?,?,?,?,?)",
-                listOf(str(p, "id"), str(p, "rootId"), lng(p, "revision"), str(p, "name"), str(p, "updatedAt"),
+                listOf(str(p, "id"), str(p, "rootId").ifEmpty { str(p, "id") }, lng(p, "revision"), str(p, "name"), str(p, "updatedAt"),
                     if (snap is JsonPrimitive && snap.isString) snap.content else (snap ?: JsonObject(emptyMap())).toString(), i.toLong()),
             )
         }
