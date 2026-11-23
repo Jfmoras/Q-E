@@ -109,6 +109,28 @@ class SpeciesOptionTest {
         assertEquals(listOf(0, 1), QeSpecies.printOrder(back, true).map { it.first })
     }
 
+    @Test fun printHeadingOnlyForMultipleOptionsAndOnlyNamedSuffix() {
+        // single option: no heading at all (the screenshot's "OPTION 1: Option 1")
+        assertNull(QeSpecies.printHeading(QuoteOption(name = "Option 1"), 0, 1))
+        assertNull(QeSpecies.printHeading(QuoteOption(name = "Teak set"), 0, 1))
+        // several options: "OPTION N", ": name" only when really named
+        assertEquals("OPTION 1", QeSpecies.printHeading(QuoteOption(name = "Option 1"), 0, 2))
+        assertEquals("OPTION 2", QeSpecies.printHeading(QuoteOption(name = ""), 1, 2))
+        assertEquals("OPTION 2", QeSpecies.printHeading(QuoteOption(name = "  option 2 copy "), 1, 3))
+        assertEquals("OPTION 3: Premium", QeSpecies.printHeading(QuoteOption(name = " Premium "), 2, 3))
+        assertEquals("OPTION 2: Teak", QeSpecies.printHeading(QuoteOption(name = "", species = "Teak"), 1, 2))
+        assertEquals("OPTION 2: Premium (Teak)", QeSpecies.printHeading(QuoteOption(name = "Premium", species = "Teak"), 1, 2))
+        assertEquals("OPTION 1: Option A", QeSpecies.printHeading(QuoteOption(name = "Option A"), 0, 2))
+        // UI keeps "Option N" for unnamed options; new / added / duplicated options get no auto name
+        assertEquals("Option 2", QeSpecies.optionLabel(QuoteOption(name = ""), 1))
+        val s = QeQuote.ensureQuoteOptions(quotation().copy(quoteOptions = emptyList()))
+        assertEquals("", s.quoteOptions.single().name)
+        val two = QeQuote.addOption(s)
+        assertEquals(listOf("", ""), two.quoteOptions.map { it.name })
+        assertEquals("", QeQuote.duplicateOption(two).quoteOptions.last().name)
+        assertEquals("Premium Copy", QeQuote.duplicateOption(two.copy(quoteOptions = two.quoteOptions.map { it.copy(name = "Premium") })).quoteOptions.last().name)
+    }
+
     @Test fun speciesAndLinkRoundTripThroughJsonAndStayOptional() {
         val n = QeSpecies.duplicateAsSpecies(quotation(), "Teak", "4000", "150").state.copy(printComparison = true)
         val json = QeJson.encodeToString(WorkspaceState.serializer(), n)
@@ -116,7 +138,7 @@ class SpeciesOptionTest {
         val plain = QeJson.encodeToString(QuoteOption.serializer(), QuoteOption(name = "Option 1", items = listOf(QuoteItem(description = "x"))))
         assertFalse(plain.contains("species")); assertFalse(plain.contains("wood"))
         assertNull(QeJson.decodeFromString(QuoteItem.serializer(), """{"description":"V10.1 line","unitPrice":"10"}""").species)
-        assertEquals("Option 1 (Sal)", QeSpecies.optionLabel(QuoteOption(name = "Option 1", species = "Sal"), 0))
+        assertEquals("Sal", QeSpecies.optionLabel(QuoteOption(name = "Option 1", species = "Sal"), 0))
         assertEquals("Teak", QeSpecies.optionLabel(QuoteOption(name = "Teak", species = "Teak"), 0))
     }
 }

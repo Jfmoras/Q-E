@@ -62,7 +62,9 @@ class QeQuoteTest {
     }
 
     private fun check(tag: String, s: WorkspaceState, e: JsonObject) {
-        assertEquals("$tag options", QeJson.decodeFromJsonElement(ListSerializer(QuoteOption.serializer()), e["quoteOptions"]!!), s.quoteOptions)
+        // t48u: auto default names ("Option N", "… Copy") are stored blank natively; everything else must match V10.1.
+        fun norm(l: List<QuoteOption>) = l.map { if (com.moraswood.qande.logic.QeSpecies.isDefaultName(it.name)) it.copy(name = "") else it }
+        assertEquals("$tag options", norm(QeJson.decodeFromJsonElement(ListSerializer(QuoteOption.serializer()), e["quoteOptions"]!!)), norm(s.quoteOptions))
         assertEquals("$tag active", e["activeQuoteOption"]!!.jsonPrimitive.int, s.activeQuoteOption)
         assertEquals("$tag items", QeJson.decodeFromJsonElement(ListSerializer(QuoteItem.serializer()), e["quoteItems"]!!), s.quoteItems)
         val q = e["quote"]!!.jsonObject
