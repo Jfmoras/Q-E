@@ -60,15 +60,61 @@ object QeProjects {
         return Sections(sorted.filter { status(status(it)) == RUNNING }, sorted.filter { status(status(it)) == FINISHED }, sorted.filter { status(status(it)) == DELETED })
     }
 
-    /* ---------- comments (append-only) ---------- */
+    /** Remaining after deleting the payment at [index] (t47u: payments can be deleted). */
+    fun withoutPayment(total: Double, payments: List<Double>, index: Int): Money =
+        money(total, payments.filterIndexed { i, _ -> i != index })
 
-    data class Comment(val author: String, val text: String, val at: String)
+    /* ---------- comments (editable since t47u) ---------- */
 
-    /** Returns the new list (old entries untouched) or null when the text is blank / author unknown. */
-    fun append(list: List<Comment>, author: String, text: String, at: String): List<Comment>? {
+    data class Comment(val id: String, val author: String, val text: String, val at: String, val editedAt: String = "")
+
+    /** Adds a comment; null when the text is blank / author unknown. */
+    fun append(list: List<Comment>, id: String, author: String, text: String, at: String): List<Comment>? {
         val t = text.trim()
         if (t.isEmpty() || author !in listOf(USER, CLIENT)) return null
-        return list + Comment(author, t, at)
+        return list + Comment(id, author, t, at)
+    }
+
+    /** Edits one comment's text (author and original time kept, [editedAt] stamped); null when blank / unknown id. */
+    fun edit(list: List<Comment>, id: String, text: String, editedAt: String): List<Comment>? {
+        val t = text.trim()
+        if (t.isEmpty() || list.none { it.id == id }) return null
+        return list.map { if (it.id == id) it.copy(text = t, editedAt = editedAt) else it }
+    }
+
+    fun delete(list: List<Comment>, id: String): List<Comment> = list.filterNot { it.id == id }
+
+    /* ---------- project revisions (R0, R1, ...) ---------- */
+
+    @kotlinx.serialization.Serializable
+    data class SnapItem(val name: String, val qty: String = "", val unit: String = "", val price: Double = 0.0, val sizes: String = "", val wood: String = "")
+    @kotlinx.serialization.Serializable
+    data class SnapHardware(val name: String, val qty: String = "", val note: String = "")
+    /** Everything a frozen revision shows (read-only). */
+    @kotlinx.serialization.Serializable
+    data class Snapshot(
+        val revision: Int, val total: Double, val paid: Double, val description: String, val notes: String, val startDate: String,
+        val items: List<SnapItem>, val hardware: List<SnapHardware>, val at: String,
+    )
+
+    private val snapJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    fun encode(s: Snapshot): String = snapJson.encodeToString(Snapshot.serializer(), s)
+    fun decode(raw: String): Snapshot? = runCatching { snapJson.decodeFromString(Snapshot.serializer(), raw) }.getOrNull()
+
+    fun label(revision: Int) = "R$revision"
+
+    /**
+     * "Revise project": freezes the current state as R[current] and starts R[current]+1. The new total is reached by
+     * adding a V10.1 revision entry of [delta] (= newTotal − current total, may be negative when extras are removed),
+     * so QeOps.value — and with it the Operations screen, remaining amount and summary card — follows the latest revision.
+     */
+    data class Revise(val next: Int, val delta: Double, val note: String)
+
+    fun revise(current: Int, currentTotal: Double, newTotalText: String, reason: String): Revise? {
+        val t = newTotalText.trim().toDoubleOrNull()?.takeIf { it >= 0 && it.isFinite() } ?: return null
+        val next = current + 1
+        val note = (label(next) + ": " + reason.trim().ifEmpty { "Client revision" })
+        return Revise(next, Math.round((t - currentTotal) * 100) / 100.0, note)
     }
 
     /* ---------- Confirm as Project (quotation → project) ---------- */

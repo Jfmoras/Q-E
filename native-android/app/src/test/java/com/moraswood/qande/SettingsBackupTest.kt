@@ -56,7 +56,7 @@ class SettingsBackupTest {
                 st.execute(e["createSql"]!!.jsonPrimitive.content.replace("\${TABLE_NAME}", t))
                 (e["indices"]?.jsonArray ?: emptyList()).forEach { st.execute(it.jsonObject["createSql"]!!.jsonPrimitive.content.replace("\${TABLE_NAME}", t)) }
             }
-            (QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS + QeMigrations.COMMENT_TRIGGERS).forEach(st::execute)
+            (QeMigrations.ASSET_TRIGGERS + QeMigrations.REVISION_TRIGGERS).forEach(st::execute)
         }
         return JdbcPort(c)
     }
@@ -134,6 +134,23 @@ class SettingsBackupTest {
         assertEquals(QeBackup.TABLES.size, QeBackup.TABLES.toSet().size)
     }
 
+    @Test fun schema10BackupRestoresIntoV11() {
+        val src = freshDb()
+        QeBackup.restore(src, v101)
+        src.exec("INSERT INTO pp_projects(projectId, description, status, startDate, jobUuid, jobRootId, quoteRevision, quotePdfId, updatedAt) VALUES ('P1','Cot','running','2026-11-01','','',0,'','t')")
+        src.exec("INSERT INTO pp_comments(id, projectId, author, text, at) VALUES ('c1','P1','client','Darker polish','t')")
+        // a v10 dump has no editedAt / revision columns and no pp_revisions table
+        val v10 = QeBackup.dumpTables(src).filterKeys { it != "pp_revisions" }.mapValues { (t, rows) ->
+            kotlinx.serialization.json.JsonArray(rows.map { r -> kotlinx.serialization.json.JsonObject((r as kotlinx.serialization.json.JsonObject).filterKeys { k -> !(t == "pp_comments" && k == "editedAt") && !(t == "pp_projects" && k == "revision") }) })
+        }
+        val w = StringWriter()
+        QeBackup.write(w, "d", QeBackup.storage(v10, QeBackup.AiExport("", "", "")), emptyList())
+        val dst = freshDb()
+        QeBackup.restore(dst, QeBackup.parse(w.toString()))
+        assertEquals("", dst.query("SELECT editedAt FROM pp_comments").single()["editedAt"])
+        assertEquals(0L, dst.query("SELECT revision FROM pp_projects").single()["revision"])
+    }
+
     @Test fun nativeBackupRoundTripsEveryTableAndFiles() {
         val src = freshDb()
         QeBackup.restore(src, v101)
@@ -172,7 +189,8 @@ class SettingsBackupTest {
         assertEquals(photo.toList(), java.util.Base64.getDecoder().decode(r.files.getValue("item_photos/item-1.jpg")).toList())
         assertEquals(70000, java.util.Base64.getDecoder().decode(r.files.getValue("project-attachments/x y.pdf")).size)
         try { dst.exec("DELETE FROM asset_issues"); fail("append-only triggers must be back after restore") } catch (e: SQLException) { assertTrue(e.message!!.contains("append-only")) }
-        try { dst.exec("UPDATE pp_comments SET text = 'x'"); fail("comments must stay append-only after restore") } catch (e: SQLException) { assertTrue(e.message!!.contains("append-only")) }
+        dst.exec("UPDATE pp_comments SET text = 'edited', editedAt = 't2'") // comments are editable since v11
+        dst.exec("DELETE FROM pp_comments")
         dst.exec("INSERT INTO assets(name, category, purchaseDate, cost, serial, photoFile, createdAt) VALUES ('Saw','tool','',0,'',NULL,'t')")
         assertEquals(2L, dst.query("SELECT MAX(id) AS m FROM assets").single()["m"])
     }

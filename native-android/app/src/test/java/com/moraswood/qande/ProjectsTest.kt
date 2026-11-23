@@ -55,27 +55,66 @@ class ProjectsTest {
         assertEquals(QeProjects.RUNNING, QeProjects.status(null))
     }
 
-    @Test fun commentsAreAppendOnly() {
-        val a = QeProjects.append(emptyList(), QeProjects.USER, " Started ", "t1")!!
-        val b = QeProjects.append(a, QeProjects.CLIENT, "Darker polish please", "t2")!!
-        assertEquals(a, b.take(1)) // earlier entries never change
+    @Test fun commentsCanBeEditedAndDeleted() {
+        val a = QeProjects.append(emptyList(), "c1", QeProjects.USER, " Started ", "t1")!!
+        val b = QeProjects.append(a, "c2", QeProjects.CLIENT, "Darker polish please", "t2")!!
         assertEquals(listOf("user", "client"), b.map { it.author })
-        assertNull(QeProjects.append(b, QeProjects.USER, "  ", "t3"))
-        assertNull(QeProjects.append(b, "owner", "x", "t3"))
-        // the database refuses UPDATE / DELETE on pp_comments (migration 9 → 10 triggers)
+        assertNull(QeProjects.append(b, "c3", QeProjects.USER, "  ", "t3"))
+        assertNull(QeProjects.append(b, "c3", "owner", "x", "t3"))
+        val e = QeProjects.edit(b, "c2", " Walnut polish ", "t4")!!
+        assertEquals(QeProjects.Comment("c2", "client", "Walnut polish", "t2", "t4"), e[1]) // author + original time kept, edited stamped
+        assertEquals(b[0], e[0])
+        assertNull(QeProjects.edit(b, "c2", " ", "t4")); assertNull(QeProjects.edit(b, "nope", "x", "t4"))
+        assertEquals(listOf("c2"), QeProjects.delete(e, "c1").map { it.id })
+        // migration 10 → 11 removes the v10 append-only triggers and adds editedAt: UPDATE / DELETE now work
         DriverManager.getConnection("jdbc:sqlite::memory:").use { c ->
             c.createStatement().use { st ->
                 st.execute("CREATE TABLE `pp_comments` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `author` TEXT NOT NULL, `text` TEXT NOT NULL, `at` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                st.execute("CREATE TABLE `pp_projects` (`projectId` TEXT NOT NULL, PRIMARY KEY(`projectId`))")
                 QeMigrations.COMMENT_TRIGGERS.forEach(st::execute)
                 st.execute("INSERT INTO pp_comments VALUES ('1','p','user','hello','t')")
-                for (sql in listOf("UPDATE pp_comments SET text='x'", "DELETE FROM pp_comments")) {
-                    try { st.execute(sql); fail("$sql should be refused") } catch (e: java.sql.SQLException) { assertTrue(e.message!!.contains("append-only")) }
-                }
-                QeMigrations.COMMENT_TRIGGER_DROPS.forEach(st::execute) // Full Backup restore path
-                st.execute("DELETE FROM pp_comments")
+                try { st.execute("UPDATE pp_comments SET text='x'"); fail("v10 refuses") } catch (e: java.sql.SQLException) { assertTrue(e.message!!.contains("append-only")) }
+                QeMigrations.MIGRATION_10_11_SQL.forEach(st::execute)
+                st.execute("UPDATE pp_comments SET text='hello again', editedAt='t2' WHERE id='1'")
+                st.executeQuery("SELECT text, editedAt FROM pp_comments").use { rs -> rs.next(); assertEquals("hello again", rs.getString(1)); assertEquals("t2", rs.getString(2)) }
+                st.execute("DELETE FROM pp_comments WHERE id='1'")
+                st.executeQuery("SELECT COUNT(*) FROM pp_comments").use { rs -> rs.next(); assertEquals(0, rs.getInt(1)) }
             }
         }
-        assertTrue(QeMigrations.MIGRATION_9_10_SQL.containsAll(QeMigrations.COMMENT_TRIGGERS))
+    }
+
+    @Test fun deletingAPaymentRaisesRemaining() {
+        val m = QeProjects.money(p)
+        val after = QeProjects.withoutPayment(QeOps.value(p), p.payments.map { it.amount }, 0) // delete the ₹10,000 advance
+        assertEquals(37000.0, m.remaining, 0.0)
+        assertEquals(5000.0, after.paid, 0.0)
+        assertEquals(47000.0, after.remaining, 0.0)
+        assertEquals(m.remaining + 10000.0, after.remaining, 0.0)
+        assertEquals(10, after.pct)
+        // summary card follows: same project without that payment
+        val s = QeProjects.summary(listOf(p.copy(payments = p.payments.drop(1))), { QeProjects.RUNNING }, "2026-11")
+        assertEquals(5000.0, s.collected, 0.0); assertEquals(0.0, s.collectedThisMonth, 0.0)
+    }
+
+    @Test fun revisionSnapshotAndTotalFollowLatest() {
+        val r = QeProjects.revise(0, QeOps.value(p), "55500", "Added mirror, removed one drawer")!!
+        assertEquals(1, r.next); assertEquals(3500.0, r.delta, 0.0)
+        assertEquals("R1: Added mirror, removed one drawer", r.note)
+        // the new total is the V10.1 value with the revision entry added → remaining follows the latest revision
+        val revised = p.copy(revisions = p.revisions + OpsEntry(r.delta, r.note, "t"))
+        assertEquals(55500.0, QeProjects.money(revised).total, 0.0)
+        assertEquals(40500.0, QeProjects.money(revised).remaining, 0.0)
+        // extras removed: negative difference
+        val down = QeProjects.revise(1, 55500.0, "50000", " ")!!
+        assertEquals(-5500.0, down.delta, 0.0); assertEquals("R2: Client revision", down.note)
+        assertNull(QeProjects.revise(0, 1.0, "abc", "")); assertNull(QeProjects.revise(0, 1.0, "-1", ""))
+        assertEquals("R0", QeProjects.label(0))
+        // snapshot round-trips (frozen, read-only copy of the old revision)
+        val snap = QeProjects.Snapshot(0, 52000.0, 15000.0, "Cot", "Teak", "2026-10-01",
+            listOf(QeProjects.SnapItem("Cot", "1", "set", 40000.0, "7 ft × 4 in × 3 in × 4 pcs (CFT)", "Teak — 1.000 CFT")),
+            listOf(QeProjects.SnapHardware("Hinges", "4", "brass")), "2026-11-21T10:00:00.000Z")
+        assertEquals(snap, QeProjects.decode(QeProjects.encode(snap)))
+        assertNull(QeProjects.decode("not json"))
     }
 
     @Test fun quotationToProjectMapping() {
