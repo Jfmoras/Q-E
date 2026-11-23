@@ -212,7 +212,7 @@ fun QuotationPanel(
             ) {
                 val selectField: @Composable (Modifier) -> Unit = { m ->
                     QeFieldLabel("Quotation option", m) {
-                        QeSelect(active, opts.mapIndexed { i, o -> i to o.name.ifEmpty { "Option " + (i + 1) } }, actions.onSelectOption, Modifier.fillMaxWidth())
+                        QeSelect(active, opts.mapIndexed { i, o -> i to com.moraswood.qande.logic.QeSpecies.optionLabel(o, i) }, actions.onSelectOption, Modifier.fillMaxWidth())
                     }
                 }
                 val nameField: @Composable (Modifier) -> Unit = { m ->

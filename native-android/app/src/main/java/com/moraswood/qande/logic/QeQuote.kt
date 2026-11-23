@@ -30,7 +30,7 @@ object QeQuote {
     /** `ensureQuoteOptions()` */
     fun ensureQuoteOptions(s: WorkspaceState): WorkspaceState {
         val options = s.quoteOptions.ifEmpty {
-            listOf(QuoteOption("Option 1", s.quoteItems, s.quote.discountType, s.quote.discountValue, s.quote.gstPercent))
+            listOf(QuoteOption("", s.quoteItems, s.quote.discountType, s.quote.discountValue, s.quote.gstPercent))
         }
         val active = maxOf(0, minOf(s.activeQuoteOption, options.size - 1))
         return if (options === s.quoteOptions && active == s.activeQuoteOption) s else s.copy(quoteOptions = options, activeQuoteOption = active)
@@ -59,7 +59,7 @@ object QeQuote {
     /** `#addQuoteOption` */
     fun addOption(s0: WorkspaceState): WorkspaceState {
         val s = syncActiveOption(s0)
-        val opt = QuoteOption("Option " + (s.quoteOptions.size + 1), listOf(QuoteItem.blank()), s.quote.discountType, "", s.quote.gstPercent)
+        val opt = QuoteOption("", listOf(QuoteItem.blank()), s.quote.discountType, "", s.quote.gstPercent)
         return activateOption(s.copy(quoteOptions = s.quoteOptions + opt), s.quoteOptions.size)
     }
 
@@ -67,7 +67,7 @@ object QeQuote {
     fun duplicateOption(s0: WorkspaceState): WorkspaceState {
         val s = syncActiveOption(s0)
         val src = s.quoteOptions[s.activeQuoteOption]
-        val copy = src.copy(name = src.name + " Copy")
+        val copy = src.copy(name = if (QeSpecies.isDefaultName(src.name)) "" else src.name + " Copy") // t48u: no auto "Option N" names
         return activateOption(s.copy(quoteOptions = s.quoteOptions + copy), s.quoteOptions.size)
     }
 

@@ -133,7 +133,7 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
         val order = com.moraswood.qande.logic.QeSpecies.printOrder(state, state.printComparison == true)
         order.forEachIndexed { k, (oi, opt) ->
             if (k == 1) appendixHeading()
-            option(oi, opt)
+            option(oi, opt, state.quoteOptions.size)
         }
         notes(state.quote.notes.filter { it.isNotBlank() })
         signatureBlock()
@@ -227,17 +227,20 @@ class QuoteSheet(private val context: Context, private val state0: WorkspaceStat
         y += l.height + mm(1f)
     }
 
-    private fun option(oi: Int, opt: com.moraswood.qande.data.QuoteOption) {
+    private fun option(oi: Int, opt: com.moraswood.qande.data.QuoteOption, optionCount: Int) {
         y += mm(18f * 0.75f * 25.4f / 72f) // .print-option margin 18px
         val t = QeQuote.totalsForOption(opt)
-        val h3 = layout("OPTION ${oi + 1}: ${collapse(com.moraswood.qande.logic.QeSpecies.optionLabel(opt, oi))}", tp(11.25f, true), contentW)
-        val h3Block = mm(3.7f) + h3.height + mm(1.3f) + mm(3.2f)
-        ensure(h3Block + tableHeaderHeight() + mm(12f)) // h3 break-after:avoid
-        y += mm(3.7f)
-        draw(h3, left, y)
-        y += h3.height + mm(1.3f)
-        canvas.drawLine(left, y, left + contentW, y, stroke(Color.parseColor("#cccccc"), 0.75f))
-        y += mm(3.2f)
+        // t48u: no heading for a single-option quotation; "OPTION N" + ": name" only when the user named it.
+        com.moraswood.qande.logic.QeSpecies.printHeading(opt, oi, optionCount)?.let { heading ->
+            val h3 = layout(collapse(heading), tp(11.25f, true), contentW)
+            val h3Block = mm(3.7f) + h3.height + mm(1.3f) + mm(3.2f)
+            ensure(h3Block + tableHeaderHeight() + mm(12f)) // h3 break-after:avoid
+            y += mm(3.7f)
+            draw(h3, left, y)
+            y += h3.height + mm(1.3f)
+            canvas.drawLine(left, y, left + contentW, y, stroke(Color.parseColor("#cccccc"), 0.75f))
+            y += mm(3.2f)
+        }
 
         val imgs = QeQuote.optionImages(opt).mapNotNull(::decode)
         if (imgs.isNotEmpty()) images(imgs)

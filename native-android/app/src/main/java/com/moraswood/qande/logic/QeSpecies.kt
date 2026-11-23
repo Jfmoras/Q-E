@@ -59,7 +59,7 @@ object QeSpecies {
             if (y !== x) repriced++ else if (x.wood == null && (x.description.isNotEmpty() || x.unitPrice.isNotEmpty())) unlinked++
             y.copy(species = sp.ifEmpty { null } ?: y.species)
         }
-        val copy = src.copy(name = sp.ifEmpty { src.name + " Copy" }, items = items, species = sp.ifEmpty { src.species })
+        val copy = src.copy(name = sp.ifEmpty { if (isDefaultName(src.name)) "" else src.name + " Copy" }, items = items, species = sp.ifEmpty { src.species })
         val next = QeQuote.activateOption(s.copy(quoteOptions = s.quoteOptions + copy), s.quoteOptions.size)
         return Duplicated(next, repriced, unlinked)
     }
@@ -86,9 +86,33 @@ object QeSpecies {
         return if (!comparison) first else first + x.quoteOptions.withIndex().filter { it.index != active }.map { it.index to it.value }
     }
 
-    fun optionLabel(o: QuoteOption, i: Int): String {
-        val name = o.name.ifEmpty { "Option " + (i + 1) }
-        val sp = o.species.orEmpty()
-        return if (sp.isNotEmpty() && !name.contains(sp, ignoreCase = true)) "$name ($sp)" else name
+    private val defaultName = Regex("""^option\s*\d+(\s+copy)*$""", RegexOption.IGNORE_CASE)
+
+    /** t48u: blank, or an auto default ("Option 2", "Option 1 Copy") the user never really named. */
+    fun isDefaultName(name: String): Boolean = name.isBlank() || defaultName.matches(name.trim())
+
+    /** The user's own name for the option (+ species), "" when unnamed. */
+    fun optionName(o: QuoteOption): String {
+        val name = if (isDefaultName(o.name)) "" else o.name.trim()
+        val sp = o.species.orEmpty().trim()
+        return when {
+            sp.isEmpty() -> name
+            name.isEmpty() -> sp
+            name.contains(sp, ignoreCase = true) -> name
+            else -> "$name ($sp)"
+        }
+    }
+
+    /** UI label: the user's name, else "Option N". */
+    fun optionLabel(o: QuoteOption, i: Int): String = optionName(o).ifEmpty { "Option " + (i + 1) }
+
+    /**
+     * Print heading (main print, comparison appendix, revision prints): none when the quotation has a single option;
+     * otherwise "OPTION N", plus ": name" only when the user named it.
+     */
+    fun printHeading(o: QuoteOption, i: Int, optionCount: Int): String? {
+        if (optionCount <= 1) return null
+        val name = optionName(o)
+        return "OPTION ${i + 1}" + if (name.isNotEmpty()) ": $name" else ""
     }
 }
