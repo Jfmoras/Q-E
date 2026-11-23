@@ -36,6 +36,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -60,6 +61,9 @@ import com.moraswood.qande.ui.components.QePrimaryButton
 import com.moraswood.qande.ui.components.QeSecondaryButton
 import com.moraswood.qande.ui.components.QeTextField
 import com.moraswood.qande.ui.theme.QeColors
+import java.io.OutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -99,6 +103,18 @@ fun ProjectsDashboardScreen(pvm: ProjectsViewModel, ovm: OperationsViewModel, sa
     var pane by rememberSaveable { mutableStateOf(Pane.Dashboard) }
     var creating by remember { mutableStateOf(false) }
     val current = list.firstOrNull { it.project.id == selected }
+    val context = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { stream -> writeProjectWorkbook(stream, list) }
+                    ?: error("Could not open the export destination")
+            }.onSuccess { pvm.msg("Excel project payment report exported.") }
+             .onFailure { pvm.msg("Excel export failed: ${it.message}") }
+        }
+    }
 
     ToolPage(820) {
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Paper).padding(16.dp)) {
@@ -115,7 +131,17 @@ fun ProjectsDashboardScreen(pvm: ProjectsViewModel, ovm: OperationsViewModel, sa
                 if (message.isNotEmpty()) Text(message, color = Sub, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
                 Spacer(Modifier.height(14.dp))
                 when (pane) {
-                    Pane.Dashboard -> { SummaryCard(list); Spacer(Modifier.height(16.dp)); ProjectList(list, limit = 5, onSeeAll = { pane = Pane.All }) { selected = it } }
+                    Pane.Dashboard -> {
+                        SummaryCard(list)
+                        Spacer(Modifier.height(12.dp))
+                        QeSecondaryButton("Export payment report to Excel (.xlsx)") {
+                            exportLauncher.launch("MWI_Project_Payments_${LocalDate.now()}.xlsx")
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        DashboardBreakdown(list)
+                        Spacer(Modifier.height(18.dp))
+                        ProjectList(list, limit = 5, onSeeAll = { pane = Pane.All }) { selected = it }
+                    }
                     Pane.All -> ProjectList(list, limit = null, onSeeAll = null) { selected = it }
                     Pane.Payments -> RecentPayments(list) { selected = it }
                 }
@@ -132,17 +158,142 @@ private fun SummaryCard(list: List<PpView>) {
     val month = YearMonth.now()
     val s = QeProjects.summary(list.map { it.project }, { id -> list.firstOrNull { it.project.id == id }?.status ?: QeProjects.RUNNING }, month.toString())
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Hero).padding(18.dp)) {
-        Text(month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.year, color = Color(0xFFB4BFC1), fontSize = 13.sp)
-        Text(QeOps.fmt(s.collectedThisMonth), color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
-        Text("collected this month · ${s.running} running", color = Color(0xFFB4BFC1), fontSize = 13.sp)
+        Text("Financial overview", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("All active and finished projects · ${s.running} running", color = Color(0xFFB4BFC1), fontSize = 12.sp)
         Spacer(Modifier.height(14.dp))
+        DashboardMoney("Total project value", s.value, Green)
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text("Total collected", color = Color(0xFFB4BFC1), fontSize = 12.sp)
+                Text(QeOps.fmt(s.collected), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+            }
+            Column(Modifier.weight(1f)) {
+                Text("Total pending", color = Color(0xFFB4BFC1), fontSize = 12.sp)
+                Text(QeOps.fmt(s.value - s.collected), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f).height(10.dp).clip(RoundedCornerShape(5.dp)).background(Color(0xFF3B4447))) {
                 Box(Modifier.fillMaxWidth(s.pct / 100f).height(10.dp).clip(RoundedCornerShape(5.dp)).background(Green))
             }
-            Text("${s.pct}%", color = Green, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 10.dp))
+            Text("${s.pct}% collected", color = Green, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.padding(start = 10.dp))
         }
-        Text("Collected ${QeOps.fmt(s.collected)} of ${QeOps.fmt(s.value)} total project value", color = Color(0xFFB4BFC1), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+        Text("${month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${month.year}: ${QeOps.fmt(s.collectedThisMonth)} received",
+            color = Color(0xFFB4BFC1), fontSize = 12.sp, modifier = Modifier.padding(top = 12.dp))
+    }
+}
+
+@Composable
+private fun DashboardMoney(label: String, value: Double, accent: Color) {
+    Text(label, color = Color(0xFFB4BFC1), fontSize = 12.sp)
+    Text(QeOps.fmt(value), color = accent, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+private fun DashboardBreakdown(list: List<PpView>) {
+    val live = list.filter { it.status != QeProjects.DELETED }
+    val byMonth = live.flatMap { it.project.payments }
+        .groupBy { it.at.take(7) }
+        .toSortedMap()
+        .entries.takeLast(6)
+    Column(Modifier.fillMaxWidth()) {
+        Text("Monthly collections", color = Ink, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+        Spacer(Modifier.height(10.dp))
+        if (byMonth.isEmpty()) Text("No payments recorded.", color = Sub, fontSize = 13.sp)
+        else {
+            val max = byMonth.maxOf { it.value.sumOf { payment -> payment.amount } }.coerceAtLeast(1.0)
+            byMonth.forEach { entry ->
+                val collected = entry.value.sumOf { it.amount }
+                Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(entry.key, color = Sub, fontSize = 11.sp, modifier = Modifier.width(64.dp))
+                    Box(Modifier.weight(1f).height(13.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFEEF1ED))) {
+                        Box(Modifier.fillMaxWidth((collected / max).toFloat().coerceIn(0f, 1f)).height(13.dp).background(Color(0xFF8CBC4C)))
+                    }
+                    Text(QeOps.fmt(collected), color = Ink, fontSize = 11.sp, modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Text("Project payment breakdown", color = Ink, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+        Spacer(Modifier.height(8.dp))
+        if (live.isEmpty()) Text("No projects yet.", color = Sub, fontSize = 13.sp)
+        live.sortedByDescending { it.money.remaining }.forEach { v ->
+            val m = v.money
+            Column(Modifier.fillMaxWidth().padding(vertical = 9.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(v.project.name, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Text("${m.pct}%", color = Sub, fontSize = 12.sp)
+                }
+                Spacer(Modifier.height(5.dp))
+                Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFE9ECE8))) {
+                    Box(Modifier.fillMaxWidth(m.pct / 100f).height(8.dp).background(Color(0xFF8CBC4C)))
+                }
+                Text("Collected ${QeOps.fmt(m.paid)}  ·  Pending ${QeOps.fmt(m.remaining)}",
+                    color = Sub, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
+    }
+}
+
+/** Produces a real two-sheet Excel workbook with no external Android dependencies. */
+private fun writeProjectWorkbook(out: OutputStream, list: List<PpView>) {
+    val live = list.filter { it.status != QeProjects.DELETED }
+    val month = YearMonth.now().toString()
+    val s = QeProjects.summary(list.map { it.project },
+        { id -> list.firstOrNull { it.project.id == id }?.status ?: QeProjects.RUNNING }, month)
+    val overview = mutableListOf<List<Any>>(
+        listOf("Moras Wood Industries - Project Payment Report"),
+        listOf("Export date", LocalDate.now().toString()),
+        listOf("Total project value", s.value),
+        listOf("Total collected", s.collected),
+        listOf("Total pending", s.value - s.collected),
+        listOf("Collected this month", s.collectedThisMonth),
+        listOf("Collection percentage", s.pct),
+        emptyList(),
+        listOf("Project", "Customer", "Status", "Revision", "Project value", "Collected", "Pending", "Collected %", "Start date")
+    )
+    live.forEach { v ->
+        overview.add(listOf(v.project.name, v.project.customer, QeProjects.statusLabel(v.status),
+            v.revisionLabel, v.money.total, v.money.paid, v.money.remaining, v.money.pct, v.startDate))
+    }
+    val payments = mutableListOf<List<Any>>(listOf("Date", "Project", "Customer", "Amount", "Notes"))
+    live.flatMap { v -> v.project.payments.map { p ->
+        listOf<Any>(p.at.take(10), v.project.name, v.project.customer, p.amount, p.note)
+    } }.sortedBy { it[0].toString() }.forEach { payments.add(it) }
+    ZipOutputStream(out).use { zip ->
+        fun entry(name: String, content: String) {
+            zip.putNextEntry(ZipEntry(name))
+            zip.write(content.toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+        }
+        entry("[Content_Types].xml", """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>""")
+        entry("_rels/.rels", """<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>""")
+        entry("xl/workbook.xml", """<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Project summary" sheetId="1" r:id="rId1"/><sheet name="Payment transactions" sheetId="2" r:id="rId2"/></sheets></workbook>""")
+        entry("xl/_rels/workbook.xml.rels", """<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>""")
+        fun esc(s: String) = s.replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;")
+            .filter { it == '\t' || it == '\n' || it == '\r' || it.code >= 32 }
+        fun xml(rows: List<List<Any>>): String = buildString {
+            append("""<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>""")
+            rows.forEachIndexed { i, row ->
+                append("<row r=\"${i + 1}\">")
+                row.forEachIndexed { j, cell ->
+                    var col = j + 1
+                    var colName = ""
+                    while (col > 0) { col--; colName = ('A' + (col % 26)).toString() + colName; col /= 26 }
+                    append("<c r=\"$colName${i + 1}\"")
+                    if (cell is Number) append("><v>${cell}</v></c>")
+                    else append(" t=\"inlineStr\"><is><t>${esc(cell.toString())}</t></is></c>")
+                }
+                append("</row>")
+            }
+            append("</sheetData></worksheet>")
+        }
+        entry("xl/worksheets/sheet1.xml", xml(overview))
+        entry("xl/worksheets/sheet2.xml", xml(payments))
     }
 }
 
