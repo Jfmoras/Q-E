@@ -5,6 +5,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +43,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.moraswood.qande.data.OpsAttachmentEntity
+import com.moraswood.qande.data.PpCommentEntity
 import com.moraswood.qande.data.PpHardwareEntity
+import com.moraswood.qande.data.PpItemEntity
+import com.moraswood.qande.data.PpRevisionEntity
 import com.moraswood.qande.data.SavedProjectEntity
 import com.moraswood.qande.logic.QeOps
 import com.moraswood.qande.logic.QeProjects
@@ -72,6 +78,7 @@ private val Amber = Color(0xFFF5A524)
 
 private fun statusColor(s: String) = when (s) { QeProjects.FINISHED -> Blue; QeProjects.DELETED -> Grey; else -> Green }
 private fun day(at: String) = at.take(10)
+private fun plain(d: Double) = if (d == Math.floor(d) && Math.abs(d) < 1e15) d.toLong().toString() else d.toString()
 
 class ProjectsCallbacks(
     val onHome: () -> Unit,
@@ -173,7 +180,7 @@ private fun ProjectRow(v: PpView, dim: Boolean, onClick: () -> Unit) {
             Text(v.project.name.take(1).uppercase().ifEmpty { "P" }, color = if (v.status == QeProjects.RUNNING) Color(0xFF3F6212) else statusColor(v.status), fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(v.project.name, color = Ink, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(v.project.name + "  · " + v.revisionLabel, color = Ink, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val sub = listOf(v.meta.description, v.project.notes).firstOrNull { it.isNotBlank() } ?: v.project.customer
             Text(sub, color = Sub, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
@@ -261,6 +268,8 @@ private fun ProjectScreen(v: PpView, pvm: ProjectsViewModel, ovm: OperationsView
             Text(v.project.name, color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Text(v.project.customer, color = Sub, fontSize = 13.sp)
         }
+        Text(v.revisionLabel, color = Ink, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(end = 6.dp).clip(RoundedCornerShape(20.dp)).background(Color(0xFFF5F5F4)).padding(horizontal = 10.dp, vertical = 4.dp))
         StatusChip(v.status)
     }
     Row(Modifier.fillMaxWidth().padding(vertical = 12.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFF5F5F4)).padding(4.dp)) {
@@ -295,13 +304,31 @@ private fun KV(k: String, v: String) = Row(Modifier.fillMaxWidth().padding(verti
     Text(k, color = Sub, fontSize = 13.sp, modifier = Modifier.width(150.dp)); Text(v, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
 }
 
+/** A pending "Are you sure?" question: message + what to do on Yes. */
+private class Ask(val title: String, val text: String, val yes: String, val action: () -> Unit)
+
+@Composable
+private fun AskDialog(ask: Ask?, onDone: () -> Unit) {
+    val a = ask ?: return
+    AlertDialog(onDismissRequest = onDone, title = { Text(a.title) }, text = { Text(a.text) },
+        confirmButton = { TextButton(onClick = { a.action(); onDone() }) { Text(a.yes, color = Color(0xFFB91C1C)) } },
+        dismissButton = { TextButton(onClick = onDone) { Text("Cancel", color = QeColors.Muted) } })
+}
+
+@Composable
+private fun Link(text: String, danger: Boolean = false, onClick: () -> Unit) =
+    Text(text, color = if (danger) Color(0xFFB91C1C) else Color(0xFF4D7C0F), fontSize = 13.sp, modifier = Modifier.clickable(onClick = onClick).padding(6.dp))
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DetailsTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewModel) {
     val m = v.money
     val id = v.project.id
+    var ask by remember(id) { mutableStateOf<Ask?>(null) }
+    AskDialog(ask) { ask = null }
     Section("Overview") {
         KV("Status", QeProjects.statusLabel(v.status))
+        KV("Revision", v.revisionLabel + if (v.revisions.isNotEmpty()) "  (${v.revisions.size} older, read-only)" else "")
         KV("Total cost", QeOps.fmt(m.total))
         KV("Payments received", QeOps.fmt(m.paid) + "  (${m.pct}%)")
         KV("Remaining", QeOps.fmt(m.remaining))
@@ -311,6 +338,9 @@ private fun DetailsTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewMod
             Text("Given / started", color = Sub, fontSize = 13.sp, modifier = Modifier.width(150.dp))
             QeTextField(start, { start = it }, Modifier.weight(1f), placeholder = "YYYY-MM-DD")
             if (start != v.startDate) QeSecondaryButton("Save", Modifier.padding(start = 6.dp)) { if (QeProjects.paymentAt(start) != null) pvm.setStartDate(id, start.trim()) else pvm.msg("Enter the date as YYYY-MM-DD.") }
+            else if (v.meta.startDate.isNotBlank()) Link("Reset", danger = true) {
+                ask = Ask("Reset start date?", "The start date goes back to the day the project was created (${v.project.created.take(10)}).", "Reset") { pvm.clearStartDate(id) }
+            }
         }
         FlowRow(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             when (v.status) {
@@ -325,19 +355,36 @@ private fun DetailsTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewMod
         QeTextField(d, { d = it }, Modifier.fillMaxWidth(), placeholder = "Description", singleLine = false, minLines = 2)
         var n by remember(id, v.project.notes) { mutableStateOf(v.project.notes) }
         QeTextField(n, { n = it }, Modifier.fillMaxWidth().padding(top = 8.dp), placeholder = "Notes", singleLine = false, minLines = 2)
-        if (d != v.meta.description || n != v.project.notes) QeSecondaryButton("Save", Modifier.padding(top = 8.dp)) { pvm.setDescription(id, d); pvm.setNotes(id, n) }
+        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (d != v.meta.description || n != v.project.notes) QeSecondaryButton("Save") { pvm.setDescription(id, d); pvm.setNotes(id, n) }
+            if (v.meta.description.isNotBlank()) Link("Delete description", danger = true) {
+                ask = Ask("Delete description?", "The project description will be cleared.", "Delete") { pvm.setDescription(id, ""); d = "" }
+            }
+            if (v.project.notes.isNotBlank()) Link("Delete notes", danger = true) {
+                ask = Ask("Delete notes?", "The project notes will be cleared.", "Delete") { pvm.setNotes(id, ""); n = "" }
+            }
+        }
     }
-    Section("Furniture items · quoted ${QeOps.fmt(v.project.original)}") {
-        if (v.items.isEmpty()) Text("No items yet. Confirm a saved quotation as a project to fill them in.", color = Sub, fontSize = 13.sp)
+    RevisionsSection(v, pvm)
+    Section("Furniture items · ${v.revisionLabel} · total ${QeOps.fmt(m.total)}") {
+        var editItem by remember(id) { mutableStateOf<PpItemEntity?>(null) }
+        if (v.items.isEmpty()) Text("No items yet. Confirm a saved quotation as a project, or add them here.", color = Sub, fontSize = 13.sp)
         v.items.forEach { it ->
             Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                Row { Text(it.name.ifBlank { "Item" }, color = Ink, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f)); Text(QeOps.fmt(it.price), color = Ink, fontWeight = FontWeight.Bold) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(it.name.ifBlank { "Item" }, color = Ink, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f)); Text(QeOps.fmt(it.price), color = Ink, fontWeight = FontWeight.Bold)
+                    Link("Edit") { editItem = it }
+                    Link("Delete", danger = true) { ask = Ask("Delete item?", "Remove \"${it.name}\" from ${v.revisionLabel}? Older revisions keep their copy.", "Delete") { pvm.deleteItem(it.id) } }
+                }
                 if (it.qty.isNotBlank() || it.unit.isNotBlank()) Text("Qty: " + listOf(it.qty, it.unit).filter { s -> s.isNotBlank() }.joinToString(" "), color = Sub, fontSize = 12.sp)
                 if (it.wood.isNotBlank()) Text("Wood: " + it.wood, color = Sub, fontSize = 12.sp)
                 if (it.sizes.isNotBlank()) Text("Sizes:\n" + it.sizes, color = Sub, fontSize = 12.sp)
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(Rule))
         }
+        QeSecondaryButton("+ Add item", Modifier.padding(top = 6.dp)) { editItem = PpItemEntity("", id, (v.items.maxOfOrNull { it.position } ?: -1) + 1, "") }
+        Text("Item prices are a record; the project total changes with Revise project.", color = Sub, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+        editItem?.let { e -> ItemDialog(e, { editItem = null }) { pvm.saveItem(it); editItem = null } }
     }
     Section("Extra hardware needed") {
         var editing by remember(id) { mutableStateOf<PpHardwareEntity?>(null) }
@@ -348,7 +395,7 @@ private fun DetailsTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewMod
                     if (h.note.isNotBlank()) Text(h.note, color = Sub, fontSize = 12.sp)
                 }
                 Text("Edit", color = Color(0xFF4D7C0F), modifier = Modifier.clickable { editing = h }.padding(6.dp))
-                Text("Delete", color = Color(0xFFB91C1C), modifier = Modifier.clickable { pvm.deleteHardware(h.id) }.padding(6.dp))
+                Text("Delete", color = Color(0xFFB91C1C), modifier = Modifier.clickable { ask = Ask("Delete hardware?", "Remove \"${h.name}\" from the hardware list?", "Delete") { pvm.deleteHardware(h.id) } }.padding(6.dp))
             }
         }
         QeSecondaryButton("+ Add hardware", Modifier.padding(top = 6.dp)) { editing = PpHardwareEntity("", id, "") }
@@ -372,10 +419,101 @@ private fun HardwareDialog(h: PpHardwareEntity, onDismiss: () -> Unit, onSave: (
 }
 
 @Composable
+private fun ItemDialog(i: PpItemEntity, onDismiss: () -> Unit, onSave: (PpItemEntity) -> Unit) {
+    var name by remember { mutableStateOf(i.name) }; var qty by remember { mutableStateOf(i.qty) }; var unit by remember { mutableStateOf(i.unit) }
+    var price by remember { mutableStateOf(if (i.id.isEmpty() && i.price == 0.0) "" else plain(i.price)) }
+    var sizes by remember { mutableStateOf(i.sizes) }; var wood by remember { mutableStateOf(i.wood) }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(if (i.id.isEmpty()) "Add item" else "Edit item") },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            QeTextField(name, { name = it }, Modifier.fillMaxWidth(), placeholder = "Item")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                QeTextField(qty, { qty = it }, Modifier.weight(1f), placeholder = "Qty")
+                QeTextField(unit, { unit = it }, Modifier.weight(1f), placeholder = "Unit")
+            }
+            QeTextField(price, { price = it }, Modifier.fillMaxWidth(), placeholder = "Price ₹")
+            QeTextField(wood, { wood = it }, Modifier.fillMaxWidth(), placeholder = "Wood")
+            QeTextField(sizes, { sizes = it }, Modifier.fillMaxWidth(), placeholder = "Sizes (one per line)", singleLine = false, minLines = 2)
+        } },
+        confirmButton = { TextButton(onClick = { onSave(i.copy(name = name.trim(), qty = qty.trim(), unit = unit.trim(), price = price.trim().toDoubleOrNull() ?: 0.0, sizes = sizes.trim(), wood = wood.trim())) }) { Text("Save", color = QeColors.Accent) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = QeColors.Muted) } })
+}
+
+/** Project revisions: current R is editable; "Revise project" freezes it and starts the next R. */
+@Composable
+private fun RevisionsSection(v: PpView, pvm: ProjectsViewModel) {
+    var revise by remember(v.project.id) { mutableStateOf(false) }
+    var view by remember(v.project.id) { mutableStateOf<PpRevisionEntity?>(null) }
+    Section("Project revisions") {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+            Text(v.revisionLabel + "  (current, editable)", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(QeOps.fmt(v.money.total), color = Ink, fontWeight = FontWeight.Bold)
+        }
+        v.revisions.sortedByDescending { it.revision }.forEach { r ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(QeProjects.label(r.revision) + "  (read-only) · " + QeOps.fmt(r.total), color = Ink, fontSize = 13.sp)
+                    Text(day(r.createdAt) + if (r.reason.isNotBlank()) " · " + r.reason else "", color = Sub, fontSize = 12.sp)
+                }
+                Link("View") { view = r }
+            }
+        }
+        QePrimaryButton("Revise project", Modifier.padding(top = 8.dp)) { revise = true }
+        Text("Use when the client adds or removes extras: ${v.revisionLabel} is kept read-only and ${QeProjects.label(v.revision + 1)} becomes the editable version. Total and remaining follow the latest revision.",
+            color = Sub, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+    }
+    if (revise) {
+        var total by remember { mutableStateOf(plain(v.money.total)) }
+        var reason by remember { mutableStateOf("") }
+        AlertDialog(onDismissRequest = { revise = false }, title = { Text("Revise project → ${QeProjects.label(v.revision + 1)}") },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("${v.revisionLabel} (${QeOps.fmt(v.money.total)}) is saved as a read-only revision.", color = Sub, fontSize = 13.sp)
+                QeTextField(total, { total = it }, Modifier.fillMaxWidth(), placeholder = "Revised total project value ₹")
+                QeTextField(reason, { reason = it }, Modifier.fillMaxWidth(), placeholder = "What changed (extras added / removed)", singleLine = false, minLines = 2)
+            } },
+            confirmButton = { TextButton(onClick = { if (pvm.revise(v, total, reason)) revise = false }) { Text("Create ${QeProjects.label(v.revision + 1)}", color = QeColors.Accent) } },
+            dismissButton = { TextButton(onClick = { revise = false }) { Text("Cancel", color = QeColors.Muted) } })
+    }
+    view?.let { r -> SnapshotDialog(r) { view = null } }
+}
+
+@Composable
+private fun SnapshotDialog(r: PpRevisionEntity, onDismiss: () -> Unit) {
+    val s = QeProjects.decode(r.snapshotJson)
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(QeProjects.label(r.revision) + " · read-only") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                KV("Total value", QeOps.fmt(r.total))
+                if (s != null) {
+                    KV("Paid by then", QeOps.fmt(s.paid))
+                    KV("Saved", QeOps.shortAt(s.at))
+                    if (s.startDate.isNotBlank()) KV("Given / started", s.startDate)
+                    if (r.reason.isNotBlank()) KV("Next revision", r.reason)
+                    if (s.description.isNotBlank()) KV("Description", s.description)
+                    if (s.notes.isNotBlank()) KV("Notes", s.notes)
+                    Text("Items", color = Ink, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
+                    if (s.items.isEmpty()) Text("None", color = Sub, fontSize = 13.sp)
+                    s.items.forEach { i ->
+                        Text(i.name + (if (i.qty.isNotBlank()) " × " + i.qty + " " + i.unit else "") + " — " + QeOps.fmt(i.price), color = Ink, fontSize = 13.sp)
+                        if (i.wood.isNotBlank()) Text("Wood: " + i.wood, color = Sub, fontSize = 12.sp)
+                        if (i.sizes.isNotBlank()) Text("Sizes:\n" + i.sizes, color = Sub, fontSize = 12.sp)
+                    }
+                    Text("Hardware", color = Ink, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
+                    if (s.hardware.isEmpty()) Text("None", color = Sub, fontSize = 13.sp)
+                    s.hardware.forEach { h -> Text(h.name + (if (h.qty.isNotBlank()) " × " + h.qty else "") + (if (h.note.isNotBlank()) " · " + h.note else ""), color = Ink, fontSize = 13.sp) }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close", color = QeColors.Accent) } })
+}
+
+@Composable
 private fun DocumentsSection(id: String, ovm: OperationsViewModel, pvm: ProjectsViewModel) {
     val files by ovm.attachments.collectAsState()
     val viewer by ovm.viewer.collectAsState()
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris -> if (uris.isNotEmpty()) pvm.upload(id, uris) }
+    var ask by remember(id) { mutableStateOf<Ask?>(null) }
+    var rename by remember(id) { mutableStateOf<OpsAttachmentEntity?>(null) }
+    AskDialog(ask) { ask = null }
     Section("Documents & pictures") {
         val list = files[id].orEmpty()
         if (list.isEmpty()) Text("No files attached.", color = Sub, fontSize = 13.sp)
@@ -383,7 +521,16 @@ private fun DocumentsSection(id: String, ovm: OperationsViewModel, pvm: Projects
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(a.name + "  (" + Math.round(a.size / 1024.0) + " KB)", color = Ink, fontSize = 13.sp, modifier = Modifier.weight(1f))
                 Text("Open", color = Color(0xFF4D7C0F), modifier = Modifier.clickable { ovm.open(a) }.padding(6.dp))
+                Link("Rename") { rename = a }
+                Link("Delete", danger = true) { ask = Ask("Delete file?", "Remove ${a.name} from this project? This cannot be undone.", "Delete") { ovm.removeAttachment(a) } }
             }
+        }
+        rename?.let { a ->
+            var name by remember(a.id) { mutableStateOf(a.name) }
+            AlertDialog(onDismissRequest = { rename = null }, title = { Text("Rename file") },
+                text = { QeTextField(name, { name = it }, Modifier.fillMaxWidth(), placeholder = "File name") },
+                confirmButton = { TextButton(onClick = { pvm.renameAttachment(a, name); rename = null }) { Text("Save", color = QeColors.Accent) } },
+                dismissButton = { TextButton(onClick = { rename = null }) { Text("Cancel", color = QeColors.Muted) } })
         }
         QeSecondaryButton("+ Attach files / photos", Modifier.padding(top = 6.dp)) { pick.launch(arrayOf("image/*", "application/pdf", "*/*")) }
         viewer?.takeIf { it.projectId == id }?.let { Box(Modifier.padding(top = 8.dp)) { AttachmentViewer(it, ovm) } }
@@ -393,14 +540,28 @@ private fun DocumentsSection(id: String, ovm: OperationsViewModel, pvm: Projects
 @Composable
 private fun CommentsBoard(v: PpView, pvm: ProjectsViewModel) {
     Section("Comments board") {
-        Text("User and client comments are kept as separate, timestamped entries and cannot be edited or deleted after saving.", color = Sub, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+        var ask by remember(v.project.id) { mutableStateOf<Ask?>(null) }
+        var editing by remember(v.project.id) { mutableStateOf<PpCommentEntity?>(null) }
+        AskDialog(ask) { ask = null }
+        Text("User and client comments are kept as separate, timestamped entries. Edit or delete any entry; edits are marked.", color = Sub, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
         v.comments.forEach { c ->
             val client = c.author == QeProjects.CLIENT
             Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).padding(start = if (client) 24.dp else 0.dp, end = if (client) 0.dp else 24.dp)
                 .clip(RoundedCornerShape(12.dp)).background(if (client) Color(0xFFEFF6FF) else Color(0xFFF7FEE7)).padding(10.dp)) {
-                Text(QeProjects.authorLabel(c.author) + " · " + QeOps.shortAt(c.at), color = Sub, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(QeProjects.authorLabel(c.author) + " · " + QeOps.shortAt(c.at) + if (c.editedAt.isNotBlank()) " · edited " + QeOps.shortAt(c.editedAt) else "", color = Sub, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 Text(c.text, color = Ink, fontSize = 14.sp)
+                Row(Modifier.align(Alignment.End)) {
+                    Link("Edit") { editing = c }
+                    Link("Delete", danger = true) { ask = Ask("Delete comment?", "Delete this ${QeProjects.authorLabel(c.author).lowercase()} comment? This cannot be undone.", "Delete") { pvm.deleteComment(c.id) } }
+                }
             }
+        }
+        editing?.let { c ->
+            var t by remember(c.id) { mutableStateOf(c.text) }
+            AlertDialog(onDismissRequest = { editing = null }, title = { Text("Edit ${QeProjects.authorLabel(c.author).lowercase()} comment") },
+                text = { QeTextField(t, { t = it }, Modifier.fillMaxWidth(), placeholder = "Comment", singleLine = false, minLines = 3) },
+                confirmButton = { TextButton(onClick = { if (pvm.editComment(c, t)) editing = null }) { Text("Save", color = QeColors.Accent) } },
+                dismissButton = { TextButton(onClick = { editing = null }) { Text("Cancel", color = QeColors.Muted) } })
         }
         var author by remember(v.project.id) { mutableStateOf(QeProjects.USER) }
         var text by remember(v.project.id) { mutableStateOf("") }
@@ -460,15 +621,18 @@ private fun PaymentsTab(v: PpView, pvm: ProjectsViewModel) {
         Box(Modifier.fillMaxWidth().padding(top = 8.dp).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Rule)) {
             Box(Modifier.fillMaxWidth(m.pct / 100f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Green))
         }
-        if (v.project.revisions.isNotEmpty()) Text("Total includes approved revision extras: " + QeOps.fmt(v.project.revisions.sumOf { it.amount }), color = Sub, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+        Text("Total follows the latest project revision (${v.revisionLabel}).", color = Sub, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+        if (v.project.revisions.isNotEmpty()) Text("Includes revision changes: " + QeOps.fmt(v.project.revisions.sumOf { it.amount }), color = Sub, fontSize = 12.sp)
     }
+    var ask by remember(v.project.id) { mutableStateOf<Ask?>(null) }
+    AskDialog(ask) { ask = null }
     Section("Advances & payments") {
-        val list = QeProjects.chronological(v.project)
+        val list = v.paymentRows
         if (list.isEmpty()) Text("No payments yet.", color = Sub, fontSize = 13.sp)
         var running = 0.0
         list.forEach { p ->
             running += p.amount
-            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(day(p.at), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     if (p.note.isNotBlank()) Text(p.note, color = Sub, fontSize = 12.sp)
@@ -476,6 +640,9 @@ private fun PaymentsTab(v: PpView, pvm: ProjectsViewModel) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(QeOps.fmt(p.amount), color = Ink, fontWeight = FontWeight.Bold)
                     Text("Balance " + QeOps.fmt(m.total - running), color = Sub, fontSize = 11.sp)
+                }
+                Link("Delete", danger = true) {
+                    ask = Ask("Delete payment?", "Delete the payment of ${QeOps.fmt(p.amount)} dated ${day(p.at)}? The remaining amount goes up by this amount.", "Delete") { pvm.deletePayment(p.rowId) }
                 }
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(Rule))

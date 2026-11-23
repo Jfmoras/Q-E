@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.moraswood.qande.AppViewModel
 import com.moraswood.qande.data.OpsAttachmentEntity
 import com.moraswood.qande.data.OpsProjectEntity
@@ -12,6 +13,7 @@ import com.moraswood.qande.data.PpCommentEntity
 import com.moraswood.qande.data.PpHardwareEntity
 import com.moraswood.qande.data.PpItemEntity
 import com.moraswood.qande.data.PpProjectEntity
+import com.moraswood.qande.data.PpRevisionEntity
 import com.moraswood.qande.data.QeDatabase
 import com.moraswood.qande.data.SavedProjectEntity
 import com.moraswood.qande.data.WorkspaceState
@@ -37,7 +39,12 @@ data class PpView(
     val items: List<PpItemEntity>,
     val hardware: List<PpHardwareEntity>,
     val comments: List<PpCommentEntity>,
+    val revisions: List<PpRevisionEntity> = emptyList(),
+    /** Payment rows (with their row ids, for delete), oldest first. */
+    val paymentRows: List<OpsProjectEntryEntity> = emptyList(),
 ) {
+    val revision get() = meta.revision
+    val revisionLabel get() = QeProjects.label(meta.revision)
     val status get() = QeProjects.status(meta.status)
     val money get() = QeProjects.money(project)
     val startDate get() = meta.startDate.ifBlank { project.created.take(10) }
@@ -54,15 +61,17 @@ class ProjectsViewModel(app: Application) : AndroidViewModel(app) {
     private val opsProjects = combine(ops.observeProjects(), ops.observeEntries()) { ps, es ->
         val by = es.groupBy { it.projectId }
         fun list(id: String, k: String) = by[id].orEmpty().filter { it.kind == k }.map { OpsEntry(it.amount, it.note, it.at) }
-        ps.map { p -> OpsProject(p.id, p.name, p.customer, p.original, p.status, list(p.id, "payment"), list(p.id, "revision"), list(p.id, "expense"), p.notes, p.created) }
+        ps.map { p -> OpsProject(p.id, p.name, p.customer, p.original, p.status, list(p.id, "payment"), list(p.id, "revision"), list(p.id, "expense"), p.notes, p.created) } to
+            es.filter { it.kind == "payment" }.sortedWith(compareBy({ it.at }, { it.rowId })).groupBy { it.projectId }
     }
-    private val extras = combine(pp.observeMeta(), pp.observeItems(), pp.observeHardware(), pp.observeComments()) { m, i, h, c -> Extras(m, i, h, c) }
-    private data class Extras(val meta: List<PpProjectEntity>, val items: List<PpItemEntity>, val hardware: List<PpHardwareEntity>, val comments: List<PpCommentEntity>)
+    private val extras = combine(pp.observeMeta(), pp.observeItems(), pp.observeHardware(), pp.observeComments(), pp.observeRevisions()) { m, i, h, c, r -> Extras(m, i, h, c, r) }
+    private data class Extras(val meta: List<PpProjectEntity>, val items: List<PpItemEntity>, val hardware: List<PpHardwareEntity>, val comments: List<PpCommentEntity>, val revisions: List<PpRevisionEntity>)
 
-    val projects: StateFlow<List<PpView>> = combine(opsProjects, extras) { ps, x ->
+    val projects: StateFlow<List<PpView>> = combine(opsProjects, extras) { (ps, pay), x ->
         val meta = x.meta.associateBy { it.projectId }
         val items = x.items.groupBy { it.projectId }; val hw = x.hardware.groupBy { it.projectId }; val cm = x.comments.groupBy { it.projectId }
-        ps.map { p -> PpView(p, meta[p.id] ?: PpProjectEntity(p.id), items[p.id].orEmpty(), hw[p.id].orEmpty(), cm[p.id].orEmpty()) }
+        val rv = x.revisions.groupBy { it.projectId }
+        ps.map { p -> PpView(p, meta[p.id] ?: PpProjectEntity(p.id), items[p.id].orEmpty(), hw[p.id].orEmpty(), cm[p.id].orEmpty(), rv[p.id].orEmpty(), pay[p.id].orEmpty()) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _message = MutableStateFlow("")
@@ -102,19 +111,69 @@ class ProjectsViewModel(app: Application) : AndroidViewModel(app) {
         return true
     }
 
+    /** Payments tab › Delete (after confirm). Remaining amount and the summary card follow through the flows. */
+    fun deletePayment(rowId: Long) {
+        viewModelScope.launch { ops.deleteEntry(rowId); msg("Payment deleted.") }
+    }
+
+    /** Start date "Reset": back to the project's creation date. */
+    fun clearStartDate(id: String) = editMeta(id) { it.copy(startDate = "") }
+
+    /** Current-revision items: add / edit / delete (older revisions are frozen snapshots). */
+    fun saveItem(i: PpItemEntity) {
+        if (i.name.isBlank()) return msg("Enter the item name.")
+        viewModelScope.launch { pp.putItems(listOf(if (i.id.isEmpty()) i.copy(id = "i" + QeOps.uid()) else i)) }
+    }
+    fun deleteItem(id: String) { viewModelScope.launch { pp.deleteItem(id) } }
+
+    /**
+     * "Revise project": freezes the current state as the current R (read-only snapshot), then starts the next R with
+     * [newTotal] as the project value (V10.1 revision entry of the difference, so every total follows the latest revision).
+     */
+    fun revise(v: PpView, newTotal: String, reason: String): Boolean {
+        val r = QeProjects.revise(v.revision, v.money.total, newTotal, reason) ?: run { msg("Enter the revised total project value."); return false }
+        viewModelScope.launch {
+            val at = now(); val id = v.project.id
+            val snap = QeProjects.Snapshot(
+                v.revision, v.money.total, v.money.paid, v.meta.description, v.project.notes, v.startDate,
+                v.items.map { QeProjects.SnapItem(it.name, it.qty, it.unit, it.price, it.sizes, it.wood) },
+                v.hardware.map { QeProjects.SnapHardware(it.name, it.qty, it.note) }, at,
+            )
+            db.withTransaction {
+                pp.addRevision(PpRevisionEntity("r" + QeOps.uid(), id, v.revision, v.money.total, reason.trim(), QeProjects.encode(snap), at))
+                if (r.delta != 0.0) ops.addEntry(OpsProjectEntryEntity(projectId = id, kind = "revision", amount = r.delta, note = r.note, at = at))
+                pp.putMeta(meta(id).copy(revision = r.next, updatedAt = at))
+            }
+            msg("${QeProjects.label(v.revision)} saved. Now editing ${QeProjects.label(r.next)}.")
+        }
+        return true
+    }
+
+    fun renameAttachment(a: OpsAttachmentEntity, name: String) {
+        if (name.isBlank()) return msg("Enter a file name.")
+        viewModelScope.launch { ops.putAttachment(a.copy(name = name.trim())); msg("File renamed.") }
+    }
+
     fun saveHardware(h: PpHardwareEntity) {
         if (h.name.isBlank()) return msg("Enter the hardware item.")
         viewModelScope.launch { pp.putHardware(if (h.id.isEmpty()) h.copy(id = "h" + QeOps.uid(), createdAt = now()) else h) }
     }
     fun deleteHardware(id: String) { viewModelScope.launch { pp.deleteHardware(id) } }
 
-    /** Comments board: append only. */
+    /** Comments board: add / edit (stamps editedAt) / delete. */
     fun addComment(id: String, author: String, text: String): Boolean {
         val at = now()
-        val ok = QeProjects.append(emptyList(), author, text, at) ?: run { msg("Write a comment first."); return false }
-        viewModelScope.launch { pp.addComment(PpCommentEntity("c" + QeOps.uid(), id, ok.last().author, ok.last().text, at)) }
+        val ok = QeProjects.append(emptyList(), "c" + QeOps.uid(), author, text, at) ?: run { msg("Write a comment first."); return false }
+        viewModelScope.launch { ok.last().let { c -> pp.addComment(PpCommentEntity(c.id, id, c.author, c.text, at)) } }
         return true
     }
+    fun editComment(c: PpCommentEntity, text: String): Boolean {
+        val at = now()
+        val ok = QeProjects.edit(listOf(QeProjects.Comment(c.id, c.author, c.text, c.at, c.editedAt)), c.id, text, at) ?: run { msg("Write a comment first."); return false }
+        viewModelScope.launch { pp.editComment(c.id, ok.single().text, at) }
+        return true
+    }
+    fun deleteComment(id: String) { viewModelScope.launch { pp.deleteComment(id) } }
 
     /** Documents & pictures go into the project's V10.1 attachments (same files as the Operations screen). */
     fun upload(id: String, uris: List<Uri>, asQuotation: Boolean = false) {
