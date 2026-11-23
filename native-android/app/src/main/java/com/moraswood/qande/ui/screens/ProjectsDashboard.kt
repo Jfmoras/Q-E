@@ -197,7 +197,7 @@ private fun DashboardBreakdown(list: List<PpView>) {
     val byMonth = live.flatMap { it.project.payments }
         .groupBy { it.at.take(7) }
         .toSortedMap()
-        .entries.takeLast(6)
+        .entries.toList().takeLast(6)
     Column(Modifier.fillMaxWidth()) {
         Text("Monthly collections", color = Ink, fontWeight = FontWeight.Bold, fontSize = 17.sp)
         Spacer(Modifier.height(10.dp))
