@@ -126,7 +126,7 @@ object QeMigrations {
         override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_8_9_SQL.forEach(db::execSQL) }
     }
 
-    /** Projects & Payments comments board is append-only: UPDATE / DELETE refused (dropped only inside a Full Backup restore). */
+    /** DB v10 only: comments were append-only. Dropped by [MIGRATION_10_11] (t47u: comments are editable). */
     val COMMENT_TRIGGERS: List<String> = listOf("UPDATE", "DELETE").map { op ->
         "CREATE TRIGGER IF NOT EXISTS `pp_comments_no_${op.lowercase()}` BEFORE $op ON `pp_comments` BEGIN SELECT RAISE(ABORT, 'comments are append-only'); END"
     }
@@ -148,7 +148,22 @@ object QeMigrations {
         override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_9_10_SQL.forEach(db::execSQL) }
     }
 
-    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL, 7 to MIGRATION_7_8_SQL, 8 to MIGRATION_8_9_SQL, 9 to MIGRATION_9_10_SQL)
+    /**
+     * t47u: comments become editable / deletable (append-only triggers dropped, editedAt added), project revisions
+     * (pp_projects.revision + frozen pp_revisions). Copied from schemas/11.json createSql.
+     */
+    val MIGRATION_10_11_SQL: List<String> get() = COMMENT_TRIGGER_DROPS + listOf(
+        "ALTER TABLE `pp_comments` ADD COLUMN `editedAt` TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE `pp_projects` ADD COLUMN `revision` INTEGER NOT NULL DEFAULT 0",
+        "CREATE TABLE IF NOT EXISTS `pp_revisions` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `revision` INTEGER NOT NULL, `total` REAL NOT NULL, `reason` TEXT NOT NULL, `snapshotJson` TEXT NOT NULL, `createdAt` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "CREATE INDEX IF NOT EXISTS `index_pp_revisions_projectId` ON `pp_revisions` (`projectId`)",
+    )
+
+    val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) { MIGRATION_10_11_SQL.forEach(db::execSQL) }
+    }
+
+    val STEP_SQL: Map<Int, List<String>> get() = mapOf(3 to MIGRATION_3_4_SQL, 4 to MIGRATION_4_5_SQL, 5 to MIGRATION_5_6_SQL, 6 to MIGRATION_6_7_SQL, 7 to MIGRATION_7_8_SQL, 8 to MIGRATION_8_9_SQL, 9 to MIGRATION_9_10_SQL, 10 to MIGRATION_10_11_SQL)
 
     val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(db: SupportSQLiteDatabase) {

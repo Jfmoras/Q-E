@@ -1,5 +1,6 @@
 package com.moraswood.qande.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.Index
@@ -33,6 +34,8 @@ data class PpProjectEntity(
     /** ops_attachments id of an uploaded PDF quotation, blank = none. */
     val quotePdfId: String = "",
     val updatedAt: String = "",
+    /** Current project revision (R0, R1, ...); older ones are frozen in pp_revisions (DB v11). */
+    @ColumnInfo(defaultValue = "0") val revision: Int = 0,
 )
 
 /** Furniture items of a project (copied from the confirmed quotation / estimation). */
@@ -62,7 +65,7 @@ data class PpHardwareEntity(
     val createdAt: String = "",
 )
 
-/** Comments board: append-only (DB triggers refuse UPDATE / DELETE outside a Full Backup restore). */
+/** Comments board: user / client entries; editable and deletable since DB v11 (t47u), [editedAt] set on edit. */
 @Entity(tableName = "pp_comments", indices = [Index("projectId")])
 data class PpCommentEntity(
     @PrimaryKey val id: String,
@@ -71,6 +74,22 @@ data class PpCommentEntity(
     val author: String,
     val text: String,
     val at: String,
+    @ColumnInfo(defaultValue = "") val editedAt: String = "",
+)
+
+/** A frozen project revision (read-only): the project state just before "Revise project" started the next R. */
+@Entity(tableName = "pp_revisions", indices = [Index("projectId")])
+data class PpRevisionEntity(
+    @PrimaryKey val id: String,
+    val projectId: String,
+    val revision: Int,
+    /** Total project value of that revision. */
+    val total: Double,
+    /** Why the next revision was made (client change request). */
+    val reason: String,
+    /** [com.moraswood.qande.logic.QeProjects.Snapshot] as JSON. */
+    val snapshotJson: String,
+    val createdAt: String,
 )
 
 @Dao
@@ -87,7 +106,13 @@ interface ProjectsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putHardware(h: PpHardwareEntity)
     @Query("DELETE FROM pp_hardware WHERE id = :id") suspend fun deleteHardware(id: String)
 
+    @Query("DELETE FROM pp_items WHERE id = :id") suspend fun deleteItem(id: String)
+
     @Query("SELECT * FROM pp_comments ORDER BY at, id") fun observeComments(): Flow<List<PpCommentEntity>>
-    /** The only write on comments. */
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun addComment(c: PpCommentEntity)
+    @Query("UPDATE pp_comments SET text = :text, editedAt = :editedAt WHERE id = :id") suspend fun editComment(id: String, text: String, editedAt: String)
+    @Query("DELETE FROM pp_comments WHERE id = :id") suspend fun deleteComment(id: String)
+
+    @Query("SELECT * FROM pp_revisions ORDER BY projectId, revision") fun observeRevisions(): Flow<List<PpRevisionEntity>>
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun addRevision(r: PpRevisionEntity)
 }
