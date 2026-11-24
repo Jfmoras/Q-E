@@ -56,6 +56,7 @@ import com.moraswood.qande.logic.QeRevisions
 import com.moraswood.qande.ops.OperationsViewModel
 import com.moraswood.qande.projects.PpView
 import com.moraswood.qande.projects.ProjectsViewModel
+import com.moraswood.qande.projects.ProjectExports
 import com.moraswood.qande.ui.components.QeDangerButton
 import com.moraswood.qande.ui.components.QePrimaryButton
 import com.moraswood.qande.ui.components.QeSecondaryButton
@@ -104,6 +105,12 @@ fun ProjectsDashboardScreen(pvm: ProjectsViewModel, ovm: OperationsViewModel, sa
     var creating by remember { mutableStateOf(false) }
     val current = list.firstOrNull { it.project.id == selected }
     val context = LocalContext.current
+    val paymentsCsvLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) runCatching {
+            context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use { it.write(ProjectExports.paymentCsv(list)) }
+                ?: error("Could not save payments")
+        }.onSuccess { pvm.msg("Payments saved to phone.") }.onFailure { pvm.msg("Save failed: ${it.message}") }
+    }
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     ) { uri ->
@@ -143,7 +150,16 @@ fun ProjectsDashboardScreen(pvm: ProjectsViewModel, ovm: OperationsViewModel, sa
                         ProjectList(list, limit = 5, onSeeAll = { pane = Pane.All }) { selected = it }
                     }
                     Pane.All -> ProjectList(list, limit = null, onSeeAll = null) { selected = it }
-                    Pane.Payments -> RecentPayments(list) { selected = it }
+                    Pane.Payments -> {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            QeSecondaryButton("Save CSV", Modifier.weight(1f)) { paymentsCsvLauncher.launch("MWI_Payments_${LocalDate.now()}.csv") }
+                            QeSecondaryButton("Share / WhatsApp", Modifier.weight(1f)) {
+                                ProjectExports.shareText(context, ProjectExports.paymentText(list), "Share payment summary")
+                            }
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        RecentPayments(list) { selected = it }
+                    }
                 }
                 Spacer(Modifier.height(18.dp))
                 BottomBar(pane, { pane = it }, onPlus = { creating = true }, onHome = cb.onHome)
@@ -730,7 +746,22 @@ private fun CommentsBoard(v: PpView, pvm: ProjectsViewModel) {
 @Composable
 private fun QuotationTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewModel, saved: List<SavedProjectEntity>, cb: ProjectsCallbacks) {
     val id = v.project.id
+    val context = LocalContext.current
     val job = QeRevisions.jobs(saved).firstOrNull { j -> (v.meta.jobRootId.isNotEmpty() && j.rootId == v.meta.jobRootId) || (v.meta.jobUuid.isNotEmpty() && j.revisions.any { it.jobUuid == v.meta.jobUuid }) }
+    val quoteXlsx = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) { uri ->
+        if (uri != null && job != null) runCatching {
+            context.contentResolver.openOutputStream(uri)?.use {
+                ProjectExports.excel(it, ProjectExports.quotationRows(job.latest), "Quotation R${job.latest.revision}")
+            } ?: error("Could not save Excel file")
+        }.onSuccess { pvm.msg("Quotation Excel saved.") }.onFailure { pvm.msg("Excel export failed: ${it.message}") }
+    }
+    val quoteTxt = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri != null && job != null) runCatching {
+            context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use {
+                it.write(ProjectExports.quotationText(job.latest))
+            } ?: error("Could not save text file")
+        }.onSuccess { pvm.msg("Quotation text saved.") }.onFailure { pvm.msg("Text export failed: ${it.message}") }
+    }
     Section("Linked quotation") {
         if (job == null) Text("No saved quotation is linked. Open a saved quotation and tap Confirm as Project, or upload a PDF below.", color = Sub, fontSize = 13.sp)
         else {
@@ -747,6 +778,22 @@ private fun QuotationTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewM
                 QePrimaryButton("Open quotation") { cb.onOpenLatest(job.rootId) }
                 QeSecondaryButton("Add revision") { cb.onOpenLatest(job.rootId); pvm.msg("Edit the quotation, then Save Project to create R${job.latest.revision + 1}.") }
             }
+            Text("Export latest saved quotation · R${job.latest.revision}", color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 10.dp, bottom = 5.dp))
+            QeSecondaryButton("Export quotation Excel (.xlsx)") {
+                quoteXlsx.launch("MWI_Quotation_R${job.latest.revision}.xlsx")
+            }
+            QeSecondaryButton("Save as plain text (.txt)", Modifier.padding(top = 6.dp)) {
+                quoteTxt.launch("MWI_Quotation_R${job.latest.revision}.txt")
+            }
+            QeSecondaryButton("Copy quotation text", Modifier.padding(top = 6.dp)) {
+                runCatching { ProjectExports.copy(context, ProjectExports.quotationText(job.latest)) }
+                    .onFailure { pvm.msg("Cannot copy quotation: ${it.message}") }
+            }
+            QeSecondaryButton("Share quotation / WhatsApp", Modifier.padding(top = 6.dp)) {
+                runCatching { ProjectExports.shareText(context, ProjectExports.quotationText(job.latest), "Share quotation") }
+                    .onFailure { pvm.msg("Cannot share quotation: ${it.message}") }
+            }
+            Text("Exports use the latest saved quotation snapshot, including all options; unsaved edits are not exported.", color = Sub, fontSize = 11.sp, modifier = Modifier.padding(top = 5.dp))
             Text("Add revision opens the latest revision in the Quotation tab; Save Project stores it as the next R number (older revisions stay read-only).", color = Sub, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
         }
     }
@@ -765,7 +812,22 @@ private fun QuotationTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewM
 @Composable
 private fun PaymentsTab(v: PpView, pvm: ProjectsViewModel) {
     val m = v.money
+    val context = LocalContext.current
+    val savePayments = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) runCatching {
+            context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use {
+                it.write(ProjectExports.paymentCsv(listOf(v)))
+            } ?: error("Could not save payments")
+        }.onSuccess { pvm.msg("Project payments saved on phone.") }
+            .onFailure { pvm.msg("Could not save: ${it.message}") }
+    }
     Section("Payment summary") {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            QeSecondaryButton("Save CSV", Modifier.weight(1f)) { savePayments.launch("MWI_${v.project.name.take(24).replace(Regex("[^A-Za-z0-9_-]"), "_")}_Payments.csv") }
+            QeSecondaryButton("Share / WhatsApp", Modifier.weight(1f)) {
+                ProjectExports.shareText(context, ProjectExports.paymentText(listOf(v)), "Share project payments")
+            }
+        }
         KV("Total project amount", QeOps.fmt(m.total))
         KV("Received so far", QeOps.fmt(m.paid))
         KV("Remaining", QeOps.fmt(m.remaining))
