@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Feature C: daily on-device overdue check (unique periodic work, KEEP).
         com.moraswood.qande.assets.OverdueAlerts.schedule(applicationContext)
+        com.moraswood.qande.backup.DailyBackup.schedule(applicationContext)
         handleLink(intent)
         setContent { QeTheme { QeApp(vm) } }
     }
