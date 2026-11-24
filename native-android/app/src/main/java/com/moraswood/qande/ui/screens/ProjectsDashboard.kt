@@ -798,14 +798,63 @@ private fun QuotationTab(v: PpView, pvm: ProjectsViewModel, ovm: OperationsViewM
         }
     }
     val files by ovm.attachments.collectAsState()
-    val pdf = files[id].orEmpty().firstOrNull { it.id == v.meta.quotePdfId }
-    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { pvm.upload(id, listOf(it), asQuotation = true) } }
-    Section("PDF quotation") {
-        if (pdf == null) Text("No PDF quotation uploaded.", color = Sub, fontSize = 13.sp) else {
-            Text(pdf.name, color = Ink, fontSize = 13.sp)
-            Box(Modifier.padding(top = 8.dp)) { AttachmentViewer(pdf, ovm) }
+    val attachments = files[id].orEmpty()
+    val quoteFiles = attachments.filter { it.id == v.meta.quotePdfId || it.name.startsWith("Quotation - ") || it.name == "Pasted quotation.txt" }
+    val pastedFile = quoteFiles.firstOrNull { it.name == "Pasted quotation.txt" }
+    var pastedText by remember(id, pastedFile?.id, pastedFile?.at) {
+        mutableStateOf(
+            pastedFile?.let { a ->
+                runCatching { com.moraswood.qande.ops.Attachments.file(context, a).readText(Charsets.UTF_8) }.getOrDefault("")
+            }.orEmpty()
+        )
+    }
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) pvm.upload(id, uris, asQuotation = true)
+    }
+    var deletion by remember(id) { mutableStateOf<Ask?>(null) }
+    AskDialog(deletion) { deletion = null }
+    Section("Quotation documents") {
+        Text("Keep the actual quotation sent to your customer. PDF, Excel, Word and plain text files are supported.",
+            color = Sub, fontSize = 12.sp)
+        if (quoteFiles.isEmpty()) Text("No quotation documents attached.", color = Sub, fontSize = 12.sp,
+            modifier = Modifier.padding(top = 8.dp))
+        quoteFiles.forEach { a ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(a.name, color = Ink, fontSize = 12.sp, modifier = Modifier.weight(1f),
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Link("Open") {
+                    if (a.type == "application/pdf" || a.name.endsWith(".pdf", true)) ovm.open(a)
+                    else com.moraswood.qande.ops.Attachments.openExternally(context, a)
+                }
+                Link("Delete", danger = true) {
+                    deletion = Ask("Delete quotation file?",
+                        "Permanently remove ${a.name} from this project?", "Delete") {
+                        pvm.deleteQuotationAttachment(a)
+                    }
+                }
+            }
         }
-        QeSecondaryButton(if (pdf == null) "Upload PDF quotation" else "Replace PDF quotation", Modifier.padding(top = 8.dp)) { pick.launch(arrayOf("application/pdf")) }
+        QeSecondaryButton("Upload PDF / Excel / Word / Text", Modifier.padding(top = 8.dp)) {
+            pick.launch(arrayOf("application/pdf", "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "text/plain", "text/rtf", "application/rtf", "application/octet-stream"))
+        }
+    }
+    Section("Paste quotation text") {
+        Text("Paste a quotation previously sent by WhatsApp, SMS or email. Save it as a project attachment included in full backups.",
+            color = Sub, fontSize = 12.sp)
+        QeTextField(pastedText, { pastedText = it }, Modifier.fillMaxWidth().padding(top = 8.dp),
+            placeholder = "Paste the full quotation here…", singleLine = false, minLines = 6)
+        QePrimaryButton("Save quotation text", Modifier.padding(top = 8.dp)) {
+            pvm.savePastedQuotation(id, pastedText)
+        }
+        QeSecondaryButton("Copy text", Modifier.padding(top = 6.dp)) {
+            ProjectExports.copy(context, pastedText)
+        }
+        QeSecondaryButton("Share text / WhatsApp", Modifier.padding(top = 6.dp)) {
+            ProjectExports.shareText(context, pastedText, "Share quotation text")
+        }
     }
 }
 
