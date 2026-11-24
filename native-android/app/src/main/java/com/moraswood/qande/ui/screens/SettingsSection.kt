@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moraswood.qande.backup.QeBackup
+import com.moraswood.qande.backup.DailyBackup
 import com.moraswood.qande.logic.LengthConverter
 import com.moraswood.qande.logic.QeAi
 import com.moraswood.qande.settings.SettingsViewModel
@@ -86,6 +87,8 @@ fun SettingsCards(svm: SettingsViewModel) {
             QeSecondaryButton("Restore", enabled = !busy) { open.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
         }
         QeSecondaryButton("Share backup", enabled = !busy, modifier = Modifier.padding(top = 8.dp)) { svm.share() }
+        Text("Automatic daily backup: ON · " + DailyBackup.location(ctx), color = QeColors.Text, fontSize = 12.sp, modifier = Modifier.padding(top = 9.dp))
+        Text("Last successful backup: " + DailyBackup.lastSuccessful(ctx).ifBlank { "Not yet completed" }, color = QeColors.Muted, fontSize = 12.sp)
         Text(
             "One file with everything: projects, quotations and revisions, signatures, payments, Projects & Payments (status, comments, hardware, documents, PDFs), notes, calculations, templates, machines and asset logs, inventory, clients, calendar dates, yield and settings. Photos and files are embedded. Restore replaces all data after a confirmation. V10.1 backups can still be restored.",
             color = QeColors.Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp),
