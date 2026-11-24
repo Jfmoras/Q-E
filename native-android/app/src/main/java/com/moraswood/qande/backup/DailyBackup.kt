@@ -54,7 +54,7 @@ object DailyBackup {
         val pref = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (pref.getString(LAST_DATE, "") == today) return "Already backed up today"
         val room = QeDatabase.get(app)
-        val tables = room.runInTransaction { QeBackup.dumpTables(RoomSqlPort(room)) }
+        val tables = room.runInTransaction(java.util.concurrent.Callable { QeBackup.dumpTables(RoomSqlPort(room)) })
         val ai = AiService(app)
         val storage = QeBackup.storage(tables, QeBackup.AiExport(ai.endpoint(), ai.model(), ai.provider()))
         val files = QeBackup.FILE_DIRS.sorted().flatMap { folder ->
