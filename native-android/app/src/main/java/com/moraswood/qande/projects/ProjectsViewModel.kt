@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** One dashboard project: the V10.1 operations project + the dashboard's own rows. */
 data class PpView(
@@ -181,12 +183,45 @@ class ProjectsViewModel(app: Application) : AndroidViewModel(app) {
             var last: OpsAttachmentEntity? = null
             for (u in uris) {
                 val f = Attachments.describe(ctx, u)
-                try { last = Attachments.store(ctx, f, id, QeOps.uid(), now()).also { ops.putAttachment(it) } }
+                try {
+                    last = Attachments.store(ctx, f, id, QeOps.uid(), now()).let { attachment ->
+                        (if (asQuotation) attachment.copy(name = "Quotation - " + attachment.name) else attachment).also { ops.putAttachment(it) }
+                    }
+                }
                 catch (_: Attachments.TooLarge) { msg("Skipped " + f.name + ": maximum 15 MB per file.") }
                 catch (_: Exception) { msg("File storage failed. Check available device space."); break }
             }
             val a = last ?: return@launch
-            if (asQuotation) { pp.putMeta(meta(id).copy(quotePdfId = a.id, updatedAt = now())); msg("Quotation PDF attached.") } else msg("File(s) attached.")
+            if (asQuotation) { pp.putMeta(meta(id).copy(quotePdfId = a.id, updatedAt = now())); msg("Quotation file attached.") } else msg("File(s) attached.")
+        }
+    }
+
+    /** Save text received through WhatsApp/SMS as a backed-up local quotation attachment. */
+    fun savePastedQuotation(projectId: String, text: String) {
+        val cleaned = text.trim()
+        if (cleaned.isBlank()) { msg("Paste quotation text first."); return }
+        if (cleaned.length > 500_000) { msg("Quotation text is too long."); return }
+        viewModelScope.launch {
+            try {
+                val previous = ops.attachments(projectId).firstOrNull { it.name == "Pasted quotation.txt" }
+                val id = previous?.id ?: "qt" + QeOps.uid()
+                val at = now()
+                val file = java.io.File(Attachments.dir(ctx), id)
+                withContext(Dispatchers.IO) { file.writeText(cleaned, Charsets.UTF_8) }
+                val attachment = OpsAttachmentEntity(id, projectId, "Pasted quotation.txt", "text/plain", file.length(), at, id)
+                ops.putAttachment(attachment)
+                pp.putMeta(meta(projectId).copy(quotePdfId = id, updatedAt = at))
+                msg("Pasted quotation saved locally.")
+            } catch (e: Exception) { msg("Unable to save quotation text: ${e.message}") }
+        }
+    }
+
+    fun deleteQuotationAttachment(a: OpsAttachmentEntity) {
+        viewModelScope.launch {
+            ops.deleteAttachment(a.id)
+            Attachments.delete(ctx, a)
+            if (meta(a.projectId).quotePdfId == a.id) pp.putMeta(meta(a.projectId).copy(quotePdfId = ""))
+            msg("Quotation attachment removed.")
         }
     }
 
