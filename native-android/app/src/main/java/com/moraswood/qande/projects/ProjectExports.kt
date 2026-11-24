@@ -71,7 +71,7 @@ object ProjectExports {
             rows += listOf("Discount", t.discount)
             rows += listOf("GST", t.gst)
             rows += listOf("Grand total", t.grand)
-            rows += emptyList()
+            rows.add(emptyList())
         }
         rows += listOf("Notes / Terms")
         s.quote.notes.filter { it.isNotBlank() }.forEach { rows += listOf(it) }
