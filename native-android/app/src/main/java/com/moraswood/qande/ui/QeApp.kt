@@ -229,10 +229,12 @@ fun QeApp(vm: AppViewModel) {
                                     onRowFace = vm::setEstimationRowFace,
                                     onMoveCategory = vm::moveEstimationCategory,
                                     onCategoryDefault = vm::setCategoryDefault,
+                                    onOverallCosting = vm::setOverallCostingField,
                                 )
                             },
                             groups = workspace.itemGroups.orEmpty(),
                             categoryDefaults = workspace.categoryDefaults,
+                            overallCosting = workspace.overallCosting,
                         )
                     },
                     quotation = {
