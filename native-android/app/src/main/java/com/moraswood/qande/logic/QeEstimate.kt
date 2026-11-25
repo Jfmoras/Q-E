@@ -123,4 +123,48 @@ object QeEstimate {
 
     /** `originalMeasure(value,unit)`: "7 ft" or "-". */
     fun originalMeasure(value: String, unit: String): String = if (value.isNotEmpty()) "$value $unit" else "-"
+    /** Overall workshop estimate. This is a separate proposal, never silently changes individual selling prices. */
+    data class OverallResult(
+        val cft: Double, val kol: Double, val wood: Double, val labour: Double,
+        val polish: Double, val other: Double, val base: Double, val markupAmount: Double,
+        val afterMarkup: Double, val marginProfit: Double, val finalPrice: Double,
+        val totalProfit: Double, val effectiveMargin: Double, val valid: Boolean,
+    )
+
+    fun overall(s: WorkspaceState): OverallResult {
+        val c = s.overallCosting
+        val totals = s.estimationItems.map(QeMath::itemTotals)
+        val cft = totals.sumOf { it.cft }
+        val kol = totals.sumOf { it.kol }
+        val existing = s.estimationItems.mapIndexed { i, item ->
+            costingResult(item, QeGroups.effectiveCosting(s, i))
+        }
+        fun override(raw: String, default: Double): Double =
+            raw.trim().toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0.0 } ?: default
+        val woodDefault = existing.sumOf { it.wood }
+        val woodFromRates = cft * override(c.rateCft, 0.0) + kol * override(c.rateKol, 0.0)
+        val wood = if (c.woodTotal.isNotBlank()) override(c.woodTotal, woodDefault)
+            else if (c.rateCft.isNotBlank() || c.rateKol.isNotBlank()) woodFromRates
+            else woodDefault
+        val labour = override(c.labour, existing.sumOf { it.labour })
+        val polish = override(c.polish, existing.sumOf { it.polish })
+        val otherDefault = existing.sumOf { it.cost - it.wood - it.labour - it.polish } +
+            s.itemGroups.orEmpty().sumOf { QeMath.num(it.labour) + QeMath.num(it.polish) + QeMath.num(it.consumables) + QeMath.num(it.other) }
+        val other = override(c.other, otherDefault)
+        val base = wood + labour + polish + other
+        val markupPct = override(c.markupPct, 0.0)
+        val marginPct = override(c.profitMarginPct, 0.0)
+        val valid = marginPct < 100.0 && markupPct <= 10000.0 &&
+            listOf(c.rateCft, c.rateKol, c.woodTotal, c.labour, c.polish, c.other, c.markupPct, c.profitMarginPct)
+                .all { it.isBlank() || (it.toDoubleOrNull()?.let { n -> n.isFinite() && n >= 0 } == true) }
+        val markupAmount = base * markupPct / 100.0
+        val afterMarkup = base + markupAmount
+        val finalPrice = if (valid) afterMarkup / (1.0 - marginPct / 100.0) else 0.0
+        val marginProfit = finalPrice - afterMarkup
+        val totalProfit = finalPrice - base
+        return OverallResult(cft, kol, wood, labour, polish, other, base,
+            markupAmount, afterMarkup, marginProfit, finalPrice, totalProfit,
+            if (finalPrice > 0) totalProfit / finalPrice * 100 else 0.0, valid)
+    }
+
 }
