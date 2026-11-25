@@ -326,6 +326,23 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (key == "sellingPrice") _estStatus.value = _estStatus.value - i
     }
 
+    /** Overall estimator fields, saved with every workspace autosave and project revision. */
+    fun setOverallCostingField(key: String, value: String) = updateEstimation { state ->
+        val c = state.overallCosting
+        val next = when (key) {
+            "rateCft" -> c.copy(rateCft = value)
+            "rateKol" -> c.copy(rateKol = value)
+            "woodTotal" -> c.copy(woodTotal = value)
+            "labour" -> c.copy(labour = value)
+            "polish" -> c.copy(polish = value)
+            "other" -> c.copy(other = value)
+            "markupPct" -> c.copy(markupPct = value)
+            "profitMarginPct" -> c.copy(profitMarginPct = value)
+            else -> c
+        }
+        state.copy(overallCosting = next)
+    }
+
     /** Feature G: mark an estimation row as a vertical piece (area = length × thickness) or back to length × width. */
     fun setEstimationRowFace(i: Int, ri: Int, vertical: Boolean) = updateEstimation(log = true) { s ->
         s.copy(estimationItems = s.estimationItems.mapIndexed { j, it ->
