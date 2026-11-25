@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.moraswood.qande.TemplateBanner
 import com.moraswood.qande.data.CalcItem
 import com.moraswood.qande.data.Costing
+import com.moraswood.qande.data.OverallCosting
 import com.moraswood.qande.logic.QeEstimate
 import com.moraswood.qande.logic.QeGroups
 import com.moraswood.qande.logic.QeCategories
@@ -87,6 +88,7 @@ class EstimationActions(
     /** Feature J: move an item to another category; set a category default rate. */
     val onMoveCategory: (Int, String) -> Unit = { _, _ -> },
     val onCategoryDefault: (String, String, String) -> Unit = { _, _, _ -> },
+    val onOverallCosting: (String, String) -> Unit = { _, _ -> },
 )
 
 fun cssHex(hex: String, fallback: Color = Color(0xFF3B82F6)): Color =
@@ -102,6 +104,7 @@ fun EstimationPanel(
     actions: EstimationActions,
     groups: List<com.moraswood.qande.data.ItemGroup> = emptyList(),
     categoryDefaults: Map<String, com.moraswood.qande.data.CategoryDefaults>? = null,
+    overallCosting: OverallCosting = OverallCosting(),
 ) {
     PageHeading("Estimation & Rate Builder", "Price every item separately. CFT/KOL rates, labour, polish and selling price can all differ item by item.")
     var alert by remember { mutableStateOf<String?>(null) }
@@ -121,7 +124,7 @@ fun EstimationPanel(
             modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth().clip(shape).background(QeColors.Card).border(1.dp, QeColors.Line, shape).padding(16.dp),
         )
     }
-    val ws = com.moraswood.qande.data.WorkspaceState(estimationItems = items, costings = costings, itemGroups = groups.ifEmpty { null }, categoryDefaults = categoryDefaults)
+    val ws = com.moraswood.qande.data.WorkspaceState(estimationItems = items, costings = costings, itemGroups = groups.ifEmpty { null }, categoryDefaults = categoryDefaults, overallCosting = overallCosting)
     // Feature J: Furniture | Doors & Windows tabs
     var catTab by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(QeCategories.FURNITURE) }
     CategoryTabs(ws, catTab) { catTab = it }
@@ -167,12 +170,65 @@ fun EstimationPanel(
         actions.onNewItem()
         if (catTab == QeCategories.DW) actions.onMoveCategory(n, QeCategories.DW)
     }
+    OverallCostingCard(ws, actions)
     val g = QeGroups.grand(ws)
     GrandBar("Estimated Selling Price", QeFormat.money(g.selling), "Send to Quotation →") {
         val missing = actions.onSendToQuotation()
         if (missing >= 0) focusMissing = missing
     }
     if (groups.isNotEmpty() || items.any { QeCategories.itemCategory(ws, items.indexOf(it)) == QeCategories.DW }) Text("Grand total (all categories) · " + subLine(g.cost, g.selling, g.profit), color = QeColors.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
+}
+
+@Composable
+private fun OverallCostingCard(ws: com.moraswood.qande.data.WorkspaceState, actions: EstimationActions) {
+    val c = ws.overallCosting
+    val result = QeEstimate.overall(ws)
+    val shape = RoundedCornerShape(16.dp)
+    Column(Modifier.fillMaxWidth().padding(top = 15.dp, bottom = 16.dp)
+        .clip(shape).background(QeColors.Card).border(1.dp, QeColors.Line, shape).padding(14.dp)) {
+        Text("Overall timber & selling price", color = QeColors.Text, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("All estimation items across Furniture and Doors & Windows", color = QeColors.Muted, fontSize = 12.sp)
+        Text("Total timber: ${QeFormat.toFixed(result.cft, 3)} CFT · ${QeFormat.toFixed(result.kol, 3)} KOL",
+            color = QeColors.Text, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 10.dp))
+        Text("Timber price: enter rate(s) to reprice all CFT/KOL, or enter a lump-sum wood total. Leave all blank to use the wood costs already entered per item.",
+            color = QeColors.Muted, fontSize = 12.sp)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            EstField("Wood ₹ / CFT", c.rateCft, Modifier.weight(1f)) { actions.onOverallCosting("rateCft", it) }
+            EstField("Wood ₹ / KOL", c.rateKol, Modifier.weight(1f)) { actions.onOverallCosting("rateKol", it) }
+        }
+        EstField("Wood total ₹ (optional override)", c.woodTotal) { actions.onOverallCosting("woodTotal", it) }
+        Text("Wood cost: ${QeFormat.money(result.wood)}", color = QeColors.Text, fontWeight = FontWeight.SemiBold)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            EstField("Labour ₹", c.labour, Modifier.weight(1f)) { actions.onOverallCosting("labour", it) }
+            EstField("Polish ₹", c.polish, Modifier.weight(1f)) { actions.onOverallCosting("polish", it) }
+        }
+        EstField("Other costs ₹", c.other) { actions.onOverallCosting("other", it) }
+        Text("Blank labour, polish and other costs use existing item costs. Enter 0 to override them with zero.",
+            color = QeColors.Muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 5.dp))
+        Text("Estimated base cost: ${QeFormat.money(result.base)}", color = QeColors.Text,
+            fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            EstField("Markup % (on cost)", c.markupPct, Modifier.weight(1f)) { actions.onOverallCosting("markupPct", it) }
+            EstField("Extra profit margin %", c.profitMarginPct, Modifier.weight(1f)) { actions.onOverallCosting("profitMarginPct", it) }
+        }
+        Text("Markup adds a percentage of base cost. Extra profit margin is a target margin on the price AFTER markup, so 20% margin means cost of that stage is 80% of its selling price.",
+            color = QeColors.Muted, fontSize = 11.sp)
+        if (!result.valid) {
+            Text("Enter non-negative numbers, markup up to 10,000%, and a profit margin below 100%.",
+                color = Color(0xFFB91C1C), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+        } else {
+            Text("Markup added: ${QeFormat.money(result.markupAmount)}", color = QeColors.Text, modifier = Modifier.padding(top = 8.dp))
+            Text("Price after markup: ${QeFormat.money(result.afterMarkup)}", color = QeColors.Text)
+            Text("Extra margin profit: ${QeFormat.money(result.marginProfit)}", color = QeColors.Text)
+            Text("Total estimated profit: ${QeFormat.money(result.totalProfit)} (${QeFormat.toFixed(result.effectiveMargin, 1)}% of final price)",
+                color = QeColors.Text, fontWeight = FontWeight.SemiBold)
+            Text("FINAL ESTIMATED PRICE: ${QeFormat.money(result.finalPrice)}",
+                color = QeColors.Text, fontWeight = FontWeight.Bold, fontSize = 19.sp,
+                modifier = Modifier.padding(top = 10.dp))
+        }
+        Text("This overall estimate is for comparison only. The existing item selling prices and Send to Quotation grand total remain unchanged.",
+            color = QeColors.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 9.dp))
+    }
 }
 
 private fun subLine(cost: Double, selling: Double, profit: Double) =
