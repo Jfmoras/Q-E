@@ -206,6 +206,8 @@ data class WorkspaceState(
     val items: List<CalcItem> = listOf(CalcItem.blank()),
     val estimationItems: List<CalcItem> = emptyList(),
     val costings: List<Costing> = emptyList(),
+    /** Overall estimation price calculator; independent of line-item selling prices. */
+    val overallCosting: OverallCosting = OverallCosting(),
     val quoteItems: List<QuoteItem> = listOf(QuoteItem.blank()),
     val customer: Customer = Customer(),
     val quote: Quote = Quote(),
@@ -247,6 +249,20 @@ data class ItemGroup(
     val labour: LStr = "", val polish: LStr = "", val consumables: LStr = "", val other: LStr = "",
     val selling: LStr = "",
     val collapsed: Boolean? = null,
+)
+
+/** Blank overrides inherit the sum already entered on individual estimation items. */
+@Serializable
+data class OverallCosting(
+    val rateCft: LStr = "",
+    val rateKol: LStr = "",
+    val woodTotal: LStr = "",
+    val labour: LStr = "",
+    val polish: LStr = "",
+    val other: LStr = "",
+    val markupPct: LStr = "",
+    /** Desired margin calculated on the price AFTER markup (0..99.99%). */
+    val profitMarginPct: LStr = "",
 )
 
 /** Saved project revision record in `mwi-projects-v1`. */
